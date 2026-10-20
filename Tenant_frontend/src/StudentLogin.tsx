@@ -1,1 +1,1 @@
-import LoginPage from './LoginPage';export default function StudentLogin(){return <LoginPage role="Student" title="Ready to learn?" color="purple"/>
+import LoginPage from './LoginPage';export default function StudentLogin(){return <LoginPage role="Student" title="Ready to learn?" color="purple"/>}
