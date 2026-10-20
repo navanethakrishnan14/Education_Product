@@ -1,0 +1,1 @@
+import LoginPage from './LoginPage';export default function FacultyLogin(){return <LoginPage role="Faculty" title="Ready to inspire?" color="blue"/>}
