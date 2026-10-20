@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "db:init": "tsx src/db/init.ts",
-    "seed": "tsx src/db/seed-demo-user.ts"
+    "seed": "tsx src/db/seed-demo-user.ts",
+    "setup:demo": "npm run db:init && npm run seed"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
