@@ -6,11 +6,10 @@ if (!rawDatabaseUrl) {
   console.error('DATABASE_URL is not set. Configure Tenant_backend/.env.');
 }
 
-// pg-connection-string currently warns that these modes behave like verify-full.
-// Normalize them explicitly so the driver behavior stays the same without printing
-// a dependency warning on every development startup.
+// Normalize SSL modes to preserve pg-connection-string's current verify-full
+// behavior without emitting its compatibility warning during development.
 const connectionString = rawDatabaseUrl?.replace(
-  /([?&]sslmode=)(prefer|require|verify-ca)(?=(&|$)/gi,
+  /([?&]sslmode=)(prefer|require|verify-ca)(?=&|$)/gi,
   '$1verify-full',
 );
 
