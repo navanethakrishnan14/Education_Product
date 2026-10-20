@@ -1,0 +1,1 @@
+import{Router}from'express';import{login}from'../services/auth.service';export const authRouter=Router();authRouter.post('/login',login);
