@@ -1,0 +1,1 @@
+import LoginPage from './LoginPage';export default function ParentLogin(){return <LoginPage role="Parent" title="Stay connected?" color="teal"/>}
