@@ -1,33 +1,34 @@
-# PostgreSQL migration and repair status
+# Platform Backend rebuild status
 
 Date: 2026-10-20
 
-This repository has been reviewed before changing database dependencies. The project is **not yet fully migrated to PostgreSQL**.
+## Current implementation
 
-## Confirmed current state
+`Platform_Backend` has been rebuilt as a clean Express + TypeScript API using PostgreSQL through Prisma. The previous Platform Backend implementation and its Mongoose model/service files were removed from the repository in the rebuild commit.
 
-- `Platform_Backend/package.json` still declares Mongoose and MongoDB-oriented dependencies.
-- Platform API startup imports `connectDB` from `src/config/db`; its current data layer and model/service files must be migrated together, not by swapping dependencies alone.
-- `Tenant_backend` already declares PostgreSQL's `pg` client and has its own `db:init` script.
-- `Tenant_frontend` and `Platform_frontend` are separate applications; frontend API URLs must match the relevant backend route prefixes and CORS configuration.
-- The uploaded ZIP did not include all Platform source/configuration files, so this branch uses the repository's tracked source as the source of truth.
+Implemented endpoints:
+- `GET /health` — API health check.
+- `POST /api/v1/auth/login` — platform administrator sign-in; returns `success`, `token`, and a safe user payload expected by Platform_frontend.
+- `GET /api/v1/auth/me` — authenticated administrator profile.
+- `GET /api/v1/platform/overview` — school and user totals.
+- `GET /api/v1/platform/schools` — paginated school directory with optional name search.
 
-## Safe migration requirements
+Database:
+- Prisma schema: `Platform_Backend/prisma/schema.prisma`.
+- Initial PostgreSQL migration: `Platform_Backend/prisma/migrations/20261020000000_initial_platform/migration.sql`.
+- Admin seed: `npm run db:seed`, using `PLATFORM_ADMIN_EMAIL` and `PLATFORM_ADMIN_PASSWORD`.
+- No MongoDB or Mongoose runtime dependencies remain in the rebuilt Platform_Backend.
 
-1. Create and review a complete PostgreSQL schema for the Platform domain before changing production database access.
-2. Replace Mongoose models and every model query in controllers, services, seeders, jobs, and scripts with typed PostgreSQL/Prisma queries.
-3. Add versioned migrations and a data migration/verification plan. Do not delete migration history or reset a database containing data.
-4. Update environment validation and examples. Keep real `.env` files, credentials, API keys, and production URLs out of Git.
-5. Build/type-check both backends and both frontends, then run integration tests against a disposable PostgreSQL database.
-6. Confirm login, tenant isolation, school creation, billing, subscriptions, reports, uploads, and background jobs before switching deployment traffic.
+## Local setup
 
-## Known risks to resolve
+1. Open `Platform_Backend` and copy `.env.example` to `.env`.
+2. Set a valid PostgreSQL `DATABASE_URL`, a `JWT_SECRET` with at least 32 characters, and strong platform admin credentials (at least 12 characters).
+3. Run `npm install`.
+4. Run `npx prisma generate`.
+5. Run `npm run db:migrate`.
+6. Run `npm run db:seed`.
+7. Run `npm run dev`.
 
-- A dependency-only switch from Mongoose to Prisma would break imports and query APIs throughout Platform Backend.
-- Existing migration folders and database schemas may not match one another. Inspect the target database and take a verified backup before applying migrations.
-- Do not assume that an HTTP 200 response means login succeeded; authentication responses must include a token and user payload, and errors must use appropriate status codes.
-- Rotate any credentials that were ever committed or included in local environment files.
+## Validation limitation
 
-## Validation status
-
-No claim of full functionality is made by this audit alone. A live PostgreSQL instance and end-to-end test environment are required to verify database migrations and runtime behavior.
+The repository files have been updated, but a live PostgreSQL database and local Node.js environment were not available here. Therefore, the migration and TypeScript build have **not** been executed in this session. This is a clean starting backend for the current platform UI, not a claim that legacy billing, subscriptions, and other removed backend features have been reimplemented or that existing production data has been migrated. Run `npm run build` and exercise the login and protected endpoints against a disposable PostgreSQL database before deployment.

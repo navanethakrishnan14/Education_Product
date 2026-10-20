@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import bcrypt from 'bcryptjs'
 import { prisma } from './lib/prisma'
 async function main(): Promise<void> {
