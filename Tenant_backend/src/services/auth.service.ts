@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { pool } from '../db/pool';
+import { getJwtSecret } from '../config/jwt';
 
 const schema = z.object({
   email: z.string().trim().email().max(254),
@@ -29,9 +30,9 @@ export async function login(req: Request, res: Response): Promise<Response> {
     });
   }
 
-  const secret = process.env.JWT_SECRET;
-  if (!secret || secret.length < 32 || secret.startsWith('replace_with_')) {
-    console.error('Login unavailable: JWT_SECRET is missing or is still the example value.');
+  const secret = getJwtSecret();
+  if (!secret) {
+    console.error('Tenant login unavailable: set a private JWT_SECRET of at least 32 characters in production.');
     return res.status(503).json({
       success: false,
       message: 'Tenant login is not configured. Set JWT_SECRET to a private random value of at least 32 characters in Tenant_backend/.env, then restart the backend.',
