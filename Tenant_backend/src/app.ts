@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { authRouter } from './routes/auth.routes';
 import { pool } from './db/pool';
+import { getJwtSecret } from './config/jwt';
 
 export const app = express();
 app.disable('x-powered-by');
@@ -58,12 +59,12 @@ app.get('/health', (_req, res) => {
 app.get('/health/ready', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
-    const jwtConfigured = Boolean(process.env.JWT_SECRET && process.env.JWT_SECRET.length >= 32 && !process.env.JWT_SECRET.startsWith('replace_with_'));
+    const jwtConfigured = Boolean(getJwtSecret());
     res.status(jwtConfigured ? 200 : 503).json({
       success: jwtConfigured,
       service: 'tenant-backend',
       database: 'connected',
-      authentication: jwtConfigured ? 'configured' : 'JWT_SECRET missing or still using example value',
+      authentication: jwtConfigured ? 'configured' : 'JWT_SECRET must be configured in production',
     });
   } catch (error) {
     console.error('Tenant readiness check failed:', error instanceof Error ? error.message : error);
