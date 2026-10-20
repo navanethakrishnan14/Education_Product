@@ -1,36 +1,17 @@
-import dotenv from 'dotenv'
-dotenv.config()
-
-function required(key: string): string {
-  const val = process.env[key]
-  if (!val) throw new Error(`Missing required env variable: ${key}`)
-  return val
+import 'dotenv/config'
+function required(name: string): string {
+  const value = process.env[name]?.trim()
+  if (!value) throw new Error(`Missing required environment variable: ${name}`)
+  return value
 }
-
 const env = {
-  NODE_ENV: process.env.NODE_ENV ?? 'development',
-  PORT: parseInt(process.env.PORT ?? '5000', 10),
-  DATABASE_URL: required('DATABASE_URL'),
-  DATABASE_SSL: process.env.DATABASE_SSL === 'true',
-  JWT_SECRET: required('JWT_SECRET'),
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN ?? '7d',
-  JWT_REFRESH_SECRET: required('JWT_REFRESH_SECRET'),
-  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN ?? '30d',
-  CLIENT_ORIGIN: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173,http://localhost:5000',
-  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID ?? '',
-  RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET ?? '',
-  RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET ?? '',
-  SAAS_ADMIN_NAME: process.env.SAAS_ADMIN_NAME ?? 'Platform Admin',
-  SAAS_ADMIN_EMAIL: process.env.SAAS_ADMIN_EMAIL ?? 'admin@example.com',
-  SAAS_ADMIN_PASSWORD: process.env.SAAS_ADMIN_PASSWORD ?? '',
-  SAAS_ADMIN_PHONE: process.env.SAAS_ADMIN_PHONE ?? '',
-  SAAS_ORG_NAME: process.env.SAAS_ORG_NAME ?? 'Education SaaS Tenant',
-  SAAS_WORKSPACE_URL: process.env.SAAS_WORKSPACE_URL ?? 'education-demo',
-  SAAS_ORG_INDUSTRY: process.env.SAAS_ORG_INDUSTRY ?? 'Education',
-  RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? '900000', 10),
-  RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX ?? '100', 10),
-  isDev: (process.env.NODE_ENV ?? 'development') === 'development',
-  isProd: process.env.NODE_ENV === 'production',
-} as const
-
+  nodeEnv: process.env.NODE_ENV ?? 'development',
+  port: Number.parseInt(process.env.PORT ?? '4001', 10),
+  databaseUrl: required('DATABASE_URL'),
+  jwtSecret: required('JWT_SECRET'),
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '8h',
+  clientOrigins: (process.env.CLIENT_ORIGIN ?? 'http://localhost:5173').split(',').map(s => s.trim()).filter(Boolean),
+}
+if (!Number.isInteger(env.port) || env.port < 1 || env.port > 65535) throw new Error('PORT must be a valid TCP port')
+if (env.jwtSecret.length < 32) throw new Error('JWT_SECRET must contain at least 32 characters')
 export default env
