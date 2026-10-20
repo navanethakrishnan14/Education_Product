@@ -7,19 +7,45 @@ export const app = express();
 app.disable('x-powered-by');
 app.use(helmet());
 
-const origins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+// Always allow the common local Vite origins; additional origins can be configured
+// with a comma-separated CORS_ORIGIN value in the backend .env file.
+const localOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+];
+const configuredOrigins = (process.env.CORS_ORIGIN || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const origins = new Set([...localOrigins, ...configuredOrigins]);
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || origins.includes('*') || origins.includes(origin)) {
+    if (!origin || origins.has('*') || origins.has(origin)) {
       return callback(null, true);
     }
     return callback(new Error('Origin is not allowed by CORS'));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  optionsSuccessStatus: 204,
+}));
+
+// Explicitly finish browser preflight requests before routes are evaluated.
+app.options('*', cors({
+  origin(origin, callback) {
+    if (!origin || origins.has('*') || origins.has(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origin is not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  optionsSuccessStatus: 204,
 }));
 
 app.use(express.json({ limit: '20kb' }));
