@@ -41,7 +41,7 @@ export default function LoginPage({ role, title, color }: { role: LoginRole; tit
     setBusy(true);
     setMessage('');
     try {
-      const configuredBase = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1').trim();
+      const configuredBase = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').trim();
       const base = configuredBase.replace(/\/$/, '');
       const response = await fetch(base + '/auth/login', {
         method: 'POST',
