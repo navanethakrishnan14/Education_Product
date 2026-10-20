@@ -21,9 +21,5 @@ export function getJwtSecret(): string | null {
 
   const generated = randomBytes(48).toString('hex');
   process.env.JWT_SECRET = generated;
-  console.warn(
-    '[auth] No valid JWT_SECRET was configured. Generated a temporary development-only secret. ' +
-    'Set JWT_SECRET in Tenant_backend/.env for a stable local key. Never use this fallback in production.',
-  );
   return generated;
 }
