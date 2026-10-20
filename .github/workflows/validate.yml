@@ -13,13 +13,9 @@ jobs:
       matrix:
         include:
           - app: Platform_Backend
-            command: npm run build
           - app: Platform_frontend
-            command: npm run build
           - app: Tenant_backend
-            command: npm run build
           - app: Tenant_frontend
-            command: npm run build
     defaults:
       run:
         working-directory: ${{ matrix.app }}
@@ -28,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: ${{ matrix.app }}/package-lock.json
-      - run: npm ci
-      - run: ${{ matrix.command }}
+      # Some frontend folders do not have a committed lockfile yet, so use
+      # npm install rather than npm ci until lockfiles are checked in.
+      - run: npm install
+      - run: npm run build
