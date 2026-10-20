@@ -19,7 +19,12 @@ export async function connectDB(): Promise<void> {
     const result = await client.query<{ version: string; current_database: string }>(
       'SELECT version(), current_database()'
     )
-    logger.info(`PostgreSQL connected: ${result.rows[0].current_database} (${result.rows[0].version.split(' ').slice(0, 2).join(' ')})`)
+    const row = result.rows[0]
+    if (!row) {
+      throw new Error('PostgreSQL connection check returned no result')
+    }
+    const version = row.version.split(' ').slice(0, 2).join(' ')
+    logger.info(`PostgreSQL connected: ${row.current_database} (${version})`)
   } finally {
     client.release()
   }
@@ -33,7 +38,11 @@ export async function withTransaction<T>(work: (client: PoolClient) => Promise<T
     await client.query('COMMIT')
     return result
   } catch (error) {
-    await client.query('ROLLBACK')
+    try {
+      await client.query('ROLLBACK')
+    } catch (rollbackError) {
+      logger.error('Failed to roll back PostgreSQL transaction', rollbackError)
+    }
     throw error
   } finally {
     client.release()
