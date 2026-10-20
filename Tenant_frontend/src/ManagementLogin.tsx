@@ -1,0 +1,1 @@
+import LoginPage from './LoginPage';export default function ManagementLogin(){return <LoginPage role="Management" title="Welcome back" color="violet"/>}
