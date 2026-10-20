@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { authRouter } from './routes/auth.routes';
+import { pool } from './db/pool';
 
 export const app = express();
 app.disable('x-powered-by');
@@ -52,6 +53,22 @@ app.use(express.json({ limit: '20kb' }));
 
 app.get('/health', (_req, res) => {
   res.json({ success: true, service: 'tenant-backend', status: 'healthy' });
+});
+
+app.get('/health/ready', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    const jwtConfigured = Boolean(process.env.JWT_SECRET && process.env.JWT_SECRET.length >= 32 && !process.env.JWT_SECRET.startsWith('replace_with_'));
+    res.status(jwtConfigured ? 200 : 503).json({
+      success: jwtConfigured,
+      service: 'tenant-backend',
+      database: 'connected',
+      authentication: jwtConfigured ? 'configured' : 'JWT_SECRET missing or still using example value',
+    });
+  } catch (error) {
+    console.error('Tenant readiness check failed:', error instanceof Error ? error.message : error);
+    res.status(503).json({ success: false, service: 'tenant-backend', database: 'unavailable' });
+  }
 });
 
 app.use('/api/v1/auth', authRouter);
