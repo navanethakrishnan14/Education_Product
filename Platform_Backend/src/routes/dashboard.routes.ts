@@ -7,19 +7,22 @@ router.use(requireAuth);
 
 router.get("/overview", async (_req, res, next) => {
   try {
-    const [schools, tenantUsers, activeSchools, activeTenantUsers] = await Promise.all([
+    const [schools, tenantUsers, activeSchools, activeTenantUsers, admins] = await Promise.all([
       prisma.schoolTenant.count(),
       prisma.tenantUser.count(),
       prisma.schoolTenant.count({ where: { status: "active" } }),
-      prisma.tenantUser.count({ where: { isActive: true } })
+      prisma.tenantUser.count({ where: { isActive: true } }),
+      prisma.platformUser.count({ where: { isActive: true } })
     ]);
+
     return res.json({
       success: true,
       data: {
-        schools,
+        registeredSchools: schools,
         tenantUsers,
         activeSchools,
         activeTenantUsers,
+        platformAdmins: admins,
         platformHealth: "healthy",
         database: "connected"
       }

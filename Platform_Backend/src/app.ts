@@ -5,6 +5,8 @@ import rateLimit from "express-rate-limit";
 import { env } from "./config/env";
 import authRoutes from "./routes/auth.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import schoolsRoutes from "./routes/schools.routes";
+import usersRoutes from "./routes/users.routes";
 
 export const app = express();
 app.disable("x-powered-by");
@@ -23,6 +25,8 @@ app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 app.get("/health", (_req, res) => res.json({ success: true, status: "ok", service: "edusphere-platform-api", timestamp: new Date().toISOString() }));
 app.use("/api/v1/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false }), authRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
+app.use("/api/v1/schools", schoolsRoutes);
+app.use("/api/v1/users", usersRoutes);
 app.use((_req, res) => res.status(404).json({ success: false, message: "The requested endpoint was not found." }));
 
 const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
