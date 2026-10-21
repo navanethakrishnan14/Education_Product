@@ -1,9 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; min-width: 320px; }
+  button, input, select, textarea { font: inherit; }
+  input, select, textarea { max-width: 100%; }
+}
 @layer base {
   html { @apply min-w-[320px] text-base; }
   body { @apply m-0 bg-slate-50 font-sans text-[15px] leading-relaxed text-slate-800; font-family: "DM Sans", sans-serif; }
