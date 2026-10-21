@@ -23,3 +23,23 @@ button.nav-item.active,button.nav-item:hover{background:#29214b}
 .tenant-page-heading .muted{margin:0}
 .workspace-placeholder{min-height:210px}
 @media(max-width:650px){.tenant-page-heading{align-items:flex-start;flex-direction:column}.tenant-page-heading h1,.workspace-placeholder h1{font-size:24px}}
+
+/* Separate routed platform pages */
+.tenant-type-card{text-decoration:none}
+.tenant-detail-page{width:100%;max-width:900px}
+.back-link{display:inline-flex;align-items:center;gap:8px;margin-bottom:20px;color:#6f49d9;text-decoration:none;font-size:13px;font-weight:700}
+.back-link:hover{text-decoration:underline}
+.tenant-detail-card{padding:30px;border:1px solid #e8eaf2;border-radius:16px;background:#fff}
+.tenant-detail-card .tenant-type-icon{margin-bottom:22px}
+.tenant-detail-card h1,.standalone-page h1{font:800 28px Manrope,sans-serif;letter-spacing:-.8px;margin:8px 0}
+.tenant-detail-card .muted,.standalone-page .muted{max-width:620px}
+.tenant-detail-card .coming{display:inline-block;margin-top:12px}
+.standalone-page{min-height:280px;padding:28px}
+.standalone-page .empty-state{margin-top:18px;border:1px dashed #e5e7ef;border-radius:12px}
+.settings-row{display:flex;align-items:center;gap:14px;margin-top:24px;padding:18px;border:1px solid #e8eaf2;border-radius:12px}
+.settings-row>div{flex:1;min-width:0}
+.settings-row strong{font:700 14px Manrope,sans-serif}
+.settings-row p{margin:5px 0 0;font-size:12px}
+.text-link{display:inline-flex;align-items:center;gap:6px;color:#7044e8;font-size:11px;font-weight:700;text-decoration:none;margin-top:4px}
+.text-link:hover{text-decoration:underline}
+@media(max-width:520px){.tenant-detail-card,.standalone-page{padding:21px}.tenant-detail-card h1,.standalone-page h1{font-size:24px}.settings-row{align-items:flex-start;flex-wrap:wrap}.settings-row .coming{margin-left:52px}}
