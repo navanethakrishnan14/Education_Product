@@ -118,14 +118,13 @@ router.get("/", async (req, res, next) => {
     };
     const [items, total] = await Promise.all([
       prisma.schoolTenant.findMany({
-        where, orderBy: { createdAt: "desc" }, skip: (page - 1) * limit, take: limit,
-        include: { _count: { select: { users: true } } }
+        where, orderBy: { createdAt: "desc" }, skip: (page - 1) * limit, take: limit
       }),
       prisma.schoolTenant.count({ where })
     ]);
     return res.json({
       success: true,
-      data: items.map(({ _count, ...school }) => ({ ...school, userCount: _count.users })),
+      data: items,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     });
   } catch (error) { return next(error); }
@@ -134,12 +133,10 @@ router.get("/", async (req, res, next) => {
 router.get("/:id", async (req, res, next) => {
   try {
     const school = await prisma.schoolTenant.findUnique({
-      where: { id: req.params.id },
-      include: { _count: { select: { users: true } } }
+      where: { id: req.params.id }
     });
     if (!school) return res.status(404).json({ success: false, message: "School tenant not found." });
-    const { _count, ...data } = school;
-    return res.json({ success: true, data: { ...data, userCount: _count.users } });
+    return res.json({ success: true, data: school });
   } catch (error) { return next(error); }
 });
 
