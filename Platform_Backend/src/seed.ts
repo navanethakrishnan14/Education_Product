@@ -92,8 +92,8 @@ async function ensurePlatformSchema(): Promise<void> {
     BEGIN
       IF to_regclass('public.school_tenants') IS NOT NULL THEN
         INSERT INTO edusphere_platform.school_tenants
-          (id, name, workspace_url, status, plan_name, details, created_at, updated_at)
-        SELECT id, name, workspace_url, status, plan_name, details, created_at, updated_at
+          (id, name, workspace_url, status, plan_name, created_at, updated_at)
+        SELECT id, name, workspace_url, status, plan_name, created_at, updated_at
         FROM public.school_tenants
         ON CONFLICT DO NOTHING;
       END IF;
