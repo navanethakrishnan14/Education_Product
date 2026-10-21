@@ -2,10 +2,11 @@ import { useState } from "react";
 import {
   ArrowRight, GraduationCap, LockKeyhole, Mail, ShieldCheck, Building2,
   Users, ChartNoAxesCombined, Settings, LogOut, Menu, X, Search, Bell,
-  ChevronRight, Globe2, Landmark
+  ChevronRight, Globe2
 } from "lucide-react";
 import { Link, Route, Routes, useNavigate } from "react-router-dom";
 import type { FormEvent } from "react";
+import Tenant from "./Tenant";
 
 function Brand() {
   return <Link to="/" className="brand"><span className="brand-icon"><GraduationCap size={21} /></span><span><b>EduSphere</b><small>PLATFORM ADMINISTRATION</small></span></Link>;
@@ -71,14 +72,9 @@ const metrics = [
   { label: "Platform Health", value: "—", detail: "API and database status", icon: ChartNoAxesCombined, tone: "blue" }
 ];
 
-const tenantTypes = [
-  { title: "School", description: "Manage school tenants, classes, faculty and students.", icon: GraduationCap, tone: "violet" },
-  { title: "College", description: "Manage colleges, departments, programs and campus users.", icon: Landmark, tone: "teal" },
-  { title: "Institution", description: "Manage other education institutions and their workspaces.", icon: Globe2, tone: "blue" }
-];
-
 function Dashboard() {
   const [menu, setMenu] = useState(false);
+  const [activeSection, setActiveSection] = useState<"overview" | "tenant" | "users" | "settings">("overview");
   const nav = useNavigate();
   function logout() {
     sessionStorage.removeItem("platform_token");
@@ -90,10 +86,10 @@ function Dashboard() {
     <aside className={"sidebar " + (menu ? "show" : "")}>
       <Brand />
       <div className="nav-caption">PLATFORM</div>
-      <a className="nav-item active" href="#overview" onClick={() => setMenu(false)}><ChartNoAxesCombined size={17} /> Overview</a>
-      <a className="nav-item" href="#tenants" onClick={() => setMenu(false)}><Building2 size={17} /> Tenant <ChevronRight size={14} /></a>
-      <a className="nav-item" href="#users" onClick={() => setMenu(false)}><Users size={17} /> Platform users <ChevronRight size={14} /></a>
-      <a className="nav-item" href="#settings" onClick={() => setMenu(false)}><Settings size={17} /> Settings</a>
+      <button className={"nav-item " + (activeSection === "overview" ? "active" : "")} onClick={() => { setActiveSection("overview"); setMenu(false); }}><ChartNoAxesCombined size={17} /> Overview</button>
+      <button className={"nav-item " + (activeSection === "tenant" ? "active" : "")} onClick={() => { setActiveSection("tenant"); setMenu(false); }}><Building2 size={17} /> Tenant <ChevronRight size={14} /></button>
+      <button className={"nav-item " + (activeSection === "users" ? "active" : "")} onClick={() => { setActiveSection("users"); setMenu(false); }}><Users size={17} /> Platform users <ChevronRight size={14} /></button>
+      <button className={"nav-item " + (activeSection === "settings" ? "active" : "")} onClick={() => { setActiveSection("settings"); setMenu(false); }}><Settings size={17} /> Settings</button>
       <div className="sidebar-bottom"><span className="status-dot" /> Platform workspace <button onClick={logout}><LogOut size={15} /> Sign out</button></div>
     </aside>
     <main className="dash-main">
@@ -102,18 +98,21 @@ function Dashboard() {
         <div><b>Platform overview</b><small>Manage your education ecosystem</small></div>
         <div className="header-actions"><button aria-label="Search"><Search size={17} /></button><button aria-label="Notifications"><Bell size={17} /></button><span className="avatar">TA</span></div>
       </header>
-      <section className="dash-content" id="overview">
-        <div className="welcome-row"><div><p className="eyebrow">PLATFORM CONTROL CENTER</p><h1>Good to see you.</h1><p className="muted">Here’s an overview of your EduSphere platform.</p></div><span className="platform-status"><i /> Platform admin area</span></div>
-        <div className="metric-grid">{metrics.map(m => { const Icon = m.icon; return <article className="metric" key={m.label}><span className={"metric-icon " + m.tone}><Icon size={20} /></span><p>{m.label}</p><h2>{m.value}</h2><small>{m.detail}</small></article>; })}</div>
-        <section className="section-card" id="tenants">
-          <div className="section-head"><div><h2>Tenant management</h2><p>Choose the type of education organization you want to manage.</p></div><span className="coming">Tenant workspace</span></div>
-          <div className="tenant-type-grid">{tenantTypes.map(item => { const Icon = item.icon; return <button className="tenant-type-card" type="button" key={item.title} onClick={() => setMenu(false)}><span className={"tenant-type-icon " + item.tone}><Icon size={23} /></span><span className="tenant-type-copy"><strong>{item.title}</strong><small>{item.description}</small></span><ArrowRight className="tenant-type-arrow" size={18} /></button>; })}</div>
-        </section>
-        <section className="quick-grid" id="users">
-          <article className="quick-card"><span className="quick-icon teal"><Users size={20} /></span><h3>Platform users</h3><p>Review authorized platform accounts.</p><span className="muted-small">Waiting for API connection</span></article>
-          <article className="quick-card" id="settings"><span className="quick-icon violet"><Globe2 size={20} /></span><h3>Tenant operations</h3><p>Monitor institutions and tenant configuration.</p><span className="muted-small">Waiting for API connection</span></article>
-        </section>
-        <footer className="dash-footer">EduSphere Platform Administration <span>Secure · Multi-tenant ready</span></footer>
+      <section className="dash-content">
+        {activeSection === "tenant" ? <Tenant /> : activeSection === "overview" ? <>
+          <div className="welcome-row"><div><p className="eyebrow">PLATFORM CONTROL CENTER</p><h1>Good to see you.</h1><p className="muted">Here’s an overview of your EduSphere platform.</p></div><span className="platform-status"><i /> Platform admin area</span></div>
+          <div className="metric-grid">{metrics.map(m => { const Icon = m.icon; return <article className="metric" key={m.label}><span className={"metric-icon " + m.tone}><Icon size={20} /></span><p>{m.label}</p><h2>{m.value}</h2><small>{m.detail}</small></article>; })}</div>
+          <section className="quick-grid">
+            <article className="quick-card"><span className="quick-icon teal"><Users size={20} /></span><h3>Platform users</h3><p>Review authorized platform accounts.</p><span className="muted-small">Waiting for API connection</span></article>
+            <article className="quick-card"><span className="quick-icon violet"><Globe2 size={20} /></span><h3>Tenant operations</h3><p>Monitor institutions and tenant configuration.</p><span className="muted-small">Waiting for API connection</span></article>
+          </section>
+          <footer className="dash-footer">EduSphere Platform Administration <span>Secure · Multi-tenant ready</span></footer>
+        </> : <section className="section-card workspace-placeholder">
+          <p className="eyebrow">PLATFORM ADMINISTRATION</p>
+          <h1>{activeSection === "users" ? "Platform users" : "Settings"}</h1>
+          <p className="muted">{activeSection === "users" ? "Manage platform administrator accounts." : "Configure platform preferences and workspace settings."}</p>
+          <span className="coming">API integration required</span>
+        </section>}
       </section>
     </main>
   </div>;
