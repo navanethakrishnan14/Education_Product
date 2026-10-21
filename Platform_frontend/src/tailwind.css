@@ -201,3 +201,41 @@
     .tenant-detail-card h1,.standalone-page h1,.tenant-page-heading h1 { @apply text-2xl; }
   }
 }
+/* School registration layout safeguards */
+@layer components {
+  .school-form-page { @apply mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8; }
+  .school-form-top { @apply mb-7 flex flex-col items-start justify-between gap-5 border-b border-slate-200 pb-5 md:flex-row md:items-end; }
+  .school-form-top > div:first-child { @apply min-w-0; }
+  .school-form-top h1 { @apply text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl; }
+  .school-form-top p { @apply mt-2 text-sm text-slate-500 sm:text-base; }
+  .school-breadcrumb { @apply mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500; }
+  .school-breadcrumb a { @apply font-medium text-violet-700 hover:text-violet-900; }
+  .school-form-actions { @apply flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end; }
+  .school-action { @apply min-h-10 rounded-lg px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-violet-300; }
+  .school-section { @apply mb-6 rounded-2xl border border-slate-200 bg-white shadow-sm; }
+  .school-section-head { @apply flex flex-wrap items-center gap-3 bg-slate-50 px-5 py-4 sm:px-6; }
+  .school-section-head > div { @apply flex-1; }
+  .school-section-head strong { @apply text-base font-bold text-slate-900; }
+  .school-section-head small { @apply mt-1 block text-sm text-slate-500; }
+  .school-section-aside { @apply rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700; }
+  .school-section-body { @apply p-4 sm:p-6; }
+  .school-basic-grid { @apply grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_220px]; }
+  .school-fields-grid, .school-fields-grid.three { @apply grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3; }
+  .school-field { @apply block min-w-0 space-y-2 text-sm font-medium text-slate-700; }
+  .school-field > span { @apply block leading-5; }
+  .school-input { @apply block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100; }
+  .school-textarea { @apply min-h-28 resize-y; }
+  .school-logo-upload { @apply min-w-0; }
+  .school-upload-box { @apply min-h-48 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-5 text-slate-600 transition hover:border-violet-400 hover:bg-violet-50; }
+  .school-upload-box strong { @apply text-center text-sm font-bold text-slate-800; }
+  .school-file-button { @apply mt-2 rounded-lg border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 shadow-sm hover:bg-slate-50; }
+  .school-notice { @apply items-start rounded-xl p-4; }
+  .school-bottom-actions { @apply mt-4 gap-3 border-t border-slate-100 pt-5; }
+  @media (max-width: 640px) {
+    .school-form-page { @apply px-3 py-4; }
+    .school-form-actions { @apply justify-start; }
+    .school-action { @apply flex-1 px-3 text-xs; }
+    .school-section-head { @apply px-4 py-3; }
+    .school-section-body { @apply p-4; }
+  }
+}
