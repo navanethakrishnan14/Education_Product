@@ -145,7 +145,13 @@ router.get("/", async (req, res, next) => {
     };
     const [items, total] = await Promise.all([
       prisma.schoolTenant.findMany({
-        where, orderBy: { createdAt: "desc" }, skip: (page - 1) * limit, take: limit
+        where,
+        select: {
+          id: true, name: true, code: true, tenantType: true, workspaceUrl: true,
+          status: true, planName: true, officialEmail: true, passwordSetAt: true,
+          createdAt: true, updatedAt: true
+        },
+        orderBy: { createdAt: "desc" }, skip: (page - 1) * limit, take: limit
       }),
       prisma.schoolTenant.count({ where })
     ]);
@@ -157,6 +163,57 @@ router.get("/", async (req, res, next) => {
   } catch (error) { return next(error); }
 });
 
+
+router.post("/:id/password-setup/resend", async (req, res, next) => {
+  try {
+    const tenant = await prisma.schoolTenant.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, name: true, officialEmail: true, passwordSetAt: true }
+    });
+    if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found." });
+    if (tenant.passwordSetAt) {
+      return res.status(409).json({ success: false, message: "This organization password has already been set. Use the password reset workflow instead." });
+    }
+    if (!tenant.officialEmail) {
+      return res.status(400).json({ success: false, message: "This tenant has no Official Email. Edit the tenant details before sending a setup email." });
+    }
+    if (!isEmailConfigured()) {
+      return res.status(503).json({ success: false, message: "Email delivery is not configured. Check SMTP settings in Platform_Backend/.env." });
+    }
+
+    const rawToken = randomBytes(32).toString("hex");
+    const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    await prisma.schoolTenant.update({
+      where: { id: tenant.id },
+      data: { passwordSetupTokenHash: tokenHash, passwordSetupExpiresAt: expiresAt }
+    });
+
+    const setupUrl = new URL("/set-password", env.FRONTEND_URL);
+    setupUrl.searchParams.set("token", rawToken);
+    try {
+      await sendPasswordSetupEmail({
+        to: tenant.officialEmail,
+        organizationName: tenant.name,
+        setupUrl: setupUrl.toString()
+      });
+    } catch (emailError) {
+      await prisma.schoolTenant.updateMany({
+        where: { id: tenant.id, passwordSetupTokenHash: tokenHash },
+        data: { passwordSetupTokenHash: null, passwordSetupExpiresAt: null }
+      });
+      console.error("Unable to resend password setup email:", emailError);
+      return res.status(502).json({ success: false, message: "The setup email could not be sent. Check SMTP settings and try again." });
+    }
+
+    return res.json({
+      success: true,
+      message: "A new password setup link has been sent to " + tenant.officialEmail + ". The link expires in 30 minutes."
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
 
 const updateTenantSchema = z.object({
   name: z.string().trim().min(2).max(160).optional(),
@@ -207,7 +264,12 @@ router.delete("/:id", async (req, res, next) => {
 router.get("/:id", async (req, res, next) => {
   try {
     const school = await prisma.schoolTenant.findUnique({
-      where: { id: req.params.id }
+      where: { id: req.params.id },
+      select: {
+        id: true, name: true, code: true, tenantType: true, workspaceUrl: true,
+        status: true, planName: true, officialEmail: true, passwordSetAt: true,
+        createdAt: true, updatedAt: true
+      }
     });
     if (!school) return res.status(404).json({ success: false, message: "School tenant not found." });
     return res.json({ success: true, data: school });
