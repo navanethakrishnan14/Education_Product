@@ -2,19 +2,31 @@ import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowRight, GraduationCap, Landmark, Globe2, UploadCloud, Save, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Link, Route, Routes, useNavigate, useParams } from "react-router-dom";
 
-async function requestTenantCode(type: string): Promise<string> {
+const pendingTenantCodeRequests = new Map<string, Promise<string>>();
+
+function requestTenantCode(type: string): Promise<string> {
+  const pending = pendingTenantCodeRequests.get(type);
+  if (pending) return pending;
+
   const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
   const token = sessionStorage.getItem("platform_token");
-  const response = await fetch(base + "/schools/code", {
+  const request = fetch(base + "/schools/code", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
     body: JSON.stringify({ tenantType: type })
+  }).then(async response => {
+    const result = await response.json();
+    if (!response.ok || typeof result.data?.code !== "string") {
+      throw new Error(result.message || "Unable to generate a tenant code. Check the platform backend and database setup.");
+    }
+    return result.data.code as string;
   });
-  const result = await response.json();
-  if (!response.ok || typeof result.data?.code !== "string") {
-    throw new Error(result.message || "Unable to generate a tenant code. Check the platform backend and database setup.");
-  }
-  return result.data.code;
+
+  pendingTenantCodeRequests.set(type, request);
+  void request.finally(() => {
+    if (pendingTenantCodeRequests.get(type) === request) pendingTenantCodeRequests.delete(type);
+  }).catch(() => undefined);
+  return request;
 }
 
 const tenantTypes = [
@@ -64,7 +76,7 @@ function SchoolCreateForm() {
       <Section number={1} title="Basic School Information" subtitle="Foundational credentials and institutional identity" aside="Mandatory Section">
         <div className="school-basic-grid"><div className="school-fields-grid">
           <Field label="School Name" required><TextInput required value={form.name} onChange={e=>update("name",e.target.value)} placeholder="Green Valley International Academy"/></Field>
-          <Field label="School Code" required><TextInput required value={form.code} readOnly aria-readonly="true" /><small>Generated automatically. This code cannot be edited.</small></Field>
+          <Field label="School Code" required><TextInput required value={form.code} readOnly aria-readonly="true" placeholder="Generating code..." /><small>Generated automatically. This code cannot be edited.</small></Field>
           <Field label="School Type" required><SelectInput value={form.schoolType} onChange={e=>update("schoolType",e.target.value)}><option>Private</option><option>Public</option><option>Government</option><option>Government Aided</option><option>International</option></SelectInput></Field>
           <Field label="Board / Curriculum" required><SelectInput value={form.board} onChange={e=>update("board",e.target.value)}>{["State Board","CBSE","ICSE","IB (International Baccalaureate)","Cambridge (IGCSE)","Other"].map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
           <Field label="School Category" required><SelectInput value={form.category} onChange={e=>update("category",e.target.value)}>{["K-12","Primary","Middle School","Secondary","Higher Secondary","Preschool"].map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
