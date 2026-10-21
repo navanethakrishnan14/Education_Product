@@ -26,7 +26,20 @@ async function ensurePlatformUsersTable() {
 
 async function main() {
   await ensurePlatformUsersTable();
-  // Add the school-registration payload column without resetting existing tenant data.
+  // Bootstrap school tenant storage without resetting existing tenant data.
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS public.school_tenants (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      workspace_url TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL DEFAULT 'active',
+      plan_name TEXT,
+      details JSONB,
+      created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  // Safe additive change for installations where the table already existed.
   await prisma.$executeRawUnsafe(`ALTER TABLE public.school_tenants ADD COLUMN IF NOT EXISTS details JSONB`);
 
   const email = env.PLATFORM_ADMIN_EMAIL.toLowerCase();
