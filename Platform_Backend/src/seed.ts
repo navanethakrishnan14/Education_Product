@@ -1,18 +1,16 @@
-import 'dotenv/config'
-import bcrypt from 'bcryptjs'
-import { prisma } from './lib/prisma'
-async function main(): Promise<void> {
-  const email = process.env.PLATFORM_ADMIN_EMAIL?.trim().toLowerCase()
-  const password = process.env.PLATFORM_ADMIN_PASSWORD
-  const name = process.env.PLATFORM_ADMIN_NAME?.trim() || 'EduSphere Platform Admin'
-  if (!email || !password) throw new Error('Set PLATFORM_ADMIN_EMAIL and PLATFORM_ADMIN_PASSWORD before running npm run db:seed.')
-  if (password.length < 12) throw new Error('PLATFORM_ADMIN_PASSWORD must be at least 12 characters.')
-  const passwordHash = await bcrypt.hash(password, 12)
-  await prisma.platformUser.upsert({
+import bcrypt from "bcryptjs";
+import { env } from "./config/env";
+import { prisma } from "./lib/prisma";
+
+async function main() {
+  const email = env.PLATFORM_ADMIN_EMAIL.toLowerCase();
+  const passwordHash = await bcrypt.hash(env.PLATFORM_ADMIN_PASSWORD, 12);
+  const admin = await prisma.platformUser.upsert({
     where: { email },
-    update: { name, passwordHash, role: 'platform_admin', isActive: true },
-    create: { name, email, passwordHash, role: 'platform_admin', isActive: true },
-  })
-  console.log(`Platform administrator seeded: ${email}`)
+    update: { name: env.PLATFORM_ADMIN_NAME, passwordHash, role: "platform_admin", isActive: true },
+    create: { name: env.PLATFORM_ADMIN_NAME, email, passwordHash, role: "platform_admin", isActive: true }
+  });
+  console.log(`Platform administrator ready: ${admin.email}`);
+  console.log("Use PLATFORM_ADMIN_PASSWORD from your local .env to sign in.");
 }
-main().catch(error => { console.error(error); process.exitCode = 1 }).finally(async () => { await prisma.$disconnect() })
+main().catch((error) => { console.error("Platform seed failed:", error); process.exitCode = 1; }).finally(async () => { await prisma.$disconnect(); });

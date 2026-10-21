@@ -1,32 +1,45 @@
-import { Router } from 'express'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-import { prisma } from '../lib/prisma'
-import env from '../config/env'
-import { requirePlatformAdmin, type AuthenticatedRequest } from '../middleware/auth'
-const router = Router()
-router.post('/login', async (req, res, next) => {
+import { Router } from "express";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { z } from "zod";
+import { prisma } from "../lib/prisma";
+import { env } from "../config/env";
+import { requireAuth, type AuthRequest } from "../middleware/auth";
+
+const router = Router();
+const loginSchema = z.object({
+  email: z.string().trim().email().max(254),
+  password: z.string().min(1).max(200)
+});
+
+router.post("/login", async (req, res, next) => {
   try {
-    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : ''
-    const password = typeof req.body?.password === 'string' ? req.body.password : ''
-    if (!email || !password) { res.status(400).json({ success: false, message: 'Email and password are required.' }); return }
-    const user = await prisma.platformUser.findUnique({ where: { email } })
-    if (!user || !user.isActive || !(await bcrypt.compare(password, user.passwordHash))) {
-      res.status(401).json({ success: false, message: 'Invalid email or password.' }); return
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ success: false, message: "Enter a valid email and password." });
+    const email = parsed.data.email.toLowerCase();
+    const user = await prisma.platformUser.findUnique({ where: { email } });
+    if (!user || !user.isActive || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
+      return res.status(401).json({ success: false, message: "Invalid email or password." });
     }
-    if (!['platform_admin', 'super_admin', 'admin'].includes(user.role)) {
-      res.status(403).json({ success: false, message: 'Platform administrator access is required.' }); return
-    }
-    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, env.jwtSecret, { expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'] })
-    await prisma.platformUser.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
-    res.json({ success: true, token, user: { id: user.id, name: user.name, email: user.email, role: user.role } })
-  } catch (error) { next(error) }
-})
-router.get('/me', requirePlatformAdmin, async (req: AuthenticatedRequest, res, next) => {
+    const token = jwt.sign({ role: user.role }, env.JWT_SECRET, { subject: user.id, expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"] });
+    await prisma.platformUser.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+    return res.json({
+      success: true,
+      token,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) { return next(error); }
+});
+
+router.get("/me", requireAuth, async (req: AuthRequest, res, next) => {
   try {
-    const user = await prisma.platformUser.findUnique({ where: { id: req.auth!.userId }, select: { id: true, name: true, email: true, role: true, isActive: true, createdAt: true } })
-    if (!user || !user.isActive) { res.status(401).json({ success: false, message: 'Platform account is unavailable.' }); return }
-    res.json({ success: true, user })
-  } catch (error) { next(error) }
-})
-export default router
+    const user = await prisma.platformUser.findUnique({
+      where: { id: req.auth!.userId },
+      select: { id: true, name: true, email: true, role: true, isActive: true, lastLoginAt: true, createdAt: true }
+    });
+    if (!user || !user.isActive) return res.status(401).json({ success: false, message: "Administrator account is unavailable." });
+    return res.json({ success: true, user });
+  } catch (error) { return next(error); }
+});
+
+export default router;

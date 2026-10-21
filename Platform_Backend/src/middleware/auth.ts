@@ -1,15 +1,23 @@
-import type { NextFunction, Request, Response } from 'express'
-import jwt, { type JwtPayload } from 'jsonwebtoken'
-import env from '../config/env'
-export interface AuthenticatedRequest extends Request { auth?: { userId: string; email: string; role: string } }
-export function requirePlatformAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
-  const header = req.header('authorization')
-  const token = header?.startsWith('Bearer ') ? header.slice(7) : ''
-  if (!token) { res.status(401).json({ success: false, message: 'Authentication token is required.' }); return }
+import type { NextFunction, Request, Response } from "express";
+import jwt from "jsonwebtoken";
+import { env } from "../config/env";
+
+export interface AuthRequest extends Request {
+  auth?: { userId: string; role: string };
+}
+
+export function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
+  const header = req.header("authorization");
+  const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
+  if (!token) return res.status(401).json({ success: false, message: "Authentication token is required." });
   try {
-    const payload = jwt.verify(token, env.jwtSecret) as JwtPayload & { userId?: string; email?: string; role?: string }
-    if (!payload.userId || !payload.email || !payload.role) { res.status(401).json({ success: false, message: 'Invalid authentication token.' }); return }
-    if (!['platform_admin', 'super_admin', 'admin'].includes(payload.role)) { res.status(403).json({ success: false, message: 'Platform administrator access is required.' }); return }
-    req.auth = { userId: payload.userId, email: payload.email, role: payload.role }; next()
-  } catch { res.status(401).json({ success: false, message: 'Invalid or expired authentication token.' }) }
+    const payload = jwt.verify(token, env.JWT_SECRET) as jwt.JwtPayload;
+    if (typeof payload.sub !== "string" || typeof payload.role !== "string") {
+      return res.status(401).json({ success: false, message: "Invalid authentication token." });
+    }
+    req.auth = { userId: payload.sub, role: payload.role };
+    return next();
+  } catch {
+    return res.status(401).json({ success: false, message: "Session expired or token is invalid. Please sign in again." });
+  }
 }

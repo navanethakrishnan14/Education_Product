@@ -1,22 +1,25 @@
-import { app } from './app'
-import env from './config/env'
-import { prisma } from './lib/prisma'
-async function main(): Promise<void> {
-  await prisma.$connect()
-  await prisma.$queryRaw`SELECT 1`
-  const server = app.listen(env.port, () => {
-    console.log(`EduSphere Platform API listening at http://localhost:${env.port}`)
-    console.log(`Health: http://localhost:${env.port}/health`)
-    console.log(`Platform API: http://localhost:${env.port}/api/v1`)
-  })
-  const shutdown = async () => {
-    server.close(async () => { await prisma.$disconnect(); process.exit(0) })
+import { app } from "./app";
+import { env } from "./config/env";
+import { prisma } from "./lib/prisma";
+
+async function start() {
+  try {
+    await prisma.$connect();
+    const server = app.listen(env.PORT, () => {
+      console.log(`EduSphere Platform API listening on http://localhost:${env.PORT}`);
+      console.log(`Health: http://localhost:${env.PORT}/health`);
+      console.log(`API base: http://localhost:${env.PORT}/api/v1`);
+    });
+    const shutdown = async (signal: string) => {
+      console.log(`${signal} received; shutting down gracefully.`);
+      server.close(async () => { await prisma.$disconnect(); process.exit(0); });
+    };
+    process.on("SIGINT", () => void shutdown("SIGINT"));
+    process.on("SIGTERM", () => void shutdown("SIGTERM"));
+  } catch (error) {
+    console.error("Unable to start Platform API. Check DATABASE_URL and PostgreSQL availability.", error);
+    await prisma.$disconnect();
+    process.exit(1);
   }
-  process.once('SIGINT', shutdown)
-  process.once('SIGTERM', shutdown)
 }
-main().catch(async error => {
-  console.error('Failed to start Platform API:', error)
-  await prisma.$disconnect()
-  process.exit(1)
-})
+void start();

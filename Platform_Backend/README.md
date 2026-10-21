@@ -1,28 +1,25 @@
-# EduSphere Platform Backend
-Clean PostgreSQL + Prisma backend for the platform administration UI, independent of the tenant-facing backend.
+# EduSphere Platform API
+
+Node.js + Express + TypeScript API backed by PostgreSQL and Prisma.
 
 ## Requirements
 - Node.js 20+
 - PostgreSQL 14+
-- A local database named `school_product` (or change `DATABASE_URL`)
+- npm
 
-## Setup (PowerShell)
-```powershell
-Copy-Item .env.example .env
-# Edit .env and set DATABASE_URL, JWT_SECRET (32+ characters), and admin credentials.
-npm install
-npx prisma generate
-npm run db:migrate
-npm run db:seed
-npm run dev
-```
+## Local setup
+1. Copy `.env.example` to `.env` and set `DATABASE_URL` and a strong `JWT_SECRET`.
+2. Create a PostgreSQL database named `edusphere_platform` (or update the URL).
+3. Run `npm install`.
+4. Run `npm run db:generate`.
+5. Run `npm run db:migrate`.
+6. Run `npm run db:seed` to create the initial platform administrator.
+7. Run `npm run dev`.
 
-## API
-- `GET /health` — health check
-- `POST /api/v1/auth/login` — `{ "email": "...", "password": "..." }`, returns `{ success, token, user }`
-- `GET /api/v1/auth/me` — authenticated platform user
-- `GET /api/v1/platform/overview` — school and user counts
-- `GET /api/v1/platform/schools` — paginated school directory
+API base URL: `http://localhost:4001/api/v1`
+Health check: `GET /health`
+Login: `POST /api/v1/auth/login`
+Current administrator: `GET /api/v1/auth/me` (Bearer token)
+Dashboard metrics: `GET /api/v1/dashboard/overview` (Bearer token)
 
-Protected endpoints require `Authorization: Bearer <token>`.
-Prisma schema is in `prisma/schema.prisma`. Run migrations against a development database first. Existing data from the removed backend is not automatically migrated.
+Seed credentials come from `PLATFORM_ADMIN_EMAIL` and `PLATFORM_ADMIN_PASSWORD`. Change the default password before production use. Never commit your real `.env` file.
