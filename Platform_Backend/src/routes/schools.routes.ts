@@ -130,6 +130,50 @@ router.get("/", async (req, res, next) => {
   } catch (error) { return next(error); }
 });
 
+
+const updateTenantSchema = z.object({
+  name: z.string().trim().min(2).max(160).optional(),
+  officialEmail: z.string().trim().email().max(254).optional(),
+  workspaceUrl: z.string().trim().min(3).max(180).regex(/^[a-z0-9-]+(\\.[a-z0-9-]+)+$/i).optional(),
+  status: z.enum(["active", "inactive", "suspended"]).optional(),
+  planName: z.string().trim().max(60).nullable().optional()
+}).refine(value => Object.keys(value).length > 0, "Provide at least one field to update.");
+
+router.patch("/:id", async (req, res, next) => {
+  try {
+    const parsed = updateTenantSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ success: false, message: "Check the tenant fields.", errors: parsed.error.flatten().fieldErrors });
+    const current = await prisma.schoolTenant.findUnique({ where: { id: req.params.id } });
+    if (!current) return res.status(404).json({ success: false, message: "Tenant not found." });
+    const input = parsed.data;
+    const officialEmail = input.officialEmail?.toLowerCase();
+    if (officialEmail && officialEmail !== current.officialEmail) {
+      const duplicate = await prisma.schoolTenant.findUnique({ where: { officialEmail } });
+      if (duplicate) return res.status(409).json({ success: false, message: "This Official Email is already registered." });
+    }
+    const workspaceUrl = input.workspaceUrl?.toLowerCase();
+    if (workspaceUrl && workspaceUrl !== current.workspaceUrl) {
+      const duplicate = await prisma.schoolTenant.findUnique({ where: { workspaceUrl } });
+      if (duplicate) return res.status(409).json({ success: false, message: "That workspace URL is already in use." });
+    }
+    const updated = await prisma.schoolTenant.update({
+      where: { id: current.id },
+      data: { ...(input.name !== undefined ? { name: input.name } : {}), ...(officialEmail !== undefined ? { officialEmail } : {}), ...(workspaceUrl !== undefined ? { workspaceUrl } : {}), ...(input.status !== undefined ? { status: input.status } : {}), ...(input.planName !== undefined ? { planName: input.planName } : {}) }
+    });
+    const { passwordSetupTokenHash: _tokenHash, passwordSetupExpiresAt: _expiresAt, adminPasswordHash: _passwordHash, ...safeTenant } = updated;
+    return res.json({ success: true, data: safeTenant });
+  } catch (error) { return next(error); }
+});
+
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const tenant = await prisma.schoolTenant.findUnique({ where: { id: req.params.id } });
+    if (!tenant) return res.status(404).json({ success: false, message: "Tenant not found." });
+    await prisma.schoolTenant.delete({ where: { id: tenant.id } });
+    return res.json({ success: true, message: "Tenant deleted successfully." });
+  } catch (error) { return next(error); }
+});
+
 router.get("/:id", async (req, res, next) => {
   try {
     const school = await prisma.schoolTenant.findUnique({
