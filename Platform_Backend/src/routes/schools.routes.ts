@@ -13,6 +13,38 @@ const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20)
 });
 
+
+const createSchoolSchema = z.object({
+  name: z.string().trim().min(2).max(160),
+  code: z.string().trim().min(2).max(40),
+  email: z.string().trim().email().max(254),
+  phone: z.string().trim().min(5).max(40),
+  workspaceUrl: z.string().trim().min(3).max(180).regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i, "Enter a valid school subdomain."),
+  plan: z.string().trim().min(1).max(60).optional(),
+  activationStatus: z.string().trim().max(30).optional()
+}).passthrough();
+
+router.post("/", async (req, res, next) => {
+  try {
+    const parsed = createSchoolSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ success: false, message: "Check the required school fields.", errors: parsed.error.flatten().fieldErrors });
+    const input = parsed.data;
+    const existing = await prisma.schoolTenant.findUnique({ where: { workspaceUrl: input.workspaceUrl } });
+    if (existing) return res.status(409).json({ success: false, message: "That school subdomain is already in use." });
+    const details = { ...input };
+    const school = await prisma.schoolTenant.create({
+      data: {
+        name: input.name,
+        workspaceUrl: input.workspaceUrl.toLowerCase(),
+        status: input.activationStatus?.toLowerCase() === "active" ? "active" : input.activationStatus?.toLowerCase() === "suspended" ? "suspended" : "inactive",
+        planName: input.plan || "Free Trial",
+        details
+      }
+    });
+    return res.status(201).json({ success: true, message: "School tenant created.", data: school });
+  } catch (error) { return next(error); }
+});
+
 router.get("/", async (req, res, next) => {
   try {
     const parsed = querySchema.safeParse(req.query);
