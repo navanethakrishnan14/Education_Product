@@ -27,7 +27,7 @@ const tenantPrefix: Record<z.infer<typeof tenantTypeSchema>, string> = {
 
 const createSchoolSchema = z.object({
   name: z.string().trim().min(2).max(160),
-  code: z.string().trim().regex(/^(SCH|COL|INS)-\d{4}-\d{4,}$/, "Code must use the format SCH-YYYY-0001, COL-YYYY-0001 or INS-YYYY-0001."),
+  code: z.string().trim().regex(/^(SCH|COL|INS)-\d{4}-\d{4,}$/, "Code must use the format SCH-YYYY-0001, COL-YYYY-0001 or INS-YYYY-0001.").optional(),
   tenantType: tenantTypeSchema.default("school"),
   email: z.string().trim().email().max(254),
   phone: z.string().trim().min(5).max(40),
@@ -45,18 +45,22 @@ router.post("/code", async (req, res, next) => {
 
     const tenantType = parsed.data.tenantType;
     const year = new Date().getFullYear();
-    const counter = await prisma.tenantCodeCounter.upsert({
-      where: { tenantType_year: { tenantType, year } },
-      create: { tenantType, year, lastNumber: 1 },
-      update: { lastNumber: { increment: 1 } }
+    const prefix = tenantPrefix[tenantType] + "-" + year + "-";
+    // Preview only: viewing, reopening, or cancelling a form never consumes a code.
+    const existingCodes = await prisma.schoolTenant.findMany({
+      where: { tenantType, code: { startsWith: prefix } },
+      select: { code: true }
     });
-    const code = tenantPrefix[tenantType] + "-" + year + "-" + String(counter.lastNumber).padStart(4, "0");
+    const lastUsedNumber = existingCodes.reduce((largest, tenant) => {
+      const suffix = tenant.code?.startsWith(prefix) ? Number(tenant.code.slice(prefix.length)) : 0;
+      return Number.isInteger(suffix) ? Math.max(largest, suffix) : largest;
+    }, 0);
+    const code = prefix + String(lastUsedNumber + 1).padStart(4, "0");
     return res.json({ success: true, data: { code } });
   } catch (error) {
     return next(error);
   }
 });
-
 router.post("/", async (req, res, next) => {
   try {
     const parsed = createSchoolSchema.safeParse(req.body);
@@ -64,32 +68,55 @@ router.post("/", async (req, res, next) => {
     const input = parsed.data;
     if (!isEmailConfigured()) return res.status(503).json({ success: false, message: "Email delivery is not configured. Add SMTP_HOST, SMTP_USER, SMTP_PASS and SMTP_FROM to Platform_Backend/.env before creating tenants." });
     const officialEmail = input.email.toLowerCase();
-    if (!input.code.startsWith(tenantPrefix[input.tenantType] + "-")) {
-      return res.status(400).json({ success: false, message: "The code prefix does not match the selected tenant type." });
-    }
-    const duplicateCode = await prisma.schoolTenant.findUnique({ where: { code: input.code } });
-    if (duplicateCode) return res.status(409).json({ success: false, message: "This tenant code is already registered. Refresh the form to generate another code." });
     const duplicateEmail = await prisma.schoolTenant.findUnique({ where: { officialEmail } });
     if (duplicateEmail) return res.status(409).json({ success: false, message: "This Official Email is already registered to an organization." });
     const existing = await prisma.schoolTenant.findUnique({ where: { workspaceUrl: input.workspaceUrl } });
     if (existing) return res.status(409).json({ success: false, message: "That school subdomain is already in use." });
-    const details = { ...input, email: officialEmail };
     const rawToken = randomBytes(32).toString("hex");
     const tokenHash = createHash("sha256").update(rawToken).digest("hex");
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
-    const school = await prisma.schoolTenant.create({
-      data: {
-        name: input.name,
-        code: input.code,
-        tenantType: input.tenantType,
-        workspaceUrl: input.workspaceUrl.toLowerCase(),
-        status: input.activationStatus?.toLowerCase() === "active" ? "active" : input.activationStatus?.toLowerCase() === "suspended" ? "suspended" : "inactive",
-        planName: input.plan || "Free Trial",
-        officialEmail,
-        passwordSetupTokenHash: tokenHash,
-        passwordSetupExpiresAt: expiresAt,
-        details: details as Prisma.InputJsonValue
-      }
+    const year = new Date().getFullYear();
+    const prefix = tenantPrefix[input.tenantType] + "-" + year + "-";
+
+    // Allocate only when creating. A transaction lock prevents duplicate numbers
+    // when two admins create the same tenant type at nearly the same time.
+    const school = await prisma.$transaction(async (tx) => {
+      const lockKey = "tenant-code:" + input.tenantType + ":" + year;
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
+      const existingCodes = await tx.schoolTenant.findMany({
+        where: { tenantType: input.tenantType, code: { startsWith: prefix } },
+        select: { code: true }
+      });
+      const lastUsedNumber = existingCodes.reduce((largest, tenant) => {
+        const suffix = tenant.code?.startsWith(prefix) ? Number(tenant.code.slice(prefix.length)) : 0;
+        return Number.isInteger(suffix) ? Math.max(largest, suffix) : largest;
+      }, 0);
+      const nextNumber = lastUsedNumber + 1;
+      const code = prefix + String(nextNumber).padStart(4, "0");
+
+      // Reconcile the old counter, which may have been advanced by form visits.
+      await tx.tenantCodeCounter.upsert({
+        where: { tenantType_year: { tenantType: input.tenantType, year } },
+        create: { tenantType: input.tenantType, year, lastNumber: nextNumber },
+        update: { lastNumber: nextNumber }
+      });
+
+      const details = { ...input, code, email: officialEmail };
+      return tx.schoolTenant.create({
+        data: {
+          name: input.name,
+          code,
+          tenantType: input.tenantType,
+          workspaceUrl: input.workspaceUrl.toLowerCase(),
+          status: input.activationStatus?.toLowerCase() === "active" ? "active" : input.activationStatus?.toLowerCase() === "suspended" ? "suspended" : "inactive",
+          planName: input.plan || "Free Trial",
+          officialEmail,
+          passwordSetupTokenHash: tokenHash,
+          passwordSetupExpiresAt: expiresAt,
+          details: details as Prisma.InputJsonValue
+        }
+      });
     });
     const setupUrl = new URL("/set-password", env.FRONTEND_URL);
     setupUrl.searchParams.set("token", rawToken);
