@@ -13,7 +13,9 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "ts-node src/seed.ts",
     "type-check": "prisma generate && tsc --noEmit",
-    "db:setup": "ts-node src/seed.ts"
+    "db:setup": "ts-node src/seed.ts",
+    "db:prepare": "prisma db execute --file prisma/prepare-schema.sql --schema prisma/schema.prisma",
+    "db:push:safe": "npm run db:prepare && prisma db push --schema prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
