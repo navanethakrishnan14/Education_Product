@@ -108,3 +108,57 @@ button.nav-item.active,button.nav-item:hover{background:#29214b}
  .school-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .school-plan{min-height:175px}
 }
+
+
+/* Project-wide typography accessibility baseline */
+html{font-size:16px;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-size:15px;line-height:1.55}
+input,select,textarea,button{font-size:inherit}
+button,a,input,select,textarea{touch-action:manipulation}
+.brand b{font-size:19px}
+.brand small{font-size:11px;letter-spacing:1px}
+.eyebrow{font-size:12px;letter-spacing:1.2px}
+.muted{font-size:16px;line-height:1.65}
+.login-card label{font-size:15px}
+.field{min-height:54px}
+.field input{font-size:16px}
+.field input::placeholder{font-size:14px}
+.primary{min-height:54px;font-size:16px}
+.secure{font-size:14px}
+.nav-caption{font-size:11px}
+.nav-item{font-size:14px;min-height:43px}
+.sidebar-bottom{font-size:12px}
+.sidebar-bottom button{font-size:13px}
+.dash-header b{font-size:14px}
+.dash-header small{font-size:12px}
+.header-actions button{min-width:30px;min-height:30px}
+.welcome-row h1{font-size:32px}
+.metric p{font-size:13px}
+.metric h2{font-size:28px}
+.metric small{font-size:12px}
+.platform-status{font-size:12px}
+.section-head h2{font-size:17px}
+.section-head p,.quick-card p{font-size:13px}
+.coming{font-size:11px}
+.empty-state h3{font-size:15px}
+.empty-state p{font-size:12px}
+.quick-card h3{font-size:16px}
+.text-link{font-size:13px}
+.dash-footer{font-size:11px}
+.tenant-page-heading h1,.workspace-placeholder h1{font-size:32px}
+.tenant-type-copy strong{font-size:17px}
+.tenant-type-copy small{font-size:13px;line-height:1.6}
+.back-link{font-size:15px}
+.tenant-detail-card h1,.standalone-page h1{font-size:32px}
+.settings-row strong{font-size:16px}
+.settings-row p{font-size:14px}
+.standalone-page .muted,.tenant-detail-card .muted{font-size:16px}
+@media(max-width:520px){
+ body{font-size:15px}
+ .brand b{font-size:18px}
+ .nav-item{font-size:14px}
+ .welcome-row h1{font-size:28px}
+ .tenant-page-heading h1,.workspace-placeholder h1{font-size:28px}
+ .tenant-detail-card h1,.standalone-page h1{font-size:27px}
+ .muted{font-size:15px}
+}
