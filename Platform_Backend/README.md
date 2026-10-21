@@ -12,11 +12,10 @@ Node.js + Express + TypeScript API backed by PostgreSQL and Prisma. Routes are a
 2. Create a PostgreSQL database named `edusphere_platform` (or update the URL).
 3. Run `npm install`.
 4. Run `npm run db:generate`.
-5. Run `npm run db:migrate:dev` on a fresh local database, or `npm run db:migrate` to apply committed migrations.
-6. Run `npm run db:seed` to create the initial platform administrator.
-7. Run `npm run dev`.
+5. Run `npm run db:setup` to synchronize the Prisma schema with the configured PostgreSQL database and seed the initial platform administrator. This is intended for first-time development setup; review schema changes before using `prisma db push` on a database with existing data.
+6. Run `npm run dev`.
 
-API base URL: `http://localhost:4001/api/v1`
+API base URL: `http://localhost:4000/api/v1`
 
 ## Endpoints
 - `GET /health` — liveness check
@@ -30,6 +29,6 @@ API base URL: `http://localhost:4001/api/v1`
 
 All API endpoints except `/health` and `/api/v1/auth/login` require `Authorization: Bearer <token>`.
 
-Seed credentials come from `PLATFORM_ADMIN_EMAIL` and `PLATFORM_ADMIN_PASSWORD`. Change the example password before production use. Never commit your real `.env` file.
+Seed credentials come from `PLATFORM_ADMIN_EMAIL` and `PLATFORM_ADMIN_PASSWORD` in `Platform_Backend/.env` (defaults: `admin@edusphere.com` / `ChangeMe123!` if not overridden). If your `.env` uses `SAAS_ADMIN_EMAIL` or `SAAS_ADMIN_PASSWORD`, those are not read by this backend; set the `PLATFORM_ADMIN_*` names instead. Change the example password before production use. Never commit your real `.env` file.
 
 Note: the current Platform_frontend dashboard is primarily a visual shell and does not yet call the dashboard, schools, or users endpoints. These API endpoints are ready for that integration.
