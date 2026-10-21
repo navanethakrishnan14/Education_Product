@@ -7,6 +7,7 @@ import {
 import { Link, NavLink, Route, Routes, useNavigate, Outlet } from "react-router-dom";
 import type { FormEvent } from "react";
 import Tenant from "./Tenant";
+import SetPassword from "./SetPassword";
 
 function Brand() {
   return <Link to="/" className="brand"><span className="brand-icon"><GraduationCap size={21} /></span><span><b>EduSphere</b><small>PLATFORM ADMINISTRATION</small></span></Link>;
@@ -143,5 +144,5 @@ function Dashboard() {
 }
 
 export default function App() {
-  return <Routes><Route path="/" element={<Login />} /><Route path="/dashboard/*" element={sessionStorage.getItem("platform_token") ? <Dashboard /> : <Login />} /><Route path="*" element={<Login />} /></Routes>;
+  return <Routes><Route path="/" element={<Login />} /><Route path="/set-password" element={<SetPassword />} /><Route path="/dashboard/*" element={sessionStorage.getItem("platform_token") ? <Dashboard /> : <Login />} /><Route path="*" element={<Login />} /></Routes>;
 }
