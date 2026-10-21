@@ -1,8 +1,11 @@
 import { Router } from "express";
+import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
+import { env } from "../config/env";
+import { isEmailConfigured, sendPasswordSetupEmail } from "../lib/mailer";
 
 const router = Router();
 router.use(requireAuth);
@@ -30,19 +33,38 @@ router.post("/", async (req, res, next) => {
     const parsed = createSchoolSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, message: "Check the required school fields.", errors: parsed.error.flatten().fieldErrors });
     const input = parsed.data;
+    if (!isEmailConfigured()) return res.status(503).json({ success: false, message: "Email delivery is not configured. Add SMTP_HOST, SMTP_USER, SMTP_PASS and SMTP_FROM to Platform_Backend/.env before creating tenants." });
+    const officialEmail = input.email.toLowerCase();
+    const duplicateEmail = await prisma.schoolTenant.findUnique({ where: { officialEmail } });
+    if (duplicateEmail) return res.status(409).json({ success: false, message: "This Official Email is already registered to an organization." });
     const existing = await prisma.schoolTenant.findUnique({ where: { workspaceUrl: input.workspaceUrl } });
     if (existing) return res.status(409).json({ success: false, message: "That school subdomain is already in use." });
-    const details = { ...input };
+    const details = { ...input, email: officialEmail };
+    const rawToken = randomBytes(32).toString("hex");
+    const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
     const school = await prisma.schoolTenant.create({
       data: {
         name: input.name,
         workspaceUrl: input.workspaceUrl.toLowerCase(),
         status: input.activationStatus?.toLowerCase() === "active" ? "active" : input.activationStatus?.toLowerCase() === "suspended" ? "suspended" : "inactive",
         planName: input.plan || "Free Trial",
+        officialEmail,
+        passwordSetupTokenHash: tokenHash,
+        passwordSetupExpiresAt: expiresAt,
         details: details as Prisma.InputJsonValue
       }
     });
-    return res.status(201).json({ success: true, message: "School tenant created.", data: school });
+    const setupUrl = new URL("/set-password", env.FRONTEND_URL);
+    setupUrl.searchParams.set("token", rawToken);
+    try {
+      await sendPasswordSetupEmail({ to: officialEmail, organizationName: school.name, setupUrl: setupUrl.toString() });
+    } catch (_emailError) {
+      await prisma.schoolTenant.delete({ where: { id: school.id } });
+      return res.status(502).json({ success: false, message: "The organization was not saved because the password setup email could not be sent. Check SMTP settings and try again." });
+    }
+    const { passwordSetupTokenHash: _tokenHash, passwordSetupExpiresAt: _expiresAt, adminPasswordHash: _passwordHash, ...safeSchool } = school;
+    return res.status(201).json({ success: true, message: "Organization created. A password setup link was sent to the Official Email.", data: { ...safeSchool, passwordSetupEmailSent: true } });
   } catch (error) { return next(error); }
 });
 
