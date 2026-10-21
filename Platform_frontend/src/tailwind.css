@@ -240,3 +240,14 @@
     .school-section-body { @apply p-4; }
   }
 }
+
+
+/* Sidebar alignment: keep every navigation item anchored to the left */
+.sidebar { align-items: stretch; text-align: left; }
+.sidebar > .brand { width: 100%; justify-content: flex-start; align-self: stretch; }
+.sidebar .nav-caption { width: 100%; text-align: left; }
+.sidebar .nav-item { width: 100%; justify-content: flex-start; text-align: left; align-self: stretch; }
+.sidebar .nav-item > svg:first-child { flex: 0 0 auto; margin-left: 0; }
+.sidebar .nav-item > svg:last-child { margin-left: auto; }
+.sidebar .sidebar-bottom { width: 100%; text-align: left; }
+.sidebar .sidebar-bottom button { justify-content: flex-start; width: 100%; text-align: left; }
