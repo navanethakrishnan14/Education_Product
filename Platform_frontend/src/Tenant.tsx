@@ -1,15 +1,22 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowRight, GraduationCap, Landmark, Globe2, UploadCloud, Save, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Link, Route, Routes, useNavigate, useParams } from "react-router-dom";
 
-function generateTenantCode(type: string) {
-  const prefix = type === "school" ? "SCH" : type === "college" ? "COL" : "INS";
-  const year = new Date().getFullYear();
-  const suffix = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-    ? crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()
-    : Math.random().toString(36).slice(2, 10).toUpperCase().padEnd(8, "0");
-  return prefix + "-" + year + "-" + suffix;
+async function requestTenantCode(type: string): Promise<string> {
+  const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
+  const token = sessionStorage.getItem("platform_token");
+  const response = await fetch(base + "/schools/code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+    body: JSON.stringify({ tenantType: type })
+  });
+  const result = await response.json();
+  if (!response.ok || typeof result.data?.code !== "string") {
+    throw new Error(result.message || "Unable to generate a tenant code. Check the platform backend and database setup.");
+  }
+  return result.data.code;
 }
+
 const tenantTypes = [
   { slug: "school", title: "School", description: "Manage school tenants, classes, faculty and students.", icon: GraduationCap, tone: "violet" },
   { slug: "college", title: "College", description: "Manage colleges, departments, programs and campus users.", icon: Landmark, tone: "teal" },
@@ -38,19 +45,20 @@ function Section({number,title,subtitle,aside,children}:{number:number;title:str
 function TextInput(props:React.InputHTMLAttributes<HTMLInputElement>){return <input {...props} className={"school-input "+(props.className||"")}/>;}
 function SelectInput({children,...props}:React.SelectHTMLAttributes<HTMLSelectElement> & {children:React.ReactNode}){return <select {...props} className="school-input">{children}</select>;}
 function SchoolCreateForm() {
-  const [form,setForm]=useState<SchoolForm>(()=>({...initial,code:generateTenantCode("school")})); const [busy,setBusy]=useState(false); const [message,setMessage]=useState(""); const [logoName,setLogoName]=useState(""); const nav=useNavigate();
+  const [form,setForm]=useState<SchoolForm>(()=>({...initial,code:""})); const [busy,setBusy]=useState(false); const [message,setMessage]=useState(""); const [logoName,setLogoName]=useState(""); const nav=useNavigate();
+  useEffect(()=>{let active=true;requestTenantCode("school").then(code=>{if(active)setForm(old=>({...old,code}));}).catch(error=>{if(active)setMessage(error instanceof Error?error.message:"Unable to generate school code.");});return()=>{active=false;};},[]);
   const update=(key:keyof SchoolForm,value:unknown)=>setForm(old=>({...old,[key]:value}));
   const toggle=(key:"workingDays"|"modules",value:string)=>update(key,form[key].includes(value)?form[key].filter(v=>v!==value):[...form[key],value]);
   async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setMessage("");try{
     const base=(import.meta.env.VITE_PLATFORM_API_BASE_URL||"http://localhost:4000/api/v1").replace(/\/$/,"");
     const token=sessionStorage.getItem("platform_token");
-    const response=await fetch(base+"/schools",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:JSON.stringify({...form,workspaceUrl:form.subdomain?form.subdomain+".edusphere.cloud":form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-")+".edusphere.cloud"})});
+    const response=await fetch(base+"/schools",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:JSON.stringify({...form,tenantType:"school",workspaceUrl:form.subdomain?form.subdomain+".edusphere.cloud":form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-")+".edusphere.cloud"})});
     const result=await response.json();if(!response.ok)throw new Error(result.message||"Unable to create school.");
     setMessage("School tenant created successfully.");setTimeout(()=>nav("/dashboard/tenant"),700);
   }catch(err){setMessage(err instanceof Error?err.message:"Unable to create school.");}finally{setBusy(false);}}
   const draft=()=>{sessionStorage.setItem("school_form_draft",JSON.stringify(form));setMessage("Draft saved in this browser.");};
   return <div className="school-form-page">
-    <div className="school-form-top"><div><div className="school-breadcrumb"><Link to="/dashboard">Dashboard</Link> › <Link to="/dashboard/tenant">Tenant</Link> › Add School</div><h1>Add New School</h1><p>Register a school and configure its platform access.</p></div><div className="school-form-actions"><Link className="school-action secondary" to="/dashboard/tenant"><ArrowLeft size={14}/> Back to Schools</Link><button className="school-action secondary" type="button" onClick={draft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" form="school-create-form" disabled={busy}><CheckCircle2 size={14}/>{busy?"Creating…":"Create School"}</button></div></div>
+    <div className="school-form-top"><div><div className="school-breadcrumb"><Link to="/dashboard">Dashboard</Link> › <Link to="/dashboard/tenant">Tenant</Link> › Add School</div><h1>Add New School</h1><p>Register a school and configure its platform access.</p></div><div className="school-form-actions"><Link className="school-action secondary" to="/dashboard/tenant"><ArrowLeft size={14}/> Back to Schools</Link><button className="school-action secondary" type="button" onClick={draft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" form="school-create-form" disabled={busy||!form.code}><CheckCircle2 size={14}/>{busy?"Creating…":"Create School"}</button></div></div>
     {message&&<div className={"school-message "+(message.includes("successfully")||message.includes("Draft")?"success":"error")} role="status">{message}</div>}
     <form id="school-create-form" onSubmit={submit}>
       <Section number={1} title="Basic School Information" subtitle="Foundational credentials and institutional identity" aside="Mandatory Section">
@@ -94,14 +102,14 @@ function SchoolCreateForm() {
         <Field label="Internal Platform Admin Notes"><textarea className="school-input school-textarea" value={form.notes} onChange={e=>update("notes",e.target.value)} placeholder="Internal notes visible only to platform administrators."/></Field>
       </Section>
       </>}
-      <div className="school-bottom-actions"><Link className="school-action secondary" to="/dashboard/tenant">Cancel</Link><button className="school-action secondary" type="button" onClick={draft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" disabled={busy}><CheckCircle2 size={14}/>{busy?"Creating…":"Create School Tenant"} <ArrowRight size={14}/></button></div>
+      <div className="school-bottom-actions"><Link className="school-action secondary" to="/dashboard/tenant">Cancel</Link><button className="school-action secondary" type="button" onClick={draft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" disabled={busy||!form.code}><CheckCircle2 size={14}/>{busy?"Creating…":"Create School Tenant"} <ArrowRight size={14}/></button></div>
     </form>
   </div>;
 }
 
 function GenericTenantCreateForm({ type, title }: { type: string; title: string }) {
   const [form, setForm] = useState({
-    name: "", code: generateTenantCode(type), category: type === "college" ? "Arts & Science College" : "Educational Institution",
+    name: "", code: "", category: type === "college" ? "Arts & Science College" : "Educational Institution",
     affiliation: "", recognitionNumber: "", website: "", email: "", phone: "", alternatePhone: "",
     address1: "", address2: "", city: "", district: "", state: "", country: "", postalCode: "",
     adminName: "", adminTitle: type === "college" ? "Principal" : "Director", adminEmail: "", adminPhone: "",
@@ -110,6 +118,15 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const nav = useNavigate();
+  useEffect(() => {
+    let active = true;
+    requestTenantCode(type).then(code => {
+      if (active) setForm(old => ({ ...old, code }));
+    }).catch(error => {
+      if (active) setMessage(error instanceof Error ? error.message : "Unable to generate tenant code.");
+    });
+    return () => { active = false; };
+  }, [type]);
   const update = (key: keyof typeof form, value: string) => setForm(old => ({ ...old, [key]: value }));
   const workspaceUrl = () => (form.subdomain || form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")) + ".edusphere.cloud";
   async function submit(e: FormEvent<HTMLFormElement>) {
@@ -133,7 +150,7 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
   const saveDraft = () => { sessionStorage.setItem(type + "_form_draft", JSON.stringify(form)); setMessage("Draft saved in this browser."); };
   const label = type === "college" ? "College" : "Institution";
   return <div className="school-form-page">
-    <div className="school-form-top"><div><div className="school-breadcrumb"><Link to="/dashboard">Dashboard</Link> › <Link to="/dashboard/tenant">Tenant</Link> › Add {label}</div><h1>Add New {label}</h1><p>Register a {label.toLowerCase()} and configure its platform access.</p></div><div className="school-form-actions"><Link className="school-action secondary" to="/dashboard/tenant"><ArrowLeft size={14}/> Back to Tenants</Link><button className="school-action secondary" type="button" onClick={saveDraft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" form="generic-tenant-form" disabled={busy}><CheckCircle2 size={14}/>{busy ? "Creating…" : "Create " + label}</button></div></div>
+    <div className="school-form-top"><div><div className="school-breadcrumb"><Link to="/dashboard">Dashboard</Link> › <Link to="/dashboard/tenant">Tenant</Link> › Add {label}</div><h1>Add New {label}</h1><p>Register a {label.toLowerCase()} and configure its platform access.</p></div><div className="school-form-actions"><Link className="school-action secondary" to="/dashboard/tenant"><ArrowLeft size={14}/> Back to Tenants</Link><button className="school-action secondary" type="button" onClick={saveDraft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" form="generic-tenant-form" disabled={busy || !form.code}><CheckCircle2 size={14}/>{busy ? "Creating…" : "Create " + label}</button></div></div>
     {message && <div className={"school-message " + (message.includes("successfully") || message.includes("Draft") ? "success" : "error")} role="status">{message}</div>}
     <form id="generic-tenant-form" onSubmit={submit}>
       <Section number={1} title={label + " Information"} subtitle="Organization identity, classification and contact details" aside="Organization Details">
@@ -175,7 +192,7 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
         </div>
         <Field label="Internal Platform Admin Notes"><textarea className="school-input school-textarea" value={form.notes} onChange={e=>update("notes",e.target.value)} placeholder="Notes visible only to platform administrators."/></Field>
       </Section>
-      <div className="school-bottom-actions"><Link className="school-action secondary" to="/dashboard/tenant">Cancel</Link><button className="school-action secondary" type="button" onClick={saveDraft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" disabled={busy}><CheckCircle2 size={14}/>{busy ? "Creating…" : "Create " + label + " Tenant"} <ArrowRight size={14}/></button></div>
+      <div className="school-bottom-actions"><Link className="school-action secondary" to="/dashboard/tenant">Cancel</Link><button className="school-action secondary" type="button" onClick={saveDraft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" disabled={busy || !form.code}><CheckCircle2 size={14}/>{busy ? "Creating…" : "Create " + label + " Tenant"} <ArrowRight size={14}/></button></div>
     </form>
   </div>;
 }
