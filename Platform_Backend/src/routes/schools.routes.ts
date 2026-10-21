@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -139,7 +139,7 @@ const updateTenantSchema = z.object({
   planName: z.string().trim().max(60).nullable().optional()
 }).refine(value => Object.keys(value).length > 0, "Provide at least one field to update.");
 
-router.patch("/:id", async (req, res, next) => {
+const updateTenantHandler: RequestHandler = async (req, res, next) => {
   try {
     const parsed = updateTenantSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, message: "Check the tenant fields.", errors: parsed.error.flatten().fieldErrors });
@@ -163,8 +163,11 @@ router.patch("/:id", async (req, res, next) => {
     const { passwordSetupTokenHash: _tokenHash, passwordSetupExpiresAt: _expiresAt, adminPasswordHash: _passwordHash, ...safeTenant } = updated;
     return res.json({ success: true, data: safeTenant });
   } catch (error) { return next(error); }
-});
+};
 
+// Edit tenant: PATCH is used by the frontend; PUT is also supported for API clients.
+router.patch("/:id", updateTenantHandler);
+router.put("/:id", updateTenantHandler);
 router.delete("/:id", async (req, res, next) => {
   try {
     const tenant = await prisma.schoolTenant.findUnique({ where: { id: req.params.id } });
