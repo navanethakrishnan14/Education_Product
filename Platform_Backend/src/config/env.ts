@@ -12,7 +12,13 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default(process.env.CLIENT_ORIGIN || "http://localhost:5173,http://localhost:5174,http://localhost:5000"),
   PLATFORM_ADMIN_NAME: z.string().default("Platform Administrator"),
   PLATFORM_ADMIN_EMAIL: z.string().email().default("admin@edusphere.com"),
-  PLATFORM_ADMIN_PASSWORD: z.string().min(8).default("ChangeMe123!")
+  PLATFORM_ADMIN_PASSWORD: z.string().min(8).default("ChangeMe123!"),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
+  FRONTEND_URL: z.string().url().default("http://localhost:5173")
 });
 
 const parsed = envSchema.safeParse(process.env);
