@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
 
@@ -38,7 +39,7 @@ router.post("/", async (req, res, next) => {
         workspaceUrl: input.workspaceUrl.toLowerCase(),
         status: input.activationStatus?.toLowerCase() === "active" ? "active" : input.activationStatus?.toLowerCase() === "suspended" ? "suspended" : "inactive",
         planName: input.plan || "Free Trial",
-        details
+        details: details as Prisma.InputJsonValue
       }
     });
     return res.status(201).json({ success: true, message: "School tenant created.", data: school });
