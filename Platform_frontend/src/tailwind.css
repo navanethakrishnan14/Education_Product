@@ -7,7 +7,6 @@
 @layer base {
   html { @apply min-w-[320px] text-base; }
   body { @apply m-0 bg-slate-50 font-sans text-[15px] leading-relaxed text-slate-800; font-family: "DM Sans", sans-serif; }
-  button, input, select, textarea { @apply font-inherit; }
   button { @apply cursor-pointer; }
   a { @apply no-underline; }
   h1,h2,h3 { font-family: "Manrope", sans-serif; }
