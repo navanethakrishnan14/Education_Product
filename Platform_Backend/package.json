@@ -13,7 +13,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "ts-node src/seed.ts",
     "type-check": "prisma generate && tsc --noEmit",
-    "db:setup": "prisma db push && ts-node src/seed.ts"
+    "db:setup": "ts-node src/seed.ts"
   },
   "prisma": {
     "seed": "ts-node src/seed.ts"
