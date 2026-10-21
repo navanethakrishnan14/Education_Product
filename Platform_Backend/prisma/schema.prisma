@@ -44,14 +44,15 @@ model SchoolTenant {
 }
 
 model TenantUser {
-  id             String       @id @default(cuid())
-  schoolTenantId String       @map("school_tenant_id")
-  name           String
+  id             String        @id @default(cuid())
+  // Nullable during compatibility migration so existing tenant_users rows are preserved.
+  schoolTenantId String?       @map("school_tenant_id")
+  name           String?
   email          String
-  role           String       @default("student")
-  isActive       Boolean      @default(true) @map("is_active")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  schoolTenant   SchoolTenant @relation(fields: [schoolTenantId], references: [id], onDelete: Cascade)
+  role           String        @default("student")
+  isActive       Boolean       @default(true) @map("is_active")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  schoolTenant   SchoolTenant? @relation(fields: [schoolTenantId], references: [id], onDelete: Cascade)
 
   @@unique([schoolTenantId, email])
   @@index([schoolTenantId])
