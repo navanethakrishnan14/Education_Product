@@ -6,8 +6,8 @@ function generateTenantCode(type: string) {
   const prefix = type === "school" ? "SCH" : type === "college" ? "COL" : "INS";
   const year = new Date().getFullYear();
   const suffix = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-    ? crypto.randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase()
-    : Math.random().toString(36).slice(2, 8).toUpperCase().padEnd(6, "0");
+    ? crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()
+    : Math.random().toString(36).slice(2, 10).toUpperCase().padEnd(8, "0");
   return prefix + "-" + year + "-" + suffix;
 }
 const tenantTypes = [
