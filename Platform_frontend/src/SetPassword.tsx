@@ -27,6 +27,7 @@ export default function SetPassword() {
   const [retryValidation, setRetryValidation] = useState(0);
   const token = params.get("token") || "";
   const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
+  const tenantPortalLogin = String(import.meta.env.VITE_TENANT_PORTAL_URL || "http://localhost:5174/login/management").trim();
 
   useEffect(() => {
     let cancelled = false;
@@ -192,9 +193,17 @@ export default function SetPassword() {
 
       {message && (completed || canShowForm) && <p className={completed ? "login-note" : "notice"} role="status" aria-live="polite">{message}</p>}
 
-      {completed && <div className="login-note" style={{textAlign:"left"}}>
-        <CheckCircle2 size={15}/> Setup is complete for the official email shown above. Use the organization sign-in instructions provided by your platform administrator.
-      </div>}
+      {completed && <>
+        <div className="login-note" style={{textAlign:"left"}}>
+          <CheckCircle2 size={15}/> Password setup is complete for the official email shown above. You can now sign in through the Management portal.
+        </div>
+        <a href={tenantPortalLogin} className="primary" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,textDecoration:"none",marginTop:16}}>
+          Continue to Management sign-in <ArrowRight size={16}/>
+        </a>
+        <p className="muted" style={{fontSize:13,textAlign:"left",marginTop:12}}>
+          If the organization is still Pending or Inactive, the platform administrator must activate it before Management sign-in will be allowed.
+        </p>
+      </>}
 
       <div className="login-note"><ShieldCheck size={15}/> Setup links expire after 30 minutes and can be used only once.</div>
     </section>
