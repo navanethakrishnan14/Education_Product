@@ -223,7 +223,7 @@ function TenantDirectory() {
   const [saving,setSaving] = useState(false);
   const [search,setSearch] = useState("");
   const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
-  const auth = () => { const token=sessionStorage.getItem("platform_token"); return token ? {Authorization:"Bearer "+token} : {}; };
+  const auth = (): Record<string, string> => { const token=sessionStorage.getItem("platform_token"); return token ? { Authorization: "Bearer " + token } : {}; };
   async function load() {
     setLoading(true); setError("");
     try { const response=await fetch(base+"/schools?limit=100&page=1",{headers:auth()}); const result=await response.json(); if(!response.ok) throw new Error(result.message||"Unable to load tenants."); setItems(Array.isArray(result.data)?result.data:[]); }
