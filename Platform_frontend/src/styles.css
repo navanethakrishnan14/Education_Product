@@ -173,3 +173,10 @@ button,a,input,select,textarea{touch-action:manipulation}
 .sidebar>.nav-item svg:last-child{margin-left:auto}
 .sidebar>.nav-item:not(:has(svg:last-child)){justify-content:flex-start}
 .sidebar-bottom{width:100%;box-sizing:border-box;align-self:stretch}
+
+
+/* Correct icon alignment: only the trailing chevron moves to the far edge. */
+.sidebar .nav-item>svg:first-child{margin-left:0;flex:0 0 17px}
+.sidebar .nav-item>svg:last-child:not(:first-child){margin-left:auto;flex:0 0 14px}
+.sidebar .nav-item>svg:only-child{margin-left:0}
+.sidebar .nav-item{justify-content:flex-start}
