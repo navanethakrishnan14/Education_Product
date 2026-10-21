@@ -90,8 +90,90 @@ function SchoolCreateForm() {
     </form>
   </div>;
 }
+
+function GenericTenantCreateForm({ type, title }: { type: string; title: string }) {
+  const [form, setForm] = useState({
+    name: "", code: "", category: type === "college" ? "Arts & Science College" : "Educational Institution",
+    affiliation: "", recognitionNumber: "", website: "", email: "", phone: "", alternatePhone: "",
+    address1: "", address2: "", city: "", district: "", state: "", country: "", postalCode: "",
+    adminName: "", adminTitle: type === "college" ? "Principal" : "Director", adminEmail: "", adminPhone: "",
+    subdomain: "", activationStatus: "Pending", notes: ""
+  });
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const nav = useNavigate();
+  const update = (key: keyof typeof form, value: string) => setForm(old => ({ ...old, [key]: value }));
+  const workspaceUrl = () => (form.subdomain || form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")) + ".edusphere.cloud";
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault(); setBusy(true); setMessage("");
+    try {
+      const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
+      const token = sessionStorage.getItem("platform_token");
+      const response = await fetch(base + "/schools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+        body: JSON.stringify({ ...form, tenantType: type, workspaceUrl: workspaceUrl() })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Unable to create " + title.toLowerCase() + ".");
+      setMessage(title + " tenant created successfully.");
+      window.setTimeout(() => nav("/dashboard/tenant"), 700);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Unable to create " + title.toLowerCase() + ".");
+    } finally { setBusy(false); }
+  }
+  const saveDraft = () => { sessionStorage.setItem(type + "_form_draft", JSON.stringify(form)); setMessage("Draft saved in this browser."); };
+  const label = type === "college" ? "College" : "Institution";
+  return <div className="school-form-page">
+    <div className="school-form-top"><div><div className="school-breadcrumb"><Link to="/dashboard">Dashboard</Link> › <Link to="/dashboard/tenant">Tenant</Link> › Add {label}</div><h1>Add New {label}</h1><p>Register a {label.toLowerCase()} and configure its platform access.</p></div><div className="school-form-actions"><Link className="school-action secondary" to="/dashboard/tenant"><ArrowLeft size={14}/> Back to Tenants</Link><button className="school-action secondary" type="button" onClick={saveDraft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" form="generic-tenant-form" disabled={busy}><CheckCircle2 size={14}/>{busy ? "Creating…" : "Create " + label}</button></div></div>
+    {message && <div className={"school-message " + (message.includes("successfully") || message.includes("Draft") ? "success" : "error")} role="status">{message}</div>}
+    <form id="generic-tenant-form" onSubmit={submit}>
+      <Section number={1} title={label + " Information"} subtitle="Organization identity, classification and contact details" aside="Organization Details">
+        <div className="school-fields-grid">
+          <Field label={label + " Name"} required><TextInput required value={form.name} onChange={e=>update("name",e.target.value)} placeholder={type === "college" ? "Example Arts and Science College" : "Example Educational Institution"}/></Field>
+          <Field label={label + " Code"} required><TextInput required value={form.code} onChange={e=>update("code",e.target.value.toUpperCase())} placeholder={type === "college" ? "COL-2026-001" : "INS-2026-001"}/></Field>
+          <Field label={label + " Type"} required><SelectInput required value={form.category} onChange={e=>update("category",e.target.value)}>{(type === "college" ? ["Arts & Science College","Engineering College","Medical College","Polytechnic College","Teacher Training College","Community College","Other"] : ["Educational Institution","Training Institute","Research Institution","Coaching Centre","Vocational Institute","Professional Institute","Other"]).map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
+          <Field label={type === "college" ? "University / Affiliation" : "Affiliating / Governing Body"}><TextInput value={form.affiliation} onChange={e=>update("affiliation",e.target.value)} placeholder="Affiliating university or governing body"/></Field>
+          <Field label="Recognition / Registration Number"><TextInput value={form.recognitionNumber} onChange={e=>update("recognitionNumber",e.target.value)} placeholder="Recognition or registration ID"/></Field>
+          <Field label="Website"><TextInput type="url" value={form.website} onChange={e=>update("website",e.target.value)} placeholder="https://www.example.edu"/></Field>
+          <Field label="Official Email" required><TextInput required type="email" value={form.email} onChange={e=>update("email",e.target.value)} placeholder="office@example.edu"/></Field>
+          <Field label="Contact Number" required><TextInput required type="tel" value={form.phone} onChange={e=>update("phone",e.target.value)} placeholder="+91 98765 43210"/></Field>
+          <Field label="Alternate Contact"><TextInput type="tel" value={form.alternatePhone} onChange={e=>update("alternatePhone",e.target.value)} placeholder="Alternate phone number"/></Field>
+        </div>
+      </Section>
+      <Section number={2} title="Address & Location" subtitle="Campus address and regional information" aside="Location">
+        <div className="school-fields-grid three">
+          <Field label="Address Line 1" required><TextInput required value={form.address1} onChange={e=>update("address1",e.target.value)} placeholder="Street address"/></Field>
+          <Field label="Address Line 2"><TextInput value={form.address2} onChange={e=>update("address2",e.target.value)} placeholder="Building, campus or area"/></Field>
+          <Field label="City / Town" required><TextInput required value={form.city} onChange={e=>update("city",e.target.value)} placeholder="City or town"/></Field>
+          <Field label="District"><TextInput value={form.district} onChange={e=>update("district",e.target.value)} placeholder="District"/></Field>
+          <Field label="State" required><TextInput required value={form.state} onChange={e=>update("state",e.target.value)} placeholder="State"/></Field>
+          <Field label="Country" required><TextInput required value={form.country} onChange={e=>update("country",e.target.value)} placeholder="Country"/></Field>
+          <Field label="Postal Code" required><TextInput required value={form.postalCode} onChange={e=>update("postalCode",e.target.value)} placeholder="Postal code"/></Field>
+        </div>
+      </Section>
+      <Section number={3} title="Primary Administrator" subtitle="Main point of contact for this tenant workspace" aside="Account Contact">
+        <div className="school-fields-grid">
+          <Field label="Administrator Name" required><TextInput required value={form.adminName} onChange={e=>update("adminName",e.target.value)} placeholder="Full name"/></Field>
+          <Field label="Designation" required><SelectInput required value={form.adminTitle} onChange={e=>update("adminTitle",e.target.value)}>{(type === "college" ? ["Principal","Dean","College Administrator","Director","IT Administrator"] : ["Director","Administrator","Head of Institution","Coordinator","IT Administrator"]).map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
+          <Field label="Administrator Email" required><TextInput required type="email" value={form.adminEmail} onChange={e=>update("adminEmail",e.target.value)} placeholder="admin@example.edu"/></Field>
+          <Field label="Administrator Phone" required><TextInput required type="tel" value={form.adminPhone} onChange={e=>update("adminPhone",e.target.value)} placeholder="+91 98765 43210"/></Field>
+        </div>
+      </Section>
+      <Section number={4} title="Workspace & Activation" subtitle="Unique tenant URL and initial access status" aside="Platform Settings">
+        <div className="school-fields-grid">
+          <Field label="Workspace Subdomain" required><div className="school-subdomain"><TextInput required value={form.subdomain} onChange={e=>update("subdomain",e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,""))} placeholder={type === "college" ? "example-college" : "example-institution"}/><span>.edusphere.cloud</span></div></Field>
+          <Field label="Activation Status" required><SelectInput required value={form.activationStatus} onChange={e=>update("activationStatus",e.target.value)}>{["Pending","Active","Suspended"].map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
+        </div>
+        <Field label="Internal Platform Admin Notes"><textarea className="school-input school-textarea" value={form.notes} onChange={e=>update("notes",e.target.value)} placeholder="Notes visible only to platform administrators."/></Field>
+      </Section>
+      <div className="school-bottom-actions"><Link className="school-action secondary" to="/dashboard/tenant">Cancel</Link><button className="school-action secondary" type="button" onClick={saveDraft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" disabled={busy}><CheckCircle2 size={14}/>{busy ? "Creating…" : "Create " + label + " Tenant"} <ArrowRight size={14}/></button></div>
+    </form>
+  </div>;
+}
+
 function TenantTypeDetail(){const {type}=useParams();const tenant=tenantTypes.find(x=>x.slug===type);if(!tenant)return <section className="section-card"><h1>Tenant type not found</h1><Link to="/dashboard/tenant">Back to Tenant</Link></section>;const Icon=tenant.icon;
- return <section className="tenant-detail-page"><Link className="back-link" to="/dashboard/tenant"><ArrowLeft size={16}/> All tenant types</Link>{type==="school"?<SchoolCreateForm/>:<div className="tenant-detail-card"><span className={"tenant-type-icon "+tenant.tone}><Icon size={28}/></span><p className="eyebrow">TENANT MANAGEMENT</p><h1>{tenant.title} tenants</h1><p className="muted">{tenant.description}</p><div className="coming">Dedicated {tenant.title.toLowerCase()} registration form planned separately.</div></div>}</section>;
+ return <section className="tenant-detail-page"><Link className="back-link" to="/dashboard/tenant"><ArrowLeft size={16}/> All tenant types</Link>{type==="school"?<SchoolCreateForm/>:<GenericTenantCreateForm type={type || "institution"} title={tenant.title}/>}</section>;
 }
 function TenantTypeChooser(){return <section className="tenant-page"><div className="tenant-page-heading"><div><p className="eyebrow">TENANT MANAGEMENT</p><h1>Choose tenant type</h1><p className="muted">Select the kind of education organization you want to manage.</p></div><span className="platform-status"><i/> Tenant workspace</span></div><div className="tenant-type-grid">{tenantTypes.map(item=>{const Icon=item.icon;return <Link className="tenant-type-card" to={`/dashboard/tenant/${item.slug}`} key={item.slug}><span className={"tenant-type-icon "+item.tone}><Icon size={23}/></span><span className="tenant-type-copy"><strong>{item.title}</strong><small>{item.description}</small></span><ArrowRight className="tenant-type-arrow" size={18}/></Link>;})}</div></section>;}
 export default function Tenant(){return <Routes><Route index element={<TenantTypeChooser/>}/><Route path=":type" element={<TenantTypeDetail/>}/></Routes>;}
