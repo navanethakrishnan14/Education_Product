@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight, GraduationCap, LockKeyhole, Mail, ShieldCheck, Building2,
   Users, ChartNoAxesCombined, Settings, LogOut, Menu, X, Search, Bell,
@@ -67,16 +67,63 @@ function Login() {
   </main>;
 }
 
-const metrics = [
-  { label: "Registered Tenants", value: "—", detail: "Schools, colleges and institutions", icon: Building2, tone: "violet" },
-  { label: "Tenant Users", value: "—", detail: "Across all tenant organizations", icon: Users, tone: "teal" },
-  { label: "Platform Health", value: "—", detail: "API and database status", icon: ChartNoAxesCombined, tone: "blue" }
-];
+type TenantSummary = {
+  id: string;
+  name: string;
+  code?: string | null;
+  tenantType?: string | null;
+  officialEmail?: string | null;
+  workspaceUrl?: string | null;
+  status?: string | null;
+  planName?: string | null;
+  createdAt?: string;
+};
 
 function OverviewPage() {
+  const [tenants, setTenants] = useState<TenantSummary[]>([]);
+  const [tenantCount, setTenantCount] = useState(0);
+  const [loadingTenants, setLoadingTenants] = useState(true);
+  const [tenantError, setTenantError] = useState("");
+  useEffect(() => {
+    let cancelled = false;
+    async function loadTenants() {
+      try {
+        const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\\/$/, "");
+        const token = sessionStorage.getItem("platform_token");
+        const response = await fetch(base + "/schools?limit=5&page=1", {
+          headers: token ? { Authorization: "Bearer " + token } : {}
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || "Unable to load tenants.");
+        if (!cancelled) {
+          const items: TenantSummary[] = Array.isArray(result.data) ? result.data : [];
+          setTenants(items);
+          setTenantCount(Number(result.pagination?.total ?? items.length));
+        }
+      } catch (error) {
+        if (!cancelled) setTenantError(error instanceof Error ? error.message : "Unable to load tenants.");
+      } finally {
+        if (!cancelled) setLoadingTenants(false);
+      }
+    }
+    void loadTenants();
+    return () => { cancelled = true; };
+  }, []);
+
   return <>
-    <div className="welcome-row"><div><p className="eyebrow">PLATFORM CONTROL CENTER</p><h1>Good to see you.</h1><p className="muted">Here’s an overview of your EduSphere platform.</p></div><span className="platform-status"><i /> Platform admin area</span></div>
-    <div className="metric-grid">{metrics.map(m => { const Icon = m.icon; return <article className="metric" key={m.label}><span className={"metric-icon " + m.tone}><Icon size={20} /></span><p>{m.label}</p><h2>{m.value}</h2><small>{m.detail}</small></article>; })}</div>
+    <div className="welcome-row"><div><p className="eyebrow">PLATFORM CONTROL CENTER</p><h1>Dashboard</h1><p className="muted">Your EduSphere tenant overview and platform activity.</p></div><span className="platform-status"><i /> Platform admin area</span></div>
+    <div className="metric-grid">
+      <article className="metric"><span className="metric-icon violet"><Building2 size={20} /></span><p>Registered Tenants</p><h2>{loadingTenants ? "…" : tenantCount}</h2><small>Schools, colleges and institutions</small></article>
+      <article className="metric"><span className="metric-icon teal"><Users size={20} /></span><p>Tenant Types</p><h2>{loadingTenants ? "…" : new Set(tenants.map(t => t.tenantType).filter(Boolean)).size || (tenantCount ? "3" : "0")}</h2><small>School, college and institution workspaces</small></article>
+      <article className="metric"><span className="metric-icon blue"><ChartNoAxesCombined size={20} /></span><p>Active Tenants</p><h2>{loadingTenants ? "…" : tenants.filter(t => t.status === "active").length}{!loadingTenants && tenantCount > tenants.length ? "+" : ""}</h2><small>Active among the latest tenants shown</small></article>
+    </div>
+    <section className="section-card" style={{marginTop:24}}>
+      <div className="welcome-row"><div><p className="eyebrow">TENANT MANAGEMENT</p><h2>Recently created tenants</h2><p className="muted">Schools, colleges and institutions registered on your platform.</p></div><NavLink className="text-link" to="/dashboard/tenant">Manage tenants <ArrowRight size={14}/></NavLink></div>
+      {tenantError ? <div className="empty-state"><h3>Unable to load tenants</h3><p>{tenantError}</p><button className="primary" type="button" onClick={() => window.location.reload()}>Reload dashboard</button></div>
+      : loadingTenants ? <div className="empty-state"><p>Loading tenants…</p></div>
+      : tenants.length === 0 ? <div className="empty-state"><span><Building2 size={24}/></span><h3>No tenants yet</h3><p>Create your first school, college or institution to see it here.</p><NavLink className="text-link" to="/dashboard/tenant">Create a tenant <ArrowRight size={14}/></NavLink></div>
+      : <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",textAlign:"left",minWidth:600}}><thead><tr>{["Tenant","Code","Type","Official Email","Status"].map(label=><th key={label} style={{padding:"12px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}>{label}</th>)}</tr></thead><tbody>{tenants.map(tenant=><tr key={tenant.id}><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}><strong>{tenant.name}</strong><div className="muted" style={{fontSize:12}}>{tenant.workspaceUrl || ""}</div></td><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}>{tenant.code || "—"}</td><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)",textTransform:"capitalize"}}>{tenant.tenantType || "school"}</td><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}>{tenant.officialEmail || "—"}</td><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}><span className="coming">{tenant.status || "pending"}</span></td></tr>)}</tbody></table></div>}
+    </section>
     <section className="quick-grid">
       <article className="quick-card"><span className="quick-icon teal"><Users size={20} /></span><h3>Platform users</h3><p>Review authorized platform accounts.</p><NavLink className="text-link" to="/dashboard/users">Open platform users <ArrowRight size={14} /></NavLink></article>
       <article className="quick-card"><span className="quick-icon violet"><Globe2 size={20} /></span><h3>Tenant operations</h3><p>Manage schools, colleges and institutions.</p><NavLink className="text-link" to="/dashboard/tenant">Open tenants <ArrowRight size={14} /></NavLink></article>
@@ -115,7 +162,7 @@ function Dashboard() {
     <aside className={"sidebar " + (menu ? "show" : "")} style={{ alignItems: "stretch", textAlign: "left", width: "100%", boxSizing: "border-box" }}>
       <Brand />
       <div className="nav-caption" style={{ width: "100%", textAlign: "left", alignSelf: "stretch" }}>PLATFORM</div>
-      <NavLink end className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: "14px", width: "100%", alignSelf: "stretch", boxSizing: "border-box", paddingLeft: "16px", paddingRight: "16px", textAlign: "left" }} to="/dashboard" onClick={() => setMenu(false)}><ChartNoAxesCombined size={17} /> <span style={{ textAlign: "left", flex: 1 }}>Overview</span></NavLink>
+      <NavLink end className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: "14px", width: "100%", alignSelf: "stretch", boxSizing: "border-box", paddingLeft: "16px", paddingRight: "16px", textAlign: "left" }} to="/dashboard" onClick={() => setMenu(false)}><ChartNoAxesCombined size={17} /> <span style={{ textAlign: "left", flex: 1 }}>Dashboard</span></NavLink>
       <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: "14px", width: "100%", alignSelf: "stretch", boxSizing: "border-box", paddingLeft: "16px", paddingRight: "16px", textAlign: "left" }} to="/dashboard/tenant" onClick={() => setMenu(false)}><Building2 size={17} /> <span style={{ textAlign: "left", flex: 1 }}>Tenant</span><ChevronRight size={14} /></NavLink>
       <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: "14px", width: "100%", alignSelf: "stretch", boxSizing: "border-box", paddingLeft: "16px", paddingRight: "16px", textAlign: "left" }} to="/dashboard/users" onClick={() => setMenu(false)}><Users size={17} /> <span style={{ textAlign: "left", flex: 1 }}>Platform users</span><ChevronRight size={14} /></NavLink>
       <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: "14px", width: "100%", alignSelf: "stretch", boxSizing: "border-box", paddingLeft: "16px", paddingRight: "16px", textAlign: "left" }} to="/dashboard/settings" onClick={() => setMenu(false)}><Settings size={17} /> <span style={{ textAlign: "left", flex: 1 }}>Settings</span></NavLink>
