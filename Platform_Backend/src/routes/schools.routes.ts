@@ -27,11 +27,11 @@ const tenantPrefix: Record<z.infer<typeof tenantTypeSchema>, string> = {
 
 const createSchoolSchema = z.object({
   name: z.string().trim().min(2).max(160),
-  code: z.string().trim().regex(/^(SCH|COL|INS)-\\d{4}-\\d{4,}$/, "Code must use the format SCH-YYYY-0001, COL-YYYY-0001 or INS-YYYY-0001."),
+  code: z.string().trim().regex(/^(SCH|COL|INS)-\d{4}-\d{4,}$/, "Code must use the format SCH-YYYY-0001, COL-YYYY-0001 or INS-YYYY-0001."),
   tenantType: tenantTypeSchema.default("school"),
   email: z.string().trim().email().max(254),
   phone: z.string().trim().min(5).max(40),
-  workspaceUrl: z.string().trim().min(3).max(180).regex(/^[a-z0-9-]+(\\.[a-z0-9-]+)+$/i, "Enter a valid tenant subdomain."),
+  workspaceUrl: z.string().trim().min(3).max(180).regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i, "Enter a valid tenant subdomain."),
   plan: z.string().trim().min(1).max(60).optional(),
   activationStatus: z.string().trim().max(30).optional()
 }).passthrough();
