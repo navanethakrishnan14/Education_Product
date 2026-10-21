@@ -23,7 +23,7 @@ function Landing() {
 }
 function Workspace() {
   const nav = useNavigate();
-  const [user, setUser] = useState<{name?: string; email?: string; role?: string; tenantId?: string} | null>(null);
+  const [user, setUser] = useState<{name?: string; email?: string; role?: string; tenantId?: string; tenantCode?: string | null; tenantType?: string} | null>(null);
   useEffect(() => {
     const token = localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token');
     const raw = localStorage.getItem('tenant_user') || sessionStorage.getItem('tenant_user');
@@ -33,7 +33,7 @@ function Workspace() {
   function logout() { localStorage.removeItem('tenant_token'); localStorage.removeItem('tenant_user'); sessionStorage.removeItem('tenant_token'); sessionStorage.removeItem('tenant_user'); nav('/', { replace: true }); }
   if (!user) return <div className="workspace-loading">Checking your secure session…</div>;
   const role = user.role || 'USER';
-  return <main className="workspace-page"><header className="workspace-header"><Brand/><button className="logout" onClick={logout}>Sign out</button></header><section className="workspace-content"><div className="workspace-symbol"><ShieldCheck size={24}/></div><div className="eyebrow">AUTHENTICATED TENANT WORKSPACE</div><h1>Welcome{user.name ? ', ' + user.name : ''}</h1><p>Your identity has been verified for the selected school portal.</p><div className="workspace-summary"><span>Role</span><strong>{role}</strong><span>School / Tenant ID</span><code>{user.tenantId || 'Not provided'}</code><span>Account</span><strong>{user.email || 'Signed-in user'}</strong></div><p className="workspace-note">Your sign-in is complete. Feature dashboards can be connected here as the Management, Faculty, Parent, and Student modules are implemented.</p><button className="launch" onClick={logout}>Sign out securely <ArrowRight size={14}/></button></section></main>;
+  return <main className="workspace-page"><header className="workspace-header"><Brand/><button className="logout" onClick={logout}>Sign out</button></header><section className="workspace-content"><div className="workspace-symbol"><ShieldCheck size={24}/></div><div className="eyebrow">AUTHENTICATED TENANT WORKSPACE</div><h1>Welcome{user.name ? ', ' + user.name : ''}</h1><p>Your identity has been verified for the selected school portal.</p><div className="workspace-summary"><span>Role</span><strong>{role}</strong>{user.tenantCode && <><span>Organization Code</span><code>{user.tenantCode}</code></>}<span>Organization / Tenant ID</span><code>{user.tenantId || 'Not provided'}</code><span>Account</span><strong>{user.email || 'Signed-in user'}</strong></div><p className="workspace-note">Your sign-in is complete. Feature dashboards can be connected here as the Management, Faculty, Parent, and Student modules are implemented.</p><button className="launch" onClick={logout}>Sign out securely <ArrowRight size={14}/></button></section></main>;
 }
 function GuardedWorkspace() {
   const token = localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token');
