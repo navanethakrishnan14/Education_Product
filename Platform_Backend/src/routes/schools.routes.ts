@@ -18,15 +18,44 @@ const querySchema = z.object({
 });
 
 
+const tenantTypeSchema = z.enum(["school", "college", "institution"]);
+const tenantPrefix: Record<z.infer<typeof tenantTypeSchema>, string> = {
+  school: "SCH",
+  college: "COL",
+  institution: "INS"
+};
+
 const createSchoolSchema = z.object({
   name: z.string().trim().min(2).max(160),
-  code: z.string().trim().min(2).max(40),
+  code: z.string().trim().regex(/^(SCH|COL|INS)-\\d{4}-\\d{4,}$/, "Code must use the format SCH-YYYY-0001, COL-YYYY-0001 or INS-YYYY-0001."),
+  tenantType: tenantTypeSchema.default("school"),
   email: z.string().trim().email().max(254),
   phone: z.string().trim().min(5).max(40),
-  workspaceUrl: z.string().trim().min(3).max(180).regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i, "Enter a valid school subdomain."),
+  workspaceUrl: z.string().trim().min(3).max(180).regex(/^[a-z0-9-]+(\\.[a-z0-9-]+)+$/i, "Enter a valid tenant subdomain."),
   plan: z.string().trim().min(1).max(60).optional(),
   activationStatus: z.string().trim().max(30).optional()
 }).passthrough();
+
+router.post("/code", async (req, res, next) => {
+  try {
+    const parsed = z.object({ tenantType: tenantTypeSchema.default("school") }).safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, message: "Choose a valid tenant type: school, college or institution." });
+    }
+
+    const tenantType = parsed.data.tenantType;
+    const year = new Date().getFullYear();
+    const counter = await prisma.tenantCodeCounter.upsert({
+      where: { tenantType_year: { tenantType, year } },
+      create: { tenantType, year, lastNumber: 1 },
+      update: { lastNumber: { increment: 1 } }
+    });
+    const code = tenantPrefix[tenantType] + "-" + year + "-" + String(counter.lastNumber).padStart(4, "0");
+    return res.json({ success: true, data: { code } });
+  } catch (error) {
+    return next(error);
+  }
+});
 
 router.post("/", async (req, res, next) => {
   try {
@@ -35,6 +64,11 @@ router.post("/", async (req, res, next) => {
     const input = parsed.data;
     if (!isEmailConfigured()) return res.status(503).json({ success: false, message: "Email delivery is not configured. Add SMTP_HOST, SMTP_USER, SMTP_PASS and SMTP_FROM to Platform_Backend/.env before creating tenants." });
     const officialEmail = input.email.toLowerCase();
+    if (!input.code.startsWith(tenantPrefix[input.tenantType] + "-")) {
+      return res.status(400).json({ success: false, message: "The code prefix does not match the selected tenant type." });
+    }
+    const duplicateCode = await prisma.schoolTenant.findUnique({ where: { code: input.code } });
+    if (duplicateCode) return res.status(409).json({ success: false, message: "This tenant code is already registered. Refresh the form to generate another code." });
     const duplicateEmail = await prisma.schoolTenant.findUnique({ where: { officialEmail } });
     if (duplicateEmail) return res.status(409).json({ success: false, message: "This Official Email is already registered to an organization." });
     const existing = await prisma.schoolTenant.findUnique({ where: { workspaceUrl: input.workspaceUrl } });
@@ -46,6 +80,8 @@ router.post("/", async (req, res, next) => {
     const school = await prisma.schoolTenant.create({
       data: {
         name: input.name,
+        code: input.code,
+        tenantType: input.tenantType,
         workspaceUrl: input.workspaceUrl.toLowerCase(),
         status: input.activationStatus?.toLowerCase() === "active" ? "active" : input.activationStatus?.toLowerCase() === "suspended" ? "suspended" : "inactive",
         planName: input.plan || "Free Trial",
