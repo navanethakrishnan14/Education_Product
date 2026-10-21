@@ -16,7 +16,7 @@ const schema = z.object({
 router.post("/", async (req, res, next) => {
   try {
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ success: false, message: "Use a password with at least 8 characters, including uppercase, lowercase, a number and a special character.", errors: parsed.error.flatten().fieldErrors });
+    if (!parsed.success) return res.status(400).json({ success: false, message: "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a special character.", errors: parsed.error.flatten().fieldErrors });
     const tokenHash = createHash("sha256").update(parsed.data.token).digest("hex");
     const tenant = await prisma.schoolTenant.findFirst({
       where: { passwordSetupTokenHash: tokenHash, passwordSetupExpiresAt: { gt: new Date() } },
