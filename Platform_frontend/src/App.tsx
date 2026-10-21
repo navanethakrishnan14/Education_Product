@@ -4,7 +4,7 @@ import {
   Users, ChartNoAxesCombined, Settings, LogOut, Menu, X, Search, Bell,
   ChevronRight, Globe2
 } from "lucide-react";
-import { Link, Route, Routes, useNavigate } from "react-router-dom";
+import { Link, NavLink, Route, Routes, useNavigate, Outlet } from "react-router-dom";
 import type { FormEvent } from "react";
 import Tenant from "./Tenant";
 
@@ -72,9 +72,37 @@ const metrics = [
   { label: "Platform Health", value: "—", detail: "API and database status", icon: ChartNoAxesCombined, tone: "blue" }
 ];
 
+function OverviewPage() {
+  return <>
+    <div className="welcome-row"><div><p className="eyebrow">PLATFORM CONTROL CENTER</p><h1>Good to see you.</h1><p className="muted">Here’s an overview of your EduSphere platform.</p></div><span className="platform-status"><i /> Platform admin area</span></div>
+    <div className="metric-grid">{metrics.map(m => { const Icon = m.icon; return <article className="metric" key={m.label}><span className={"metric-icon " + m.tone}><Icon size={20} /></span><p>{m.label}</p><h2>{m.value}</h2><small>{m.detail}</small></article>; })}</div>
+    <section className="quick-grid">
+      <article className="quick-card"><span className="quick-icon teal"><Users size={20} /></span><h3>Platform users</h3><p>Review authorized platform accounts.</p><NavLink className="text-link" to="/dashboard/users">Open platform users <ArrowRight size={14} /></NavLink></article>
+      <article className="quick-card"><span className="quick-icon violet"><Globe2 size={20} /></span><h3>Tenant operations</h3><p>Manage schools, colleges and institutions.</p><NavLink className="text-link" to="/dashboard/tenant">Open tenants <ArrowRight size={14} /></NavLink></article>
+    </section>
+    <footer className="dash-footer">EduSphere Platform Administration <span>Secure · Multi-tenant ready</span></footer>
+  </>;
+}
+
+function PlatformUsersPage() {
+  return <section className="section-card standalone-page">
+    <p className="eyebrow">ACCESS CONTROL</p><h1>Platform users</h1>
+    <p className="muted">Review and manage authorized platform administrator accounts.</p>
+    <div className="empty-state"><span><Users size={24} /></span><h3>Platform user directory</h3><p>User listing and management will appear here after API integration.</p></div>
+    <span className="coming">API integration required</span>
+  </section>;
+}
+
+function SettingsPage() {
+  return <section className="section-card standalone-page">
+    <p className="eyebrow">CONFIGURATION</p><h1>Settings</h1>
+    <p className="muted">Configure your platform workspace and administration preferences.</p>
+    <div className="settings-row"><span className="quick-icon violet"><Settings size={20} /></span><div><strong>Platform settings</strong><p className="muted">Authentication, workspace and platform preferences.</p></div><span className="coming">Coming with API integration</span></div>
+  </section>;
+}
+
 function Dashboard() {
   const [menu, setMenu] = useState(false);
-  const [activeSection, setActiveSection] = useState<"overview" | "tenant" | "users" | "settings">("overview");
   const nav = useNavigate();
   function logout() {
     sessionStorage.removeItem("platform_token");
@@ -86,38 +114,31 @@ function Dashboard() {
     <aside className={"sidebar " + (menu ? "show" : "")}>
       <Brand />
       <div className="nav-caption">PLATFORM</div>
-      <button className={"nav-item " + (activeSection === "overview" ? "active" : "")} onClick={() => { setActiveSection("overview"); setMenu(false); }}><ChartNoAxesCombined size={17} /> Overview</button>
-      <button className={"nav-item " + (activeSection === "tenant" ? "active" : "")} onClick={() => { setActiveSection("tenant"); setMenu(false); }}><Building2 size={17} /> Tenant <ChevronRight size={14} /></button>
-      <button className={"nav-item " + (activeSection === "users" ? "active" : "")} onClick={() => { setActiveSection("users"); setMenu(false); }}><Users size={17} /> Platform users <ChevronRight size={14} /></button>
-      <button className={"nav-item " + (activeSection === "settings" ? "active" : "")} onClick={() => { setActiveSection("settings"); setMenu(false); }}><Settings size={17} /> Settings</button>
+      <NavLink end className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} to="/dashboard" onClick={() => setMenu(false)}><ChartNoAxesCombined size={17} /> Overview</NavLink>
+      <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} to="/dashboard/tenant" onClick={() => setMenu(false)}><Building2 size={17} /> Tenant <ChevronRight size={14} /></NavLink>
+      <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} to="/dashboard/users" onClick={() => setMenu(false)}><Users size={17} /> Platform users <ChevronRight size={14} /></NavLink>
+      <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} to="/dashboard/settings" onClick={() => setMenu(false)}><Settings size={17} /> Settings</NavLink>
       <div className="sidebar-bottom"><span className="status-dot" /> Platform workspace <button onClick={logout}><LogOut size={15} /> Sign out</button></div>
     </aside>
     <main className="dash-main">
       <header className="dash-header">
         <button className="menu-toggle" onClick={() => setMenu(!menu)} aria-label="Toggle navigation">{menu ? <X size={20} /> : <Menu size={20} />}</button>
-        <div><b>Platform overview</b><small>Manage your education ecosystem</small></div>
+        <div><b>EduSphere Platform</b><small>Manage your education ecosystem</small></div>
         <div className="header-actions"><button aria-label="Search"><Search size={17} /></button><button aria-label="Notifications"><Bell size={17} /></button><span className="avatar">TA</span></div>
       </header>
       <section className="dash-content">
-        {activeSection === "tenant" ? <Tenant /> : activeSection === "overview" ? <>
-          <div className="welcome-row"><div><p className="eyebrow">PLATFORM CONTROL CENTER</p><h1>Good to see you.</h1><p className="muted">Here’s an overview of your EduSphere platform.</p></div><span className="platform-status"><i /> Platform admin area</span></div>
-          <div className="metric-grid">{metrics.map(m => { const Icon = m.icon; return <article className="metric" key={m.label}><span className={"metric-icon " + m.tone}><Icon size={20} /></span><p>{m.label}</p><h2>{m.value}</h2><small>{m.detail}</small></article>; })}</div>
-          <section className="quick-grid">
-            <article className="quick-card"><span className="quick-icon teal"><Users size={20} /></span><h3>Platform users</h3><p>Review authorized platform accounts.</p><span className="muted-small">Waiting for API connection</span></article>
-            <article className="quick-card"><span className="quick-icon violet"><Globe2 size={20} /></span><h3>Tenant operations</h3><p>Monitor institutions and tenant configuration.</p><span className="muted-small">Waiting for API connection</span></article>
-          </section>
-          <footer className="dash-footer">EduSphere Platform Administration <span>Secure · Multi-tenant ready</span></footer>
-        </> : <section className="section-card workspace-placeholder">
-          <p className="eyebrow">PLATFORM ADMINISTRATION</p>
-          <h1>{activeSection === "users" ? "Platform users" : "Settings"}</h1>
-          <p className="muted">{activeSection === "users" ? "Manage platform administrator accounts." : "Configure platform preferences and workspace settings."}</p>
-          <span className="coming">API integration required</span>
-        </section>}
+        <Routes>
+          <Route index element={<OverviewPage />} />
+          <Route path="tenant/*" element={<Tenant />} />
+          <Route path="users" element={<PlatformUsersPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="*" element={<OverviewPage />} />
+        </Routes>
       </section>
     </main>
   </div>;
 }
 
 export default function App() {
-  return <Routes><Route path="/" element={<Login />} /><Route path="/dashboard" element={sessionStorage.getItem("platform_token") ? <Dashboard /> : <Login />} /><Route path="*" element={<Login />} /></Routes>;
+  return <Routes><Route path="/" element={<Login />} /><Route path="/dashboard/*" element={sessionStorage.getItem("platform_token") ? <Dashboard /> : <Login />} /><Route path="*" element={<Login />} /></Routes>;
 }
