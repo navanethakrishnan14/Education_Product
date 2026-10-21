@@ -161,7 +161,7 @@ router.get("/", async (req, res, next) => {
 const updateTenantSchema = z.object({
   name: z.string().trim().min(2).max(160).optional(),
   officialEmail: z.string().trim().email().max(254).optional(),
-  workspaceUrl: z.string().trim().min(3).max(180).regex(/^[a-z0-9-]+(\\.[a-z0-9-]+)+$/i).optional(),
+  workspaceUrl: z.string().trim().min(3).max(180).regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i).optional(),
   status: z.enum(["active", "inactive", "suspended"]).optional(),
   planName: z.string().trim().max(60).nullable().optional()
 }).refine(value => Object.keys(value).length > 0, "Provide at least one field to update.");
