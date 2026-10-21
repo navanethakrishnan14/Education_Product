@@ -28,3 +28,6 @@ jobs:
       # npm install rather than npm ci until lockfiles are checked in.
       - run: npm install
       - run: npm run build
+        env:
+          # Prisma config requires DATABASE_URL while generating the client; the build does not connect to this placeholder database.
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/edusphere_platform?schema=public
