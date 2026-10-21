@@ -96,7 +96,7 @@ function OverviewPage() {
     const planName = window.prompt("Plan:", tenant.planName || "");
     if (planName === null) return;
     try {
-      const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\\/$/, "");
+      const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
       const token = sessionStorage.getItem("platform_token");
       const response = await fetch(base + "/schools/" + encodeURIComponent(tenant.id), {
         method: "PATCH",
@@ -114,7 +114,7 @@ function OverviewPage() {
   async function deleteTenant(tenant: TenantSummary) {
     if (!window.confirm('Delete "' + tenant.name + '"? This permanently removes the tenant record.')) return;
     try {
-      const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\\/$/, "");
+      const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
       const token = sessionStorage.getItem("platform_token");
       const response = await fetch(base + "/schools/" + encodeURIComponent(tenant.id), {
         method: "DELETE",
