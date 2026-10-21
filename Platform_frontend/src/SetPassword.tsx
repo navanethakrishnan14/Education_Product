@@ -46,10 +46,10 @@ export default function SetPassword() {
       <p className="muted">{success ? "Your password has been saved securely." : "Create a secure password for your organization's official email account."}</p>
       {!success && <form onSubmit={submit}>
         <label htmlFor="new-password">New password</label>
-        <div className="field"><LockKeyhole size={16}/><input id="new-password" type="password" autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} minLength={10} maxLength={128} required placeholder="At least 10 characters"/></div>
-        <p className="muted" style={{fontSize:13,marginTop:6}}>Use uppercase and lowercase letters, a number, and a special character.</p>
+        <div className="field"><LockKeyhole size={16}/><input id="new-password" type="password" autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} minLength={8} maxLength={128} required placeholder="At least 8 characters"/></div>
+        <p className="muted" style={{fontSize:13,marginTop:6}}>Use at least 8 characters, including uppercase and lowercase letters, a number, and a special character.</p>
         <label htmlFor="confirm-password">Confirm password</label>
-        <div className="field"><LockKeyhole size={16}/><input id="confirm-password" type="password" autoComplete="new-password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} minLength={10} maxLength={128} required placeholder="Enter the same password again"/></div>
+        <div className="field"><LockKeyhole size={16}/><input id="confirm-password" type="password" autoComplete="new-password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} minLength={8} maxLength={128} required placeholder="Enter the same password again"/></div>
         <button className="primary" disabled={busy || !token}>{busy ? "Saving password…" : "Create Password"} <ArrowRight size={16}/></button>
       </form>}
       {message && <p className={success ? "login-note" : "notice"} role="status">{message}</p>}
