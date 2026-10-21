@@ -111,14 +111,17 @@ function Dashboard() {
   }
 
   return <div className="dashboard">
-    <aside className={"sidebar " + (menu ? "show" : "")} style={{ alignItems: "stretch", textAlign: "left", width: "100%" }}>
+    <aside className={"sidebar " + (menu ? "show" : "")} style={{ alignItems: "stretch", textAlign: "left", width: "100%", boxSizing: "border-box" }}>
       <Brand />
-      <div className="nav-caption" style={{ width: "100%", textAlign: "left" }}>PLATFORM</div>
-      <NavLink end className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ width: "100%", justifyContent: "flex-start", textAlign: "left" }} to="/dashboard" onClick={() => setMenu(false)}><ChartNoAxesCombined size={17} /> Overview</NavLink>
-      <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ width: "100%", justifyContent: "flex-start", textAlign: "left" }} to="/dashboard/tenant" onClick={() => setMenu(false)}><Building2 size={17} /> Tenant <ChevronRight size={14} /></NavLink>
-      <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ width: "100%", justifyContent: "flex-start", textAlign: "left" }} to="/dashboard/users" onClick={() => setMenu(false)}><Users size={17} /> Platform users <ChevronRight size={14} /></NavLink>
-      <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ width: "100%", justifyContent: "flex-start", textAlign: "left" }} to="/dashboard/settings" onClick={() => setMenu(false)}><Settings size={17} /> Settings</NavLink>
-      <div className="sidebar-bottom" style={{ width: "100%", textAlign: "left" }}><div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "10px" }}><span className="status-dot" /> Platform workspace</div><button style={{ width: "100%", justifyContent: "flex-start", textAlign: "left" }} onClick={logout}><LogOut size={15} /> Sign out</button></div>
+      <div className="nav-caption" style={{ width: "100%", textAlign: "left", alignSelf: "stretch" }}>PLATFORM</div>
+      <NavLink end className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: "14px", width: "100%", alignSelf: "stretch", boxSizing: "border-box", paddingLeft: "16px", paddingRight: "16px", textAlign: "left" }} to="/dashboard" onClick={() => setMenu(false)}><ChartNoAxesCombined size={17} /> <span style={{ textAlign: "left", flex: 1 }}>Overview</span></NavLink>
+      <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: "14px", width: "100%", alignSelf: "stretch", boxSizing: "border-box", paddingLeft: "16px", paddingRight: "16px", textAlign: "left" }} to="/dashboard/tenant" onClick={() => setMenu(false)}><Building2 size={17} /> <span style={{ textAlign: "left", flex: 1 }}>Tenant</span><ChevronRight size={14} /></NavLink>
+      <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: "14px", width: "100%", alignSelf: "stretch", boxSizing: "border-box", paddingLeft: "16px", paddingRight: "16px", textAlign: "left" }} to="/dashboard/users" onClick={() => setMenu(false)}><Users size={17} /> <span style={{ textAlign: "left", flex: 1 }}>Platform users</span><ChevronRight size={14} /></NavLink>
+      <NavLink className={({ isActive }) => "nav-item " + (isActive ? "active" : "")} style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: "14px", width: "100%", alignSelf: "stretch", boxSizing: "border-box", paddingLeft: "16px", paddingRight: "16px", textAlign: "left" }} to="/dashboard/settings" onClick={() => setMenu(false)}><Settings size={17} /> <span style={{ textAlign: "left", flex: 1 }}>Settings</span></NavLink>
+      <div className="sidebar-bottom" style={{ width: "100%", textAlign: "left", alignSelf: "stretch", boxSizing: "border-box" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "10px", width: "100%", textAlign: "left" }}><span className="status-dot" /> Platform workspace</div>
+        <button style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", justifyContent: "flex-start", textAlign: "left", paddingLeft: "16px", boxSizing: "border-box" }} onClick={logout}><LogOut size={15} /> <span>Sign out</span></button>
+      </div>
     </aside>
     <main className="dash-main">
       <header className="dash-header">
