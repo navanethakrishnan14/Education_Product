@@ -47,3 +47,64 @@ button.nav-item.active,button.nav-item:hover{background:#29214b}
 
 /* School registration form — dense administrative layout matching the supplied reference */
 .school-form-page{width:100%;min-width:0;color:#252a3c}.school-form-top{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:0 0 20px}.school-breadcrumb{font-size:10px;color:#8b91a4;margin-bottom:10px}.school-breadcrumb a{color:inherit;text-decoration:none}.school-form-top h1{font:800 27px Manrope,sans-serif;letter-spacing:-.8px;margin:0 0 5px}.school-form-top p{font-size:11px;color:#858ba0;margin:0}.school-form-actions,.school-bottom-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.school-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 11px;border:1px solid #dce0eb;border-radius:6px;background:#fff;color:#4d556a;text-decoration:none;font-size:10px;font-weight:600;white-space:nowrap}.school-action.primary-school{background:#476ca8;border-color:#476ca8;color:#fff}.school-action:disabled{opacity:.6;cursor:wait}.school-message{padding:11px 14px;margin-bottom:14px;border-radius:6px;font-size:12px}.school-message.success{background:#eaf9f0;color:#14764b}.school-message.error{background:#fff0f0;color:#b42318}.school-section{overflow:hidden;background:#fff;border:1px solid #e0e3ed;border-radius:5px;margin-bottom:15px;box-shadow:0 2px 5px #151c2b05}.school-section-head{min-height:45px;display:flex;align-items:center;gap:10px;padding:9px 13px;background:#f3f4f9;border-bottom:1px solid #e1e4ee}.school-section-number{flex:0 0 22px;width:22px;height:22px;border-radius:3px;display:grid;place-items:center;background:#5977ac;color:#fff;font-size:10px;font-weight:700}.school-section-head>div{display:flex;flex-direction:column;gap:2px;min-width:0}.school-section-head strong{font-size:11px;font-weight:700;color:#20263a}.school-section-head small{font-size:8px;color:#7d8498}.school-section-aside{margin-left:auto;font-size:8px;color:#707a91;white-space:nowrap}.school-section-body{padding:13px}.school-basic-grid{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(145px,1fr);gap:14px}.school-fields-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px 9px;margin-bottom:12px}.school-fields-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.school-field{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:9px;color:#30374a}.school-field>span{font-weight:600}.school-field>span b{color:#d84848}.school-input{width:100%;min-width:0;height:32px;border:1px solid #d4d9e5;border-radius:3px;background:#fff;padding:0 8px;color:#30364a;font:10px 'DM Sans',sans-serif;outline:none}.school-input:focus{border-color:#6687c0;box-shadow:0 0 0 2px #6687c01a}.school-input::placeholder{color:#a0a6b6}.school-textarea{height:67px;resize:vertical;padding:8px;line-height:1.5}.school-fields-grid .school-field:has(textarea){grid-column:1/-1}.school-logo-upload{min-width:0;display:flex;flex-direction:column;gap:7px}.school-upload-box{min-height:130px;border:1px dashed #c8cedd;border-radius:4px;background:#f8f9fc;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:#6381b8;text-align:center;padding:10px}.school-upload-box strong{font-size:9px;color:#3f465a;max-width:100%;overflow-wrap:anywhere}.school-upload-box small,.school-logo-upload>small{font-size:8px;line-height:1.5;color:#81889c}.school-file-button{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid #d2d7e4;border-radius:3px;background:#fff;color:#40485c;font-size:8px;cursor:pointer}.school-notice{display:flex;gap:9px;padding:11px;margin-bottom:13px;border:1px solid #d7e3fb;border-radius:4px;background:#f1f6ff;color:#476ca8}.school-notice strong{font-size:9px}.school-notice p{font-size:9px;line-height:1.5;color:#66718b;margin:4px 0 0}.school-subtitle{font-size:9px;font-weight:700;color:#444b60;margin:12px 0 8px}.school-chip-row{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin:7px 0 14px}.school-check{display:flex;align-items:center;gap:5px;border:1px solid #d9deea;padding:5px 7px;border-radius:3px;font-size:9px;color:#4f566a}.school-check input,.school-module input{accent-color:#4c70a9;width:12px;height:12px;margin:0}.school-module-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.school-module{min-height:33px;display:flex;align-items:center;gap:7px;padding:7px;border:1px solid #dce0e9;border-radius:3px;background:#f7f8fb;font-size:9px;line-height:1.35}.school-billing{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-bottom:10px;font-size:8px;color:#70788d}.school-billing span{margin-right:5px}.school-billing button{border:1px solid #e0e3ec;background:#fff;color:#737b90;border-radius:3px;padding:5px 7px;font-size:8px}.school-billing button.selected{background:#eaf5ef;color:#16774b;border-color:#c7e9d5}.school-plan-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.school-plan{min-width:0;min-height:160px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:7px;padding:10px 8px;border:1px solid #dce0e9;border-radius:4px;background:#fff;color:#282e41}.school-plan.chosen{border:1.5px solid #466aa8;background:#f8faff;box-shadow:0 0 0 1px #466aa810}.school-plan>small{font-size:7px;color:#7e8598;letter-spacing:.4px}.school-plan>strong{font-size:10px}.school-plan>b{font:800 19px Manrope,sans-serif;letter-spacing:-.5px}.school-plan>b small{font:500 8px 'DM Sans',sans-serif}.school-plan>span{font-size:8px;color:#7f879a}.school-plan p{font-size:8px;line-height:1.5;color:#6f778b;margin:0;flex:1}.school-plan em{align-self:stretch;text-align:center;font-style:normal;border:1px solid #dce0e9;border-radius:3px;padding:5px 2px;font-size:8px;color:#525b70}.school-plan.chosen em{background:#476ca8;color:#fff;border-color:#476ca8}.school-module-pill{padding:5px 8px;border:1px solid #dce0e9;background:#f7f8fb;border-radius:12px;font-size:8px;color:#586075}.school-subdomain{display:flex;align-items:center;gap:5px}.school-subdomain span{font-size:9px;color:#777f94;white-space:nowrap}.school-toggle-row{min-height:39px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 9px;border:1px solid #dce0e9;background:#f8f9fc;margin-bottom:5px;border-radius:3px;font-size:9px}.school-toggle-row input{appearance:none;flex:0 0 25px;width:25px;height:14px;border-radius:12px;background:#c5cad5;position:relative;cursor:pointer}.school-toggle-row input:before{content:"";position:absolute;width:10px;height:10px;border-radius:50%;background:#fff;top:2px;left:2px;transition:all .15s}.school-toggle-row input:checked{background:#4b6d9f}.school-toggle-row input:checked:before{left:13px}.school-gateway-ready{padding:9px;border-radius:3px;background:#f0f6f2;font-size:8px;color:#5f7869}.school-gateway-ready b{float:right;color:#18764c}.school-bottom-actions{justify-content:flex-end;padding:3px 0 25px}.school-bottom-actions .school-action{min-height:36px}@media(max-width:900px){.school-form-top{align-items:flex-start;flex-direction:column}.school-form-actions{width:100%}.school-fields-grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}.school-plan-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.school-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.school-section-body{padding:10px}.school-basic-grid{grid-template-columns:1fr}.school-fields-grid,.school-fields-grid.three{grid-template-columns:1fr}.school-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.school-section-aside{display:none}.school-form-top h1{font-size:24px}.school-action{font-size:9px;padding:0 8px}.school-plan{min-height:145px}}
+
+
+/* Accessibility pass: make school registration form typography comfortable to read. */
+.school-form-page{font-size:15px}
+.school-breadcrumb{font-size:13px}
+.school-form-top h1{font-size:32px}
+.school-form-top p{font-size:14px;line-height:1.55}
+.school-action{font-size:13px;min-height:40px;padding:0 13px}
+.school-message{font-size:14px;line-height:1.5}
+.school-section-head{min-height:54px;padding:11px 15px;gap:12px}
+.school-section-number{flex-basis:28px;width:28px;height:28px;font-size:13px}
+.school-section-head strong{font-size:14px}
+.school-section-head small{font-size:11px;line-height:1.45}
+.school-section-aside{font-size:11px}
+.school-section-body{padding:16px}
+.school-fields-grid{gap:14px 12px}
+.school-field{font-size:13px;gap:7px}
+.school-input{height:40px;padding:0 10px;font-size:13px}
+.school-textarea{height:86px;padding:10px;line-height:1.5}
+.school-upload-box{min-height:155px;gap:9px}
+.school-upload-box strong{font-size:12px}
+.school-upload-box small,.school-logo-upload>small{font-size:11px;line-height:1.5}
+.school-file-button{font-size:11px;padding:7px 11px}
+.school-notice{padding:13px;gap:11px}
+.school-notice strong{font-size:12px}
+.school-notice p{font-size:12px;line-height:1.6}
+.school-subtitle{font-size:13px;margin:15px 0 9px}
+.school-chip-row{gap:7px}
+.school-check{font-size:12px;padding:7px 9px;gap:7px}
+.school-check input,.school-module input{width:15px;height:15px}
+.school-module-grid{gap:8px}
+.school-module{font-size:12px;min-height:42px;padding:9px;gap:9px}
+.school-billing{font-size:11px;gap:6px}
+.school-billing button{font-size:11px;padding:7px 9px}
+.school-plan-grid{gap:9px}
+.school-plan{min-height:190px;padding:12px 10px;gap:9px}
+.school-plan>small{font-size:9px}
+.school-plan>strong{font-size:13px}
+.school-plan>b{font-size:23px}
+.school-plan>b small{font-size:10px}
+.school-plan>span{font-size:11px}
+.school-plan p{font-size:10px;line-height:1.55}
+.school-plan em{font-size:10px;padding:7px 3px}
+.school-module-pill{font-size:11px;padding:6px 10px}
+.school-subdomain span{font-size:11px}
+.school-toggle-row{font-size:12px;min-height:44px;padding:10px}
+.school-toggle-row input{flex-basis:29px;width:29px;height:16px}
+.school-toggle-row input:before{width:12px;height:12px;top:2px;left:2px}
+.school-toggle-row input:checked:before{left:15px}
+.school-gateway-ready{font-size:11px;padding:11px}
+.school-bottom-actions .school-action{min-height:42px}
+@media(max-width:560px){
+ .school-form-top h1{font-size:28px}
+ .school-section-head strong{font-size:13px}
+ .school-section-head small{font-size:10px}
+ .school-fields-grid,.school-fields-grid.three{gap:12px}
+ .school-field{font-size:13px}
+ .school-input{font-size:14px;height:42px}
+ .school-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .school-plan{min-height:175px}
+}
