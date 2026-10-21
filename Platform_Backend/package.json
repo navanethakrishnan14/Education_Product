@@ -15,9 +15,6 @@
     "type-check": "prisma generate && tsc --noEmit",
     "db:setup": "ts-node src/seed.ts"
   },
-  "prisma": {
-    "seed": "ts-node src/seed.ts"
-  },
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "bcryptjs": "^2.4.3",
