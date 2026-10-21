@@ -27,6 +27,7 @@ model SchoolTenant {
   workspaceUrl String     @unique @map("workspace_url")
   status      String      @default("active")
   planName    String?     @map("plan_name")
+  details     Json?
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
   users       TenantUser[]
