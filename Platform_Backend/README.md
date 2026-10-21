@@ -9,11 +9,12 @@ Node.js + Express + TypeScript API backed by PostgreSQL and Prisma. Routes are a
 
 ## Local setup
 1. Copy `.env.example` to `.env` and set `DATABASE_URL`, a strong `JWT_SECRET` (32+ characters), and the allowed frontend origin in `CORS_ORIGIN`.
-2. Create a PostgreSQL database named `edusphere_platform` (or update the URL).
-3. Run `npm install`.
-4. Run `npm run db:generate`.
-5. Run `npm run db:setup` to synchronize the Prisma schema with the configured PostgreSQL database and seed the initial platform administrator. This is intended for first-time development setup; review schema changes before using `prisma db push` on a database with existing data.
-6. Run `npm run dev`.
+2. Run `npm install`.
+3. Run `npm run db:generate`.
+4. Run `npm run db:setup`. This safely creates the `platform_users` table if it is missing and seeds the initial platform administrator. It does not reset or synchronize unrelated existing tables.
+5. Run `npm run dev`.
+
+**Existing database warning:** Do not run `prisma db push --force-reset` on a database with data. The tenant schema may belong to another part of the education platform; reconcile those tables separately before applying broad schema changes.
 
 API base URL: `http://localhost:4000/api/v1`
 
