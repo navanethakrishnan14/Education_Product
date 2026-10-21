@@ -66,7 +66,7 @@ function SchoolCreateForm() {
     const token=sessionStorage.getItem("platform_token");
     const response=await fetch(base+"/schools",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:JSON.stringify({...form,tenantType:"school",workspaceUrl:form.subdomain?form.subdomain+".edusphere.cloud":form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-")+".edusphere.cloud"})});
     const result=await response.json();if(!response.ok)throw new Error(result.message||"Unable to create school.");
-    setMessage("School tenant created successfully.");setTimeout(()=>nav("/dashboard/tenant"),700);
+    setMessage("School tenant created successfully. Code: " + (result.data?.code || form.code));setTimeout(()=>nav("/dashboard/tenant"),700);
   }catch(err){setMessage(err instanceof Error?err.message:"Unable to create school.");}finally{setBusy(false);}}
   const draft=()=>{sessionStorage.setItem("school_form_draft",JSON.stringify(form));setMessage("Draft saved in this browser.");};
   return <div className="school-form-page">
@@ -153,7 +153,7 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Unable to create " + title.toLowerCase() + ".");
-      setMessage(title + " tenant created successfully.");
+      setMessage(title + " tenant created successfully. Code: " + (result.data?.code || form.code));
       window.setTimeout(() => nav("/dashboard/tenant"), 700);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Unable to create " + title.toLowerCase() + ".");
