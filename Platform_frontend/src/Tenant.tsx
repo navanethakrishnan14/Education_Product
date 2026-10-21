@@ -212,5 +212,53 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
 function TenantTypeDetail(){const {type}=useParams();const tenant=tenantTypes.find(x=>x.slug===type);if(!tenant)return <section className="section-card"><h1>Tenant type not found</h1><Link to="/dashboard/tenant">Back to Tenant</Link></section>;const Icon=tenant.icon;
  return <section className="tenant-detail-page"><Link className="back-link" to="/dashboard/tenant"><ArrowLeft size={16}/> All tenant types</Link>{type==="school"?<SchoolCreateForm/>:<GenericTenantCreateForm type={type || "institution"} title={tenant.title}/>}</section>;
 }
-function TenantTypeChooser(){return <section className="tenant-page"><div className="tenant-page-heading"><div><p className="eyebrow">TENANT MANAGEMENT</p><h1>Choose tenant type</h1><p className="muted">Select the kind of education organization you want to manage.</p></div><span className="platform-status"><i/> Tenant workspace</span></div><div className="tenant-type-grid">{tenantTypes.map(item=>{const Icon=item.icon;return <Link className="tenant-type-card" to={`/dashboard/tenant/${item.slug}`} key={item.slug}><span className={"tenant-type-icon "+item.tone}><Icon size={23}/></span><span className="tenant-type-copy"><strong>{item.title}</strong><small>{item.description}</small></span><ArrowRight className="tenant-type-arrow" size={18}/></Link>;})}</div></section>;}
+
+function TenantDirectory() {
+  type TenantRow = { id:string; name:string; code?:string|null; tenantType?:string|null; officialEmail?:string|null; workspaceUrl:string; status:string; planName?:string|null; details?:Record<string, unknown>|null };
+  const [items,setItems] = useState<TenantRow[]>([]);
+  const [loading,setLoading] = useState(true);
+  const [error,setError] = useState("");
+  const [notice,setNotice] = useState("");
+  const [editing,setEditing] = useState<TenantRow|null>(null);
+  const [saving,setSaving] = useState(false);
+  const [search,setSearch] = useState("");
+  const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
+  const auth = () => { const token=sessionStorage.getItem("platform_token"); return token ? {Authorization:"Bearer "+token} : {}; };
+  async function load() {
+    setLoading(true); setError("");
+    try { const response=await fetch(base+"/schools?limit=100&page=1",{headers:auth()}); const result=await response.json(); if(!response.ok) throw new Error(result.message||"Unable to load tenants."); setItems(Array.isArray(result.data)?result.data:[]); }
+    catch(e){setError(e instanceof Error?e.message:"Unable to load tenants.");} finally {setLoading(false);}
+  }
+  useEffect(()=>{void load();},[]);
+  async function remove(item:TenantRow) {
+    if(!window.confirm('Delete "'+item.name+'"? This permanently removes the tenant record.')) return;
+    setNotice(""); setError("");
+    try { const response=await fetch(base+"/schools/"+encodeURIComponent(item.id),{method:"DELETE",headers:auth()}); const result=await response.json(); if(!response.ok) throw new Error(result.message||"Unable to delete tenant."); setItems(old=>old.filter(x=>x.id!==item.id)); setNotice("Tenant deleted successfully."); }
+    catch(e){setError(e instanceof Error?e.message:"Unable to delete tenant.");}
+  }
+  async function save(e:FormEvent<HTMLFormElement>) {
+    e.preventDefault(); if(!editing)return; setSaving(true);setError("");setNotice("");
+    try { const response=await fetch(base+"/schools/"+encodeURIComponent(editing.id),{method:"PATCH",headers:{"Content-Type":"application/json",...auth()},body:JSON.stringify({name:editing.name,officialEmail:editing.officialEmail,workspaceUrl:editing.workspaceUrl,status:editing.status,planName:editing.planName})}); const result=await response.json(); if(!response.ok) throw new Error(result.message||"Unable to update tenant."); setItems(old=>old.map(x=>x.id===editing.id?result.data:x));setEditing(null);setNotice("Tenant updated successfully."); }
+    catch(e){setError(e instanceof Error?e.message:"Unable to update tenant.");}finally{setSaving(false);}
+  }
+  const visible=items.filter(x=>[x.name,x.code,x.officialEmail,x.workspaceUrl,x.tenantType].some(v=>String(v||"").toLowerCase().includes(search.toLowerCase())));
+  return <section className="section-card" style={{marginTop:24}}>
+    <div className="tenant-page-heading"><div><p className="eyebrow">REGISTERED ORGANIZATIONS</p><h2>Tenant directory</h2><p className="muted">Edit tenant details or permanently delete a tenant.</p></div><button className="school-action secondary" type="button" onClick={()=>void load()}>Refresh</button></div>
+    <div style={{margin:"14px 0"}}><input className="school-input" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name, code, email or workspace…" aria-label="Search tenants"/></div>
+    {notice&&<p className="school-message success" role="status">{notice}</p>}{error&&<p className="school-message error" role="alert">{error}</p>}
+    {loading?<p className="muted">Loading tenants…</p>:visible.length===0?<div className="empty-state"><h3>No tenants found</h3><p>Create a tenant above or change your search.</p></div>:
+    <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",textAlign:"left",minWidth:780}}><thead><tr>{["Tenant","Code","Type","Official Email","Status","Actions"].map(x=><th key={x} style={{padding:"12px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}>{x}</th>)}</tr></thead><tbody>{visible.map(item=><tr key={item.id}>
+      <td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}><strong>{item.name}</strong><div className="muted" style={{fontSize:12}}>{item.workspaceUrl}</div></td>
+      <td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}>{item.code||"—"}</td><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)",textTransform:"capitalize"}}>{item.tenantType||"school"}</td><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}>{item.officialEmail||"—"}</td><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}><span className="coming">{item.status||"inactive"}</span></td>
+      <td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)",whiteSpace:"nowrap"}}><button className="school-action secondary" type="button" onClick={()=>setEditing({...item})} style={{marginRight:8}}>Edit</button><button className="school-action secondary" type="button" onClick={()=>void remove(item)} style={{color:"#b91c1c"}}>Delete</button></td>
+    </tr>)}</tbody></table></div>}
+    {editing&&<div role="dialog" aria-modal="true" aria-labelledby="edit-tenant-title" style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(15,23,42,.48)",display:"grid",placeItems:"center",padding:20}}><form onSubmit={save} className="section-card" style={{width:"min(620px,100%)",maxHeight:"90vh",overflowY:"auto",background:"white",boxShadow:"0 24px 80px rgba(0,0,0,.2)"}}>
+      <h2 id="edit-tenant-title">Edit tenant</h2><p className="muted">Tenant code and organization type cannot be changed.</p>
+      <div className="school-fields-grid"><Field label="Tenant Name" required><TextInput required minLength={2} value={editing.name} onChange={e=>setEditing({...editing,name:e.target.value})}/></Field><Field label="Official Email" required><TextInput required type="email" value={editing.officialEmail||""} onChange={e=>setEditing({...editing,officialEmail:e.target.value})}/></Field><Field label="Workspace URL" required><TextInput required value={editing.workspaceUrl} onChange={e=>setEditing({...editing,workspaceUrl:e.target.value.toLowerCase()})}/></Field><Field label="Status" required><SelectInput value={editing.status} onChange={e=>setEditing({...editing,status:e.target.value})}><option value="active">Active</option><option value="inactive">Inactive</option><option value="suspended">Suspended</option></SelectInput></Field><Field label="Plan"><TextInput value={editing.planName||""} onChange={e=>setEditing({...editing,planName:e.target.value})} placeholder="Free Trial"/></Field></div>
+      <div className="school-bottom-actions"><button className="school-action secondary" type="button" onClick={()=>setEditing(null)}>Cancel</button><button className="school-action primary-school" type="submit" disabled={saving}>{saving?"Saving…":"Save Changes"}</button></div>
+    </form></div>}
+  </section>;
+}
+
+function TenantTypeChooser(){return <section className="tenant-page"><div className="tenant-page-heading"><div><p className="eyebrow">TENANT MANAGEMENT</p><h1>Choose tenant type</h1><p className="muted">Select the kind of education organization you want to manage.</p></div><span className="platform-status"><i/> Tenant workspace</span></div><div className="tenant-type-grid">{tenantTypes.map(item=>{const Icon=item.icon;return <Link className="tenant-type-card" to={`/dashboard/tenant/${item.slug}`} key={item.slug}><span className={"tenant-type-icon "+item.tone}><Icon size={23}/></span><span className="tenant-type-copy"><strong>{item.title}</strong><small>{item.description}</small></span><ArrowRight className="tenant-type-arrow" size={18}/></Link>;})}</div></section><TenantDirectory/>;}
 export default function Tenant(){return <Routes><Route index element={<TenantTypeChooser/>}/><Route path=":type" element={<TenantTypeDetail/>}/></Routes>;}
