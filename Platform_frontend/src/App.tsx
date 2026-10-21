@@ -88,7 +88,7 @@ function OverviewPage() {
     let cancelled = false;
     async function loadTenants() {
       try {
-        const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\\/$/, "");
+        const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
         const token = sessionStorage.getItem("platform_token");
         const response = await fetch(base + "/schools?limit=5&page=1", {
           headers: token ? { Authorization: "Bearer " + token } : {}
