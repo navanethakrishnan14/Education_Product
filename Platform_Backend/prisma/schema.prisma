@@ -28,6 +28,11 @@ model SchoolTenant {
   status      String      @default("active")
   planName    String?     @map("plan_name")
   details     Json?
+  officialEmail String? @unique @map("official_email")
+  adminPasswordHash String? @map("admin_password_hash")
+  passwordSetupTokenHash String? @unique @map("password_setup_token_hash")
+  passwordSetupExpiresAt DateTime? @map("password_setup_expires_at")
+  passwordSetAt DateTime? @map("password_set_at")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
   users       TenantUser[]

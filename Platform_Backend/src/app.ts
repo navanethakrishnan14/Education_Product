@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import schoolsRoutes from "./routes/schools.routes";
 import usersRoutes from "./routes/users.routes";
+import passwordSetupRoutes from "./routes/password-setup.routes";
 
 export const app = express();
 app.disable("x-powered-by");
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 app.get("/health", (_req, res) => res.json({ success: true, status: "ok", service: "edusphere-platform-api", timestamp: new Date().toISOString() }));
 app.use("/api/v1/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false }), authRoutes);
+app.use("/api/v1/password-setup", rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: true, legacyHeaders: false }), passwordSetupRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/schools", schoolsRoutes);
 app.use("/api/v1/users", usersRoutes);

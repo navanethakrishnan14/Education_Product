@@ -41,6 +41,13 @@ async function main() {
   `);
   // Safe additive change for installations where the table already existed.
   await prisma.$executeRawUnsafe(`ALTER TABLE public.school_tenants ADD COLUMN IF NOT EXISTS details JSONB`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE public.school_tenants ADD COLUMN IF NOT EXISTS official_email TEXT`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE public.school_tenants ADD COLUMN IF NOT EXISTS admin_password_hash TEXT`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE public.school_tenants ADD COLUMN IF NOT EXISTS password_setup_token_hash TEXT`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE public.school_tenants ADD COLUMN IF NOT EXISTS password_setup_expires_at TIMESTAMP(3)`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE public.school_tenants ADD COLUMN IF NOT EXISTS password_set_at TIMESTAMP(3)`);
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS school_tenants_official_email_key ON public.school_tenants(official_email)`);
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS school_tenants_password_setup_token_hash_key ON public.school_tenants(password_setup_token_hash)`);
 
   const email = env.PLATFORM_ADMIN_EMAIL.toLowerCase();
   const passwordHash = await bcrypt.hash(env.PLATFORM_ADMIN_PASSWORD, 12);
