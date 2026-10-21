@@ -26,6 +26,8 @@ async function ensurePlatformUsersTable() {
 
 async function main() {
   await ensurePlatformUsersTable();
+  // Add the school-registration payload column without resetting existing tenant data.
+  await prisma.$executeRawUnsafe(`ALTER TABLE public.school_tenants ADD COLUMN IF NOT EXISTS details JSONB`);
 
   const email = env.PLATFORM_ADMIN_EMAIL.toLowerCase();
   const passwordHash = await bcrypt.hash(env.PLATFORM_ADMIN_PASSWORD, 12);
