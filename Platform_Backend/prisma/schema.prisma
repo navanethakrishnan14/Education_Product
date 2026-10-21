@@ -24,6 +24,8 @@ model PlatformUser {
 model SchoolTenant {
   id          String      @id @default(cuid())
   name        String
+  code        String?     @unique @map("tenant_code")
+  tenantType  String      @default("school") @map("tenant_type")
   workspaceUrl String     @unique @map("workspace_url")
   status      String      @default("active")
   planName    String?     @map("plan_name")
@@ -54,4 +56,16 @@ model TenantUser {
   @@unique([schoolTenantId, email])
   @@index([schoolTenantId])
   @@map("tenant_users")
+}
+
+model TenantCodeCounter {
+  id         String   @id @default(cuid())
+  tenantType String   @map("tenant_type")
+  year       Int
+  lastNumber Int      @default(0) @map("last_number")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantType, year])
+  @@map("tenant_code_counters")
 }
