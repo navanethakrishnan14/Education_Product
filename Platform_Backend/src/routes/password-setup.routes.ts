@@ -13,6 +13,45 @@ const schema = z.object({
     .regex(/[^A-Za-z0-9]/, "Use at least one special character.")
 });
 
+router.get("/validate", async (req, res, next) => {
+  try {
+    const parsed = z.object({ token: z.string().min(32).max(256) }).safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, message: "This password setup link is missing a valid token. Open the full link from your email." });
+    }
+
+    const tokenHash = createHash("sha256").update(parsed.data.token).digest("hex");
+    const tenant = await prisma.schoolTenant.findFirst({
+      where: { passwordSetupTokenHash: tokenHash },
+      select: {
+        name: true,
+        officialEmail: true,
+        workspaceUrl: true,
+        passwordSetupExpiresAt: true
+      }
+    });
+
+    if (!tenant) {
+      return res.status(400).json({ success: false, message: "This password setup link is invalid or has already been used. Ask the platform administrator to send a new email." });
+    }
+    if (!tenant.passwordSetupExpiresAt || tenant.passwordSetupExpiresAt <= new Date()) {
+      return res.status(410).json({ success: false, message: "This password setup link has expired. Ask the platform administrator to send a new email." });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        organizationName: tenant.name,
+        officialEmail: tenant.officialEmail,
+        workspaceUrl: tenant.workspaceUrl,
+        expiresAt: tenant.passwordSetupExpiresAt
+      }
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.post("/", async (req, res, next) => {
   try {
     const parsed = schema.safeParse(req.body);
