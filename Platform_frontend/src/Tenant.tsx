@@ -2,6 +2,14 @@ import { useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowRight, GraduationCap, Landmark, Globe2, UploadCloud, Save, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Link, Route, Routes, useNavigate, useParams } from "react-router-dom";
 
+function generateTenantCode(type: string) {
+  const prefix = type === "school" ? "SCH" : type === "college" ? "COL" : "INS";
+  const year = new Date().getFullYear();
+  const suffix = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase()
+    : Math.random().toString(36).slice(2, 8).toUpperCase().padEnd(6, "0");
+  return prefix + "-" + year + "-" + suffix;
+}
 const tenantTypes = [
   { slug: "school", title: "School", description: "Manage school tenants, classes, faculty and students.", icon: GraduationCap, tone: "violet" },
   { slug: "college", title: "College", description: "Manage colleges, departments, programs and campus users.", icon: Landmark, tone: "teal" },
@@ -30,7 +38,7 @@ function Section({number,title,subtitle,aside,children}:{number:number;title:str
 function TextInput(props:React.InputHTMLAttributes<HTMLInputElement>){return <input {...props} className={"school-input "+(props.className||"")}/>;}
 function SelectInput({children,...props}:React.SelectHTMLAttributes<HTMLSelectElement> & {children:React.ReactNode}){return <select {...props} className="school-input">{children}</select>;}
 function SchoolCreateForm() {
-  const [form,setForm]=useState<SchoolForm>(initial); const [busy,setBusy]=useState(false); const [message,setMessage]=useState(""); const [logoName,setLogoName]=useState(""); const nav=useNavigate();
+  const [form,setForm]=useState<SchoolForm>(()=>({...initial,code:generateTenantCode("school")})); const [busy,setBusy]=useState(false); const [message,setMessage]=useState(""); const [logoName,setLogoName]=useState(""); const nav=useNavigate();
   const update=(key:keyof SchoolForm,value:unknown)=>setForm(old=>({...old,[key]:value}));
   const toggle=(key:"workingDays"|"modules",value:string)=>update(key,form[key].includes(value)?form[key].filter(v=>v!==value):[...form[key],value]);
   async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setMessage("");try{
@@ -48,7 +56,7 @@ function SchoolCreateForm() {
       <Section number={1} title="Basic School Information" subtitle="Foundational credentials and institutional identity" aside="Mandatory Section">
         <div className="school-basic-grid"><div className="school-fields-grid">
           <Field label="School Name" required><TextInput required value={form.name} onChange={e=>update("name",e.target.value)} placeholder="Green Valley International Academy"/></Field>
-          <Field label="School Code" required><TextInput required value={form.code} onChange={e=>update("code",e.target.value.toUpperCase())} placeholder="SCH-2026-GVIA"/></Field>
+          <Field label="School Code" required><TextInput required value={form.code} readOnly aria-readonly="true" /><small>Generated automatically. This code cannot be edited.</small></Field>
           <Field label="School Type" required><SelectInput value={form.schoolType} onChange={e=>update("schoolType",e.target.value)}><option>Private</option><option>Public</option><option>Government</option><option>Government Aided</option><option>International</option></SelectInput></Field>
           <Field label="Board / Curriculum" required><SelectInput value={form.board} onChange={e=>update("board",e.target.value)}>{["State Board","CBSE","ICSE","IB (International Baccalaureate)","Cambridge (IGCSE)","Other"].map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
           <Field label="School Category" required><SelectInput value={form.category} onChange={e=>update("category",e.target.value)}>{["K-12","Primary","Middle School","Secondary","Higher Secondary","Preschool"].map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
@@ -93,7 +101,7 @@ function SchoolCreateForm() {
 
 function GenericTenantCreateForm({ type, title }: { type: string; title: string }) {
   const [form, setForm] = useState({
-    name: "", code: "", category: type === "college" ? "Arts & Science College" : "Educational Institution",
+    name: "", code: generateTenantCode(type), category: type === "college" ? "Arts & Science College" : "Educational Institution",
     affiliation: "", recognitionNumber: "", website: "", email: "", phone: "", alternatePhone: "",
     address1: "", address2: "", city: "", district: "", state: "", country: "", postalCode: "",
     adminName: "", adminTitle: type === "college" ? "Principal" : "Director", adminEmail: "", adminPhone: "",
@@ -131,7 +139,7 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
       <Section number={1} title={label + " Information"} subtitle="Organization identity, classification and contact details" aside="Organization Details">
         <div className="school-fields-grid">
           <Field label={label + " Name"} required><TextInput required value={form.name} onChange={e=>update("name",e.target.value)} placeholder={type === "college" ? "Example Arts and Science College" : "Example Educational Institution"}/></Field>
-          <Field label={label + " Code"} required><TextInput required value={form.code} onChange={e=>update("code",e.target.value.toUpperCase())} placeholder={type === "college" ? "COL-2026-001" : "INS-2026-001"}/></Field>
+          <Field label={label + " Code"} required><TextInput required value={form.code} readOnly aria-readonly="true" /><small>Generated automatically. This code cannot be edited.</small></Field>
           <Field label={label + " Type"} required><SelectInput required value={form.category} onChange={e=>update("category",e.target.value)}>{(type === "college" ? ["Arts & Science College","Engineering College","Medical College","Polytechnic College","Teacher Training College","Community College","Other"] : ["Educational Institution","Training Institute","Research Institution","Coaching Centre","Vocational Institute","Professional Institute","Other"]).map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
           <Field label={type === "college" ? "University / Affiliation" : "Affiliating / Governing Body"}><TextInput value={form.affiliation} onChange={e=>update("affiliation",e.target.value)} placeholder="Affiliating university or governing body"/></Field>
           <Field label="Recognition / Registration Number"><TextInput value={form.recognitionNumber} onChange={e=>update("recognitionNumber",e.target.value)} placeholder="Recognition or registration ID"/></Field>
