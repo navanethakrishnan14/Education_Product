@@ -214,13 +214,14 @@ function TenantTypeDetail(){const {type}=useParams();const tenant=tenantTypes.fi
 }
 
 function TenantDirectory() {
-  type TenantRow = { id:string; name:string; code?:string|null; tenantType?:string|null; officialEmail?:string|null; workspaceUrl:string; status:string; planName?:string|null; details?:Record<string, unknown>|null };
+  type TenantRow = { id:string; name:string; code?:string|null; tenantType?:string|null; officialEmail?:string|null; workspaceUrl:string; status:string; planName?:string|null; passwordSetAt?:string|null; details?:Record<string, unknown>|null };
   const [items,setItems] = useState<TenantRow[]>([]);
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState("");
   const [notice,setNotice] = useState("");
   const [editing,setEditing] = useState<TenantRow|null>(null);
   const [saving,setSaving] = useState(false);
+  const [resendingId,setResendingId] = useState<string|null>(null);
   const [search,setSearch] = useState("");
   const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
   const auth = (): Record<string, string> => { const token=sessionStorage.getItem("platform_token"); return token ? { Authorization: "Bearer " + token } : {}; };
@@ -236,6 +237,19 @@ function TenantDirectory() {
     try { const response=await fetch(base+"/schools/"+encodeURIComponent(item.id),{method:"DELETE",headers:auth()}); const result=await response.json(); if(!response.ok) throw new Error(result.message||"Unable to delete tenant."); setItems(old=>old.filter(x=>x.id!==item.id)); setNotice("Tenant deleted successfully."); }
     catch(e){setError(e instanceof Error?e.message:"Unable to delete tenant.");}
   }
+  async function resendSetup(item:TenantRow) {
+    setResendingId(item.id); setError(""); setNotice("");
+    try {
+      const response=await fetch(base+"/schools/"+encodeURIComponent(item.id)+"/password-setup/resend",{method:"POST",headers:auth()});
+      const result=await response.json();
+      if(!response.ok) throw new Error(result.message||"Unable to send the password setup email.");
+      setNotice(result.message||"Password setup email sent.");
+    } catch(e) {
+      setError(e instanceof Error?e.message:"Unable to send the password setup email.");
+    } finally {
+      setResendingId(null);
+    }
+  }
   async function save(e:FormEvent<HTMLFormElement>) {
     e.preventDefault(); if(!editing)return; setSaving(true);setError("");setNotice("");
     try { const response=await fetch(base+"/schools/"+encodeURIComponent(editing.id),{method:"PATCH",headers:{"Content-Type":"application/json",...auth()},body:JSON.stringify({name:editing.name,officialEmail:editing.officialEmail,workspaceUrl:editing.workspaceUrl,status:editing.status,planName:editing.planName})}); const result=await response.json(); if(!response.ok) throw new Error(result.message||"Unable to update tenant."); setItems(old=>old.map(x=>x.id===editing.id?result.data:x));setEditing(null);setNotice("Tenant updated successfully."); }
@@ -250,7 +264,7 @@ function TenantDirectory() {
     <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",textAlign:"left",minWidth:780}}><thead><tr>{["Tenant","Code","Type","Official Email","Status","Actions"].map(x=><th key={x} style={{padding:"12px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}>{x}</th>)}</tr></thead><tbody>{visible.map(item=><tr key={item.id}>
       <td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}><strong>{item.name}</strong><div className="muted" style={{fontSize:12}}>{item.workspaceUrl}</div></td>
       <td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}>{item.code||"—"}</td><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)",textTransform:"capitalize"}}>{item.tenantType||"school"}</td><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}>{item.officialEmail||"—"}</td><td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)"}}><span className="coming">{item.status||"inactive"}</span></td>
-      <td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)",whiteSpace:"nowrap"}}><button className="school-action secondary" type="button" onClick={()=>setEditing({...item})} style={{marginRight:8}}>Edit</button><button className="school-action secondary" type="button" onClick={()=>void remove(item)} style={{color:"#b91c1c"}}>Delete</button></td>
+      <td style={{padding:"13px 10px",borderBottom:"1px solid var(--border, #e5e7eb)",whiteSpace:"nowrap"}}><button className="school-action secondary" type="button" onClick={()=>setEditing({...item})} style={{marginRight:8}}>Edit</button><button className="school-action secondary" type="button" onClick={()=>void remove(item)} style={{color:"#b91c1c",marginRight:8}}>Delete</button>{!item.passwordSetAt&&<button className="school-action secondary" type="button" onClick={()=>void resendSetup(item)} disabled={resendingId===item.id}>{resendingId===item.id?"Sending…":"Resend setup email"}</button>}</td>
     </tr>)}</tbody></table></div>}
     {editing&&<div role="dialog" aria-modal="true" aria-labelledby="edit-tenant-title" style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(15,23,42,.48)",display:"grid",placeItems:"center",padding:20}}><form onSubmit={save} className="section-card" style={{width:"min(620px,100%)",maxHeight:"90vh",overflowY:"auto",background:"white",boxShadow:"0 24px 80px rgba(0,0,0,.2)"}}>
       <h2 id="edit-tenant-title">Edit tenant</h2><p className="muted">Tenant code and organization type cannot be changed.</p>
