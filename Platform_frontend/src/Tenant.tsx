@@ -17,7 +17,7 @@ type SchoolForm = {
 };
 const initial: SchoolForm = {
   name:"",code:"",schoolType:"Private",board:"State Board",category:"K-12",medium:"English",establishedYear:"",website:"",email:"",phone:"",alternatePhone:"",description:"",
-  address1:"",address2:"",landmark:"",city:"",district:"",state:"Tamil Nadu",country:"India",postalCode:"",
+  address1:"",address2:"",landmark:"",city:"",district:"",state:"",country:"",postalCode:"",
   adminName:"",adminTitle:"Principal / Head of School",adminEmail:"",adminPhone:"",
   academicYear:"2026-2027",startDate:"2026-06-01",endDate:"2027-04-30",workingDays:["Mon","Tue","Wed","Thu","Fri"],startTime:"08:00",endTime:"15:30",periods:"8 Periods",fromClass:"Kindergarten",toClass:"Grade 12",modules:["Sections","Student Attendance Matrix","Teacher Attendance Tracking","Online Fee Gateway","Exams & Grade Books","Parent Portal Access","Student Portal Access"],
   plan:"Premium",billing:"Yearly",subdomain:"",activationStatus:"Pending",allowAdmin:true,allowFaculty:true,allowStudent:true,allowParent:true,emailNotifications:true,smsNotifications:true,inAppNotifications:true,notes:""
