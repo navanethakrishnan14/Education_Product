@@ -65,7 +65,7 @@ router.post("/", async (req, res, next) => {
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
     const updated = await prisma.schoolTenant.updateMany({
       where: { id: tenant.id, passwordSetupTokenHash: tokenHash, passwordSetupExpiresAt: { gt: new Date() } },
-      data: { adminPasswordHash: passwordHash, passwordSetAt: new Date(), passwordSetupTokenHash: null, passwordSetupExpiresAt: null }
+      data: { adminPasswordHash: passwordHash, passwordSetAt: new Date(), status: "active", passwordSetupTokenHash: null, passwordSetupExpiresAt: null }
     });
     if (updated.count !== 1) return res.status(400).json({ success: false, message: "This setup link has already been used or has expired. Ask the platform administrator for a new link." });
     return res.json({ success: true, message: "Password created successfully. You can now continue to your organization login.", data: { organizationName: tenant.name, email: tenant.officialEmail } });
