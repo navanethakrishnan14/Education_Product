@@ -77,6 +77,18 @@ export default function SetPassword() {
     return () => { cancelled = true; };
   }, [base, token, retryValidation]);
 
+  useEffect(() => {
+    if (linkState !== "success") return;
+
+    // Once the password is saved, move the user to the Management login
+    // served by Tenant_frontend. Keep the visible link as a fallback.
+    const redirectTimer = window.setTimeout(() => {
+      window.location.replace(tenantPortalLogin);
+    }, 1200);
+
+    return () => window.clearTimeout(redirectTimer);
+  }, [linkState, tenantPortalLogin]);
+
   const requirements = [
     { label: "At least 8 characters", valid: password.length >= 8 },
     { label: "One uppercase letter (A–Z)", valid: /[A-Z]/.test(password) },
@@ -195,10 +207,10 @@ export default function SetPassword() {
 
       {completed && <>
         <div className="login-note" style={{textAlign:"left"}}>
-          <CheckCircle2 size={15}/> Password setup is complete for the official email shown above. You can now sign in through the Management portal.
+          <CheckCircle2 size={15}/> Password setup is complete. Redirecting you to the Tenant Management Login now…
         </div>
         <a href={tenantPortalLogin} className="primary" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,textDecoration:"none",marginTop:16}}>
-          Continue to Management sign-in <ArrowRight size={16}/>
+          Go to Management sign-in now <ArrowRight size={16}/>
         </a>
         <p className="muted" style={{fontSize:13,textAlign:"left",marginTop:12}}>
           If the organization is still Pending or Inactive, the platform administrator must activate it before Management sign-in will be allowed.
