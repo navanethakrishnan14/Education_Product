@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "node scripts/start-dev.mjs",
+    "dev:platform": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
