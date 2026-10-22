@@ -31,30 +31,32 @@ router.post("/login", async (req, res, next) => {
       return res.status(401).json({ success: false, message: "Invalid official email or password." });
     }
 
-    if (tenant.status.toLowerCase() !== "active") {
-      return res.status(403).json({
-        success: false,
-        message: "Your password is set, but this organization is not active yet. Ask the platform administrator to activate the organization before signing in."
-      });
-    }
+    // Temporary default until the platform adds an Active/Inactive toggle:
+    // successful Management authentication ensures this tenant is marked active.
+    const activeTenant = tenant.status.toLowerCase() === "active"
+      ? tenant
+      : await prisma.schoolTenant.update({
+          where: { id: tenant.id },
+          data: { status: "active" }
+        });
 
     const token = jwt.sign(
-      { role: "MANAGEMENT", tenantId: tenant.id, tenantCode: tenant.code, tenantType: tenant.tenantType },
+      { role: "MANAGEMENT", tenantId: activeTenant.id, tenantCode: activeTenant.code, tenantType: activeTenant.tenantType },
       env.JWT_SECRET,
-      { subject: tenant.id, expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"] }
+      { subject: activeTenant.id, expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"] }
     );
 
     return res.json({
       success: true,
       token,
       user: {
-        id: tenant.id,
-        tenantId: tenant.id,
-        tenantCode: tenant.code,
-        name: tenant.name,
-        email: tenant.officialEmail,
+        id: activeTenant.id,
+        tenantId: activeTenant.id,
+        tenantCode: activeTenant.code,
+        name: activeTenant.name,
+        email: activeTenant.officialEmail,
         role: "MANAGEMENT",
-        tenantType: tenant.tenantType
+        tenantType: activeTenant.tenantType
       }
     });
   } catch (error) {
