@@ -15,7 +15,8 @@
     "type-check": "prisma generate && tsc --noEmit",
     "db:setup": "ts-node src/seed.ts",
     "db:prepare": "prisma db execute --file prisma/prepare-schema.sql --schema prisma/schema.prisma",
-    "db:push:safe": "npm run db:prepare && prisma db push --schema prisma/schema.prisma --skip-generate"
+    "db:push:safe": "npm run db:prepare && prisma db push --schema prisma/schema.prisma --skip-generate",
+    "db:activate-existing-tenants": "prisma db execute --file prisma/activate-existing-tenants.sql --schema prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
