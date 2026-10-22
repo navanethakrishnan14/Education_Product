@@ -117,7 +117,7 @@ router.post("/", async (req, res, next) => {
           code,
           tenantType: input.tenantType,
           workspaceUrl: input.workspaceUrl.toLowerCase(),
-          status: input.activationStatus?.toLowerCase() === "active" ? "active" : input.activationStatus?.toLowerCase() === "suspended" ? "suspended" : "inactive",
+          status: "active", // Active by default until the platform status toggle is implemented.
           planName: input.plan || "Free Trial",
           officialEmail,
           passwordSetupTokenHash: tokenHash,
