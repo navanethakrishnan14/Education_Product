@@ -28,6 +28,16 @@ export default function SetPassword() {
   const token = params.get("token") || "";
   const base = (import.meta.env.VITE_PLATFORM_API_BASE_URL || "http://localhost:4000/api/v1").replace(/\/$/, "");
   const tenantPortalLogin = String(import.meta.env.VITE_TENANT_PORTAL_URL || "http://localhost:5174/login/management").trim();
+  const managementLoginUrl = (() => {
+    try {
+      const url = new URL(tenantPortalLogin, window.location.origin);
+      const officialEmail = organization?.officialEmail?.trim();
+      if (officialEmail) url.searchParams.set("email", officialEmail);
+      return url.toString();
+    } catch {
+      return tenantPortalLogin;
+    }
+  })();
 
   useEffect(() => {
     let cancelled = false;
@@ -83,11 +93,11 @@ export default function SetPassword() {
     // Once the password is saved, move the user to the Management login
     // served by Tenant_frontend. Keep the visible link as a fallback.
     const redirectTimer = window.setTimeout(() => {
-      window.location.replace(tenantPortalLogin);
+      window.location.replace(managementLoginUrl);
     }, 1200);
 
     return () => window.clearTimeout(redirectTimer);
-  }, [linkState, tenantPortalLogin]);
+  }, [linkState, managementLoginUrl]);
 
   const requirements = [
     { label: "At least 8 characters", valid: password.length >= 8 },
@@ -209,7 +219,7 @@ export default function SetPassword() {
         <div className="login-note" style={{textAlign:"left"}}>
           <CheckCircle2 size={15}/> Password setup is complete. Redirecting you to the Tenant Management Login now…
         </div>
-        <a href={tenantPortalLogin} className="primary" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,textDecoration:"none",marginTop:16}}>
+        <a href={managementLoginUrl} className="primary" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,textDecoration:"none",marginTop:16}}>
           Go to Management sign-in now <ArrowRight size={16}/>
         </a>
         <p className="muted" style={{fontSize:13,textAlign:"left",marginTop:12}}>
