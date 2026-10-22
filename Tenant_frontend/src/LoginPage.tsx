@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, ArrowRight, GraduationCap, LockKeyhole, Mail, Eye, HelpCircle, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { FormEvent } from 'react';
@@ -25,19 +25,6 @@ export default function LoginPage({ role, title, color }: { role: LoginRole; tit
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [remember, setRemember] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token');
-    const userRaw = localStorage.getItem('tenant_user') || sessionStorage.getItem('tenant_user');
-    if (!token || !userRaw) return;
-    try {
-      const user = JSON.parse(userRaw) as LoginResponse['user'];
-      if (user?.role === role.toUpperCase()) nav('/workspace', { replace: true });
-    } catch {
-      sessionStorage.removeItem('tenant_token');
-      sessionStorage.removeItem('tenant_user');
-    }
-  }, [nav, role]);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
