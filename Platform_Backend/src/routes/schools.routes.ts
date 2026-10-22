@@ -81,8 +81,16 @@ router.post("/", async (req, res, next) => {
     // Allocate only when creating. A transaction lock prevents duplicate numbers
     // when two admins create the same tenant type at nearly the same time.
     const school = await prisma.$transaction(async (tx) => {
-      const lockKey = "tenant-code:" + input.tenantType + ":" + year;
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+      const counterKey = { tenantType: input.tenantType, year };
+
+      // Upsert the per-type/year counter first. Updating this unique row locks it
+      // for this transaction, serializing concurrent tenant creation without
+      // relying on a raw query that returns PostgreSQL's unsupported "void" type.
+      await tx.tenantCodeCounter.upsert({
+        where: { tenantType_year: counterKey },
+        create: { ...counterKey, lastNumber: 0 },
+        update: { updatedAt: new Date() }
+      });
 
       const existingCodes = await tx.schoolTenant.findMany({
         where: { tenantType: input.tenantType, code: { startsWith: prefix } },
@@ -95,11 +103,11 @@ router.post("/", async (req, res, next) => {
       const nextNumber = lastUsedNumber + 1;
       const code = prefix + String(nextNumber).padStart(4, "0");
 
-      // Reconcile the old counter, which may have been advanced by form visits.
-      await tx.tenantCodeCounter.upsert({
-        where: { tenantType_year: { tenantType: input.tenantType, year } },
-        create: { tenantType: input.tenantType, year, lastNumber: nextNumber },
-        update: { lastNumber: nextNumber }
+      // Reset any old counter inflated by previous form visits; only saved tenant
+      // records determine the next code.
+      await tx.tenantCodeCounter.update({
+        where: { tenantType_year: counterKey },
+        data: { lastNumber: nextNumber }
       });
 
       const details = { ...input, code, email: officialEmail };
@@ -117,7 +125,7 @@ router.post("/", async (req, res, next) => {
           details: details as Prisma.InputJsonValue
         }
       });
-    });
+    });;
     const setupUrl = new URL("/set-password", env.FRONTEND_URL);
     setupUrl.searchParams.set("token", rawToken);
     try {
