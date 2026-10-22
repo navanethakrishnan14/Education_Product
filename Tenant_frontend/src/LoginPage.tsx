@@ -14,7 +14,11 @@ type LoginResponse = {
 
 export default function LoginPage({ role, title, color }: { role: LoginRole; title: string; color: string }) {
   const nav = useNavigate();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    if (role !== 'Management') return '';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('email')?.trim() || '';
+  });
   const [password, setPassword] = useState('');
   const [tenantId, setTenantId] = useState('');
   const [visible, setVisible] = useState(false);
