@@ -300,3 +300,8 @@ body { font-size: 15px; line-height: 1.6; }
  .network-art .feature{width:49%}.network-art .core{width:145px;height:145px}.network-art .core>span{width:54px;height:54px}
  .network-art .chips span{font-size:10px;padding:7px 9px}
 }
+
+
+/* Keep Parent role card in the same blue family as the other role cards */
+.role-icon.teal{background:#dfebff;color:#2458f5}
+.teal-card .continue{color:#2458f5}
