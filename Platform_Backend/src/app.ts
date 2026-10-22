@@ -34,9 +34,38 @@ app.use("/api/v1/users", usersRoutes);
 app.use((_req, res) => res.status(404).json({ success: false, message: "The requested endpoint was not found." }));
 
 const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
-  if (error instanceof SyntaxError && "body" in error) return res.status(400).json({ success: false, message: "Invalid JSON request body." });
-  if (error?.message === "Origin is not allowed by CORS.") return res.status(403).json({ success: false, message: error.message });
-  if (env.NODE_ENV !== "production") console.error(error);
+  if (error instanceof SyntaxError && "body" in error) {
+    return res.status(400).json({ success: false, message: "Invalid JSON request body." });
+  }
+  if (error?.message === "Origin is not allowed by CORS.") {
+    return res.status(403).json({ success: false, message: error.message });
+  }
+
+  const databaseError = error as { code?: string; message?: string; meta?: { target?: string[] | string } };
+  if (databaseError.code === "P2002") {
+    return res.status(409).json({
+      success: false,
+      message: "A tenant with the same unique email, workspace URL or tenant code already exists. Check the tenant details and try again."
+    });
+  }
+  if (databaseError.code === "P2021" || databaseError.code === "P2022") {
+    console.error("Platform database schema is out of date:", databaseError.code, databaseError.message);
+    return res.status(503).json({
+      success: false,
+      message: "The Platform database schema is missing required tenant tables or columns. Stop Platform_Backend, run `npm run db:push:safe` in Platform_Backend, then restart it."
+    });
+  }
+
+  if (env.NODE_ENV !== "production") {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: databaseError.message || "Unexpected Platform API error.",
+      code: databaseError.code
+    });
+  }
+
+  console.error("Unexpected Platform API error:", databaseError.code || "unknown");
   return res.status(500).json({ success: false, message: "An unexpected server error occurred." });
 };
 app.use(errorHandler);
