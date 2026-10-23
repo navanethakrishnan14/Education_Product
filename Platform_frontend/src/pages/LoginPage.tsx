@@ -26,7 +26,7 @@ export default function LoginPage() {
       if (!data.token) throw new Error("The platform API did not return a session token.");
       sessionStorage.setItem("platform_token", data.token);
       sessionStorage.setItem("platform_user", JSON.stringify(data.user || {}));
-      nav("/dashboard/overview");
+      nav("/dashboard");
     } catch (e) {
       setMessage(e instanceof Error && e.message === "Failed to fetch"
         ? "Cannot reach Platform_Backend. Check that it is running and VITE_PLATFORM_API_BASE_URL is correct."
