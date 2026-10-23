@@ -153,39 +153,39 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   const activeIcon = menu.find(item => item.label === active)?.icon || LayoutDashboard;
   const ActiveIcon = activeIcon;
   const initials = (user.name || 'Management').split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase();
-  return <div className="min-h-screen bg-[#f3f1fc] text-[#17143a]" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
+  return <div className="min-h-screen bg-[#e8e2ff] text-[#17143a]" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
     {mobileOpen && <button aria-label="Close navigation overlay" className="fixed inset-0 z-30 bg-[#170c36]/50 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />}
-    <aside className={`fixed inset-y-0 left-0 z-40 flex w-[278px] flex-col overflow-hidden border-r border-violet-100 bg-white text-slate-800 shadow-xl shadow-violet-950/5 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="flex items-center gap-3 border-b border-violet-100 px-5 pb-6 pt-6">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-700 to-fuchsia-600 text-white shadow-lg shadow-violet-200"><GraduationCap size={25} /></div>
-        <div className="min-w-0"><p className="truncate text-[17px] font-extrabold tracking-tight">{tenantType === 'college' ? 'EduManage College' : tenantType === 'institution' ? 'EduManage Institution' : 'EduManage School'}</p><p className="mt-0.5 text-[10px] font-bold tracking-wide text-violet-500">{organizationLabel.toUpperCase()} MANAGEMENT SUITE</p></div>
-        <button className="ml-auto rounded-lg p-1 text-slate-500 hover:bg-violet-50 lg:hidden" aria-label="Close menu" onClick={() => setMobileOpen(false)}><X size={19}/></button>
+    <aside className={`fixed inset-y-0 left-0 z-40 flex w-[278px] flex-col overflow-hidden border-r border-white/10 bg-gradient-to-b from-[#321653] via-[#3b1b5d] to-[#4b2165] text-white shadow-xl shadow-violet-950/20 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className="flex items-center gap-3 border-b border-white/10 px-5 pb-6 pt-6">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/15 text-white shadow-lg shadow-black/10"><GraduationCap size={25} /></div>
+        <div className="min-w-0"><p className="truncate text-[17px] font-extrabold tracking-tight">{tenantType === 'college' ? 'EduManage College' : tenantType === 'institution' ? 'EduManage Institution' : 'EduManage School'}</p><p className="mt-0.5 text-[10px] font-bold tracking-wide text-violet-200">{organizationLabel.toUpperCase()} MANAGEMENT SUITE</p></div>
+        <button className="ml-auto rounded-lg p-1 text-white/70 hover:bg-white/10 lg:hidden" aria-label="Close menu" onClick={() => setMobileOpen(false)}><X size={19}/></button>
       </div>
-      <div className="px-4 pb-2 pt-4"><p className="px-3 text-[10px] font-bold uppercase tracking-[.18em] text-slate-400">{organizationLabel} workspace</p></div>
+      <div className="px-4 pb-2 pt-4"><p className="px-3 text-[10px] font-bold uppercase tracking-[.18em] text-violet-200/70">{organizationLabel} workspace</p></div>
       <nav aria-label="Management navigation" className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
-        {filtered.map(({ label, icon: Icon }) => <button key={label} onClick={() => select(label)} aria-current={active === label ? 'page' : undefined} className={`group flex w-full items-center gap-3 rounded-2xl px-3.5 py-[11px] text-left text-[13px] font-semibold transition-all ${active === label ? 'bg-violet-50 text-violet-900 ring-1 ring-inset ring-violet-100 shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-violet-800'}`}>
-          <span className={`grid h-7 w-7 place-items-center rounded-lg ${active === label ? 'bg-violet-200/70 text-violet-800' : 'text-slate-400 group-hover:bg-violet-50 group-hover:text-violet-700'}`}><Icon size={17}/></span><span className="flex-1">{label}</span>{active === label && <ChevronRight size={15}/>}
+        {filtered.map(({ label, icon: Icon }) => <button key={label} onClick={() => select(label)} aria-current={active === label ? 'page' : undefined} className={`group flex w-full items-center gap-3 rounded-2xl px-3.5 py-[11px] text-left text-[13px] font-semibold transition-all ${active === label ? 'bg-white text-[#321653] shadow-md' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+          <span className={`grid h-7 w-7 place-items-center rounded-lg ${active === label ? 'bg-violet-100 text-[#321653]' : 'text-white/65 group-hover:bg-white/10 group-hover:text-white'}`}><Icon size={17}/></span><span className="flex-1">{label}</span>{active === label && <ChevronRight size={15}/>}
         </button>)}
         {filtered.length === 0 && <p className="px-3 py-5 text-sm text-slate-400">No matching modules</p>}
       </nav>
-      <div className="border-t border-violet-100 p-3"><button onClick={onLogout} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-600 transition hover:bg-rose-50 hover:text-rose-700"><LogOut size={18}/> Sign out securely</button></div>
+      <div className="border-t border-white/10 p-3"><button onClick={onLogout} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-white/80 transition hover:bg-rose-500/20 hover:text-white"><LogOut size={18}/> Sign out securely</button></div>
     </aside>
     <div className="min-w-0 lg:pl-[278px]">
-      <header className="sticky top-0 z-20 flex min-h-[72px] items-center justify-between gap-3 border-b border-violet-100/80 bg-white/90 px-4 backdrop-blur-xl sm:px-6 xl:px-8">
+      <header className="sticky top-0 z-20 flex min-h-[72px] items-center justify-between gap-3 border-b border-white/10 bg-gradient-to-r from-[#321653] via-[#3e1d60] to-[#4a2369] px-4 text-white shadow-lg shadow-violet-950/10 sm:px-6 xl:px-8">
         <div className="flex min-w-0 items-center gap-3">
           <button className="rounded-xl border border-violet-100 bg-white p-2.5 text-violet-900 shadow-sm lg:hidden" aria-label="Open navigation" onClick={() => setMobileOpen(true)}><Menu size={19}/></button>
-          <div className="hidden items-center gap-2 text-xs text-slate-400 sm:flex"><School size={15}/><span>Workspace</span><ChevronRight size={13}/><span className="font-semibold text-violet-800">{active}</span></div>
+          <div className="hidden items-center gap-2 text-xs text-white/60 sm:flex"><School size={15}/><span>Workspace</span><ChevronRight size={13}/><span className="font-semibold text-white">{active}</span></div>
           <div className="sm:hidden"><p className="truncate text-sm font-bold">{active}</p><p className="truncate text-[11px] text-slate-500">{institution}</p></div>
         </div>
         <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
-          <label className="hidden max-w-[440px] flex-1 items-center gap-2.5 rounded-full border border-violet-100 bg-[#f8f7ff] px-4 py-2.5 text-slate-400 md:flex"><Search size={17}/><input aria-label="Search management modules" value={search} onChange={e => setSearch(e.target.value)} placeholder={tenantType === 'college' ? 'Search students, faculty, departments...' : tenantType === 'institution' ? 'Search members, programs, services...' : 'Search students, teachers, classes...'} className="w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400"/></label>
-          <button onClick={() => setShowNotifications(v => !v)} aria-label="Notifications" className="relative rounded-xl p-2.5 text-violet-900 transition hover:bg-violet-50"><Bell size={19}/></button>
+          <label className="hidden max-w-[440px] flex-1 items-center gap-2.5 rounded-full border border-white/20 bg-white px-4 py-2.5 text-slate-400 md:flex"><Search size={17}/><input aria-label="Search management modules" value={search} onChange={e => setSearch(e.target.value)} placeholder={tenantType === 'college' ? 'Search students, faculty, departments...' : tenantType === 'institution' ? 'Search members, programs, services...' : 'Search students, teachers, classes...'} className="w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400"/></label>
+          <button onClick={() => setShowNotifications(v => !v)} aria-label="Notifications" className="relative rounded-xl p-2.5 text-white transition hover:bg-white/10"><Bell size={19}/></button>
           {showNotifications && <div className="absolute right-20 top-[62px] w-72 rounded-2xl border border-violet-100 bg-white p-4 shadow-xl"><p className="text-sm font-bold">Notifications</p><p className="mt-2 text-xs leading-5 text-slate-500">You're all caught up. Setup reminders will appear here.</p></div>}
-          <div className="h-8 w-px bg-violet-100"/>
-          <div className="flex items-center gap-2.5 pl-1"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-violet-200 to-fuchsia-100 text-xs font-extrabold text-violet-900 shadow">{initials}</span><div className="hidden max-w-36 sm:block"><p className="truncate text-xs font-bold text-slate-900">{user.name || 'Management user'}</p><p className="truncate text-[10px] text-slate-500">{user.role || 'Head Administrator'}</p></div></div>
+          <div className="h-8 w-px bg-white/20"/>
+          <div className="flex items-center gap-2.5 pl-1"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-violet-200 to-fuchsia-100 text-xs font-extrabold text-violet-900 shadow">{initials}</span><div className="hidden max-w-36 sm:block"><p className="truncate text-xs font-bold text-white">{user.name || 'Management user'}</p><p className="truncate text-[10px] text-violet-200">{user.role || 'Head Administrator'}</p></div></div>
         </div>
       </header>
-      <main className="mx-auto max-w-[1700px] space-y-5 p-4 sm:p-6 xl:p-7">
+      <main className="mx-auto min-h-[calc(100vh-72px)] max-w-[1800px] space-y-4 rounded-tl-[28px] border border-white/70 bg-[#f8f7ff] p-4 shadow-[-10px_-4px_40px_rgba(255,255,255,.18)] sm:p-5 xl:p-6">
         {active === 'Dashboard' ? <>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div><div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-violet-100 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-violet-700"><Sparkles size={12}/> {organizationLabel} management overview</div><h1 className="text-[25px] font-extrabold tracking-tight text-[#17143a] sm:text-[30px]">Welcome back{firstName ? `, ${firstName}` : ''}</h1><p className="mt-1.5 text-sm text-slate-500">Here’s what’s happening at <span className="font-semibold text-slate-700">{institution}</span>.</p></div>
