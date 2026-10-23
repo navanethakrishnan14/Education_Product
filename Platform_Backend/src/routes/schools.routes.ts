@@ -111,7 +111,7 @@ router.post("/", async (req, res, next) => {
       });
 
       const details = { ...input, code, email: officialEmail };
-      return tx.schoolTenant.create({
+      const createdTenant = await tx.schoolTenant.create({
         data: {
           name: input.name,
           code,
@@ -125,6 +125,20 @@ router.post("/", async (req, res, next) => {
           details: details as Prisma.InputJsonValue
         }
       });
+
+      // Persist type-specific configuration alongside the shared tenant record.
+      const profileData = {
+        tenantId: createdTenant.id,
+        configuration: details as Prisma.InputJsonValue
+      };
+      if (input.tenantType === "school") {
+        await tx.schoolProfile.create({ data: profileData });
+      } else if (input.tenantType === "college") {
+        await tx.collegeProfile.create({ data: profileData });
+      } else {
+        await tx.institutionProfile.create({ data: profileData });
+      }
+      return createdTenant;
     });;
     const setupUrl = new URL("/set-password", env.FRONTEND_URL);
     setupUrl.searchParams.set("token", rawToken);
