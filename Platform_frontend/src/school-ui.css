@@ -76,3 +76,10 @@
 .admin-status-button.inactive-status{background:#fff1f2;color:#b91c1c;border-color:#ffd4d8;box-shadow:0 4px 12px #f43f5e12}
 .admin-status-button.inactive-status.selected{background:linear-gradient(135deg,#fff0f1,#ffe3e6);color:#b91c1c;border-color:#ffc5cc;box-shadow:0 6px 15px #f43f5e20,inset 0 1px 1px #fff}
 .admin-status-button:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+
+
+/* Align the administrator status controls with the other form inputs */
+.school-field:has(.admin-status-toggle){align-self:stretch}
+.admin-status-toggle{min-height:44px;align-items:center;justify-content:flex-end;gap:10px;padding:0;margin:0}
+.admin-status-button{box-sizing:border-box;min-width:116px;width:116px;min-height:40px;height:40px;padding:7px 12px;gap:8px;font-size:13px;line-height:1.2}
+.admin-status-button svg{width:17px;height:17px;flex:0 0 17px}
