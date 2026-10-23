@@ -125,7 +125,7 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
     name: "", code: "", category: type === "college" ? "Arts & Science College" : "Educational Institution",
     affiliation: "", recognitionNumber: "", website: "", email: "", phone: "", alternatePhone: "",
     address1: "", address2: "", city: "", district: "", state: "", country: "", postalCode: "",
-    adminName: "", adminTitle: type === "college" ? "Principal" : "Director", adminEmail: "", adminPhone: "",
+    adminName: "", adminTitle: type === "college" ? "Principal" : "Director", adminEmail: "", adminPhone: "", adminStatus: "Active" as "Active" | "Inactive",
     subdomain: "", activationStatus: "Pending", notes: ""
   });
   const [busy, setBusy] = useState(false);
@@ -197,6 +197,7 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
           <Field label="Designation" required><SelectInput required value={form.adminTitle} onChange={e=>update("adminTitle",e.target.value)}>{(type === "college" ? ["Principal","Dean","College Administrator","Director","IT Administrator"] : ["Director","Administrator","Head of Institution","Coordinator","IT Administrator"]).map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
           {type !== "college" && <Field label="Administrator Email" required><TextInput required type="email" value={form.adminEmail} onChange={e=>update("adminEmail",e.target.value)} placeholder="admin@example.edu"/></Field>}
           <Field label="Administrator Phone" required><TextInput required type="tel" value={form.adminPhone} onChange={e=>update("adminPhone",e.target.value)} placeholder="+91 98765 43210"/></Field>
+          <Field label="Administrator Status" required><div className="admin-status-toggle" role="group" aria-label="Administrator status"><button type="button" className={"admin-status-button active-status "+(form.adminStatus==="Active"?"selected":"")} aria-pressed={form.adminStatus==="Active"} onClick={()=>update("adminStatus","Active")}><CheckCircle2 size={20} fill="currentColor" strokeWidth={2.5}/><span>Active</span></button><button type="button" className={"admin-status-button inactive-status "+(form.adminStatus==="Inactive"?"selected":"")} aria-pressed={form.adminStatus==="Inactive"} onClick={()=>update("adminStatus","Inactive")}><ShieldCheck size={19} strokeWidth={2.5}/><span>Inactive</span></button></div></Field>
         </div>
       </Section>
       {type !== "college" && <Section number={4} title="Workspace & Activation" subtitle="Unique tenant URL and initial access status" aside="Platform Settings">
