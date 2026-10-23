@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import {
   LayoutDashboard, Building2, GraduationCap, Users, UserRound, CalendarDays,
   BookOpen, ClipboardCheck, Wallet, Megaphone, BarChart3, Settings, Bell,
@@ -107,7 +108,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   const institution = user.institutionName || user.tenantName || 'Your ' + organizationLabel.toLowerCase();
   const [profileDraft, setProfileDraft] = useState(() => ({ name: user.institutionName || user.tenantName || '', code: user.tenantCode || '', type: user.tenantType || organizationLabel.toLowerCase(), email: user.email || '' }));
   const [profileNotice, setProfileNotice] = useState('');
-  function saveProfile(event: React.FormEvent<HTMLFormElement>) {
+  function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
       localStorage.setItem('edusphere_profile:' + (user.tenantId || 'tenant'), JSON.stringify(profileDraft));
