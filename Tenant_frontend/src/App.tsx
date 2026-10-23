@@ -32,10 +32,58 @@ function Workspace() {
   const nav = useNavigate();
   const [user, setUser] = useState<{name?: string; email?: string; role?: string; tenantId?: string; tenantCode?: string | null; tenantType?: string; tenantName?: string; institutionName?: string} | null>(null);
   useEffect(() => {
+    let cancelled = false;
     const token = localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token');
     const raw = localStorage.getItem('tenant_user') || sessionStorage.getItem('tenant_user');
-    if (!token || !raw) { nav('/', { replace: true }); return; }
-    try { setUser(JSON.parse(raw)); } catch { localStorage.removeItem('tenant_token'); localStorage.removeItem('tenant_user'); sessionStorage.removeItem('tenant_token'); sessionStorage.removeItem('tenant_user'); nav('/', { replace: true }); }
+    const clearSession = () => {
+      localStorage.removeItem('tenant_token');
+      localStorage.removeItem('tenant_user');
+      sessionStorage.removeItem('tenant_token');
+      sessionStorage.removeItem('tenant_user');
+    };
+
+    if (!token || !raw) {
+      clearSession();
+      nav('/', { replace: true });
+      return;
+    }
+
+    async function restoreSession() {
+      try {
+        const cached = JSON.parse(raw!) as NonNullable<typeof user>;
+        if ((cached.role || '').toLowerCase() === 'management') {
+          // Management uses the Platform API's token contract. Do not send that
+          // token to the separate Tenant API; a Platform /me endpoint is needed
+          // to revalidate this role server-side.
+          if (!cancelled) setUser(cached);
+          return;
+        }
+
+        const configuredBase = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').trim();
+        const response = await fetch(configuredBase.replace(/\\/$/, '') + '/auth/me', {
+          headers: { Accept: 'application/json', Authorization: 'Bearer ' + token },
+        });
+        const payload = await response.json().catch(() => ({})) as {
+          success?: boolean;
+          user?: NonNullable<typeof user>;
+          message?: string;
+        };
+        if (!response.ok || !payload.success || !payload.user) {
+          throw new Error(payload.message || 'Your session is no longer valid.');
+        }
+        if (!cancelled) {
+          const storage = localStorage.getItem('tenant_token') ? localStorage : sessionStorage;
+          storage.setItem('tenant_user', JSON.stringify(payload.user));
+          setUser(payload.user);
+        }
+      } catch {
+        clearSession();
+        if (!cancelled) nav('/', { replace: true });
+      }
+    }
+
+    void restoreSession();
+    return () => { cancelled = true; };
   }, [nav]);
   function logout() { localStorage.removeItem('tenant_token'); localStorage.removeItem('tenant_user'); sessionStorage.removeItem('tenant_token'); sessionStorage.removeItem('tenant_user'); nav('/', { replace: true }); }
   if (!user) return <div className="workspace-loading">Checking your secure session…</div>;
