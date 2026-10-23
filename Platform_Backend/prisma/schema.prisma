@@ -63,36 +63,36 @@ model TenantCodeCounter {
 
 
 model SchoolProfile {
-  id          String      @id @default(cuid())
-  tenantId    String      @unique @map("tenant_id")
+  id            String       @id @default(cuid())
+  tenantId      String       @unique @map("tenant_id")
   configuration Json?
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  tenant      SchoolTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  tenant        SchoolTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("schools")
   @@schema("edusphere_platform")
 }
 
 model CollegeProfile {
-  id          String      @id @default(cuid())
-  tenantId    String      @unique @map("tenant_id")
+  id            String       @id @default(cuid())
+  tenantId      String       @unique @map("tenant_id")
   configuration Json?
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  tenant      SchoolTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  tenant        SchoolTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("colleges")
   @@schema("edusphere_platform")
 }
 
 model InstitutionProfile {
-  id          String      @id @default(cuid())
-  tenantId    String      @unique @map("tenant_id")
+  id            String       @id @default(cuid())
+  tenantId      String       @unique @map("tenant_id")
   configuration Json?
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  tenant      SchoolTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  tenant        SchoolTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("institutions")
   @@schema("edusphere_platform")

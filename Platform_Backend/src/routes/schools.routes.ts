@@ -126,8 +126,7 @@ router.post("/", async (req, res, next) => {
         }
       });
 
-      // Keep common tenant identity in school_tenants, and persist type-specific
-      // configuration in its own table. All writes are atomic in this transaction.
+      // Persist type-specific configuration alongside the shared tenant record.
       const profileData = {
         tenantId: createdTenant.id,
         configuration: details as Prisma.InputJsonValue
