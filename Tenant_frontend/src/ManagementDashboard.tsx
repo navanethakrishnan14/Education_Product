@@ -5,7 +5,7 @@ import {
   BookOpen, ClipboardCheck, Wallet, Megaphone, BarChart3, Settings, Bell,
   Search, Menu, X, LogOut, ChevronRight, Plus, ShieldCheck,
   FileText, MoreHorizontal, ArrowUpRight, CheckCircle2, TrendingUp, School,
-  CreditCard, Activity, CalendarCheck, Sparkles
+  CreditCard, Activity, CalendarCheck, Sparkles, Globe2, UploadCloud
 } from 'lucide-react';
 import ModuleWorkspace from './ModuleWorkspace';
 
