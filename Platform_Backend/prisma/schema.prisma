@@ -39,6 +39,9 @@ model SchoolTenant {
   passwordSetAt DateTime? @map("password_set_at")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
+  schoolProfile SchoolProfile?
+  collegeProfile CollegeProfile?
+  institutionProfile InstitutionProfile?
 
   @@index([status])
   @@map("school_tenants")
@@ -55,5 +58,42 @@ model TenantCodeCounter {
 
   @@unique([tenantType, year])
   @@map("tenant_code_counters")
+  @@schema("edusphere_platform")
+}
+
+
+model SchoolProfile {
+  id          String      @id @default(cuid())
+  tenantId    String      @unique @map("tenant_id")
+  configuration Json?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  tenant      SchoolTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("schools")
+  @@schema("edusphere_platform")
+}
+
+model CollegeProfile {
+  id          String      @id @default(cuid())
+  tenantId    String      @unique @map("tenant_id")
+  configuration Json?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  tenant      SchoolTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("colleges")
+  @@schema("edusphere_platform")
+}
+
+model InstitutionProfile {
+  id          String      @id @default(cuid())
+  tenantId    String      @unique @map("tenant_id")
+  configuration Json?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  tenant      SchoolTenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("institutions")
   @@schema("edusphere_platform")
 }
