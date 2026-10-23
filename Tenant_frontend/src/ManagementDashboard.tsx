@@ -9,22 +9,53 @@ import {
 } from 'lucide-react';
 
 type TenantUser = { name?: string; email?: string; role?: string; tenantId?: string; tenantCode?: string | null; tenantType?: string; tenantName?: string; institutionName?: string };
-const menu = [
+const commonMenu = [
   { label: 'Dashboard', icon: LayoutDashboard },
-  { label: 'Institution Profile', icon: Building2 },
-  { label: 'Academic Setup', icon: BookOpen },
+  { label: 'Organization Profile', icon: Building2 },
   { label: 'Management Users', icon: ShieldCheck },
-  { label: 'Faculty', icon: Users },
-  { label: 'Students', icon: GraduationCap },
-  { label: 'Parents', icon: UserRound },
-  { label: 'Attendance', icon: ClipboardCheck },
-  { label: 'Timetable', icon: CalendarDays },
-  { label: 'Examinations', icon: BookOpen },
-  { label: 'Fees & Finance', icon: Wallet },
   { label: 'Communication', icon: Megaphone },
   { label: 'Reports & Analytics', icon: BarChart3 },
   { label: 'Settings', icon: Settings }
 ];
+const typeMenus = {
+  school: [
+    ...commonMenu,
+    { label: 'Academic Setup', icon: BookOpen },
+    { label: 'Classes & Sections', icon: School },
+    { label: 'Faculty & Staff', icon: Users },
+    { label: 'Students', icon: GraduationCap },
+    { label: 'Parents & Guardians', icon: UserRound },
+    { label: 'Attendance', icon: ClipboardCheck },
+    { label: 'Timetable', icon: CalendarDays },
+    { label: 'Examinations & Results', icon: BookOpen },
+    { label: 'School Fees', icon: Wallet },
+    { label: 'Transport', icon: Building2 }
+  ],
+  college: [
+    ...commonMenu,
+    { label: 'Academic Structure', icon: BookOpen },
+    { label: 'Departments', icon: Building2 },
+    { label: 'Courses & Programs', icon: GraduationCap },
+    { label: 'Faculty', icon: Users },
+    { label: 'Students & Admissions', icon: UserRound },
+    { label: 'Semester & Credits', icon: CalendarDays },
+    { label: 'Examinations & Results', icon: ClipboardCheck },
+    { label: 'Fees & Scholarships', icon: Wallet },
+    { label: 'Research & Projects', icon: FileText },
+    { label: 'Placement & Alumni', icon: TrendingUp }
+  ],
+  institution: [
+    ...commonMenu,
+    { label: 'Organization Units', icon: Building2 },
+    { label: 'Programs & Services', icon: BookOpen },
+    { label: 'Members & Staff', icon: Users },
+    { label: 'Learners / Beneficiaries', icon: GraduationCap },
+    { label: 'Schedules & Activities', icon: CalendarDays },
+    { label: 'Participation & Records', icon: ClipboardCheck },
+    { label: 'Finance & Funding', icon: Wallet },
+    { label: 'Compliance & Documents', icon: FileText }
+  ]
+};
 const tasks = [
   { title: 'Complete institution profile', detail: 'Add address, contact details and institution logo', page: 'Institution Profile' },
   { title: 'Configure academic year', detail: 'Set terms, classes and academic calendar', page: 'Academic Setup' },
@@ -43,8 +74,11 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   const [search, setSearch] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
-  const institution = user.institutionName || user.tenantName || 'Your institution';
-  const filtered = useMemo(() => menu.filter(item => item.label.toLowerCase().includes(search.toLowerCase())), [search]);
+  const tenantType = (user.tenantType || 'school').toLowerCase() as keyof typeof typeMenus;
+  const menu = typeMenus[tenantType] || typeMenus.school;
+  const organizationLabel = tenantType === 'college' ? 'College' : tenantType === 'institution' ? 'Institution' : 'School';
+  const institution = user.institutionName || user.tenantName || 'Your ' + organizationLabel.toLowerCase();
+  const filtered = useMemo(() => menu.filter(item => item.label.toLowerCase().includes(search.toLowerCase())), [menu, search]);
   const select = (page: string) => { setActive(page); setMobileOpen(false); };
   const firstName = user.name?.trim().split(/\s+/)[0];
   const activeIcon = menu.find(item => item.label === active)?.icon || LayoutDashboard;
@@ -85,8 +119,8 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
       <main className="mx-auto max-w-[1700px] space-y-5 p-4 sm:p-6 xl:p-7">
         {active === 'Dashboard' ? <>
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <div><div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-violet-100 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-violet-700"><Sparkles size={12}/> Management overview</div><h1 className="text-[25px] font-extrabold tracking-tight text-[#17143a] sm:text-[30px]">Welcome back{firstName ? `, ${firstName}` : ''}</h1><p className="mt-1.5 text-sm text-slate-500">Here’s what’s happening at <span className="font-semibold text-slate-700">{institution}</span>.</p></div>
-            <button onClick={() => select('Institution Profile')} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#4b1682] to-[#7026a6] px-4 py-3 text-xs font-bold text-white shadow-lg shadow-violet-900/15 transition hover:-translate-y-0.5 hover:shadow-xl"><Plus size={16}/> Complete institution setup</button>
+            <div><div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-violet-100 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-violet-700"><Sparkles size={12}/> {organizationLabel} management overview</div><h1 className="text-[25px] font-extrabold tracking-tight text-[#17143a] sm:text-[30px]">Welcome back{firstName ? `, ${firstName}` : ''}</h1><p className="mt-1.5 text-sm text-slate-500">Here’s what’s happening at <span className="font-semibold text-slate-700">{institution}</span>.</p></div>
+            <button onClick={() => select('Institution Profile')} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#4b1682] to-[#7026a6] px-4 py-3 text-xs font-bold text-white shadow-lg shadow-violet-900/15 transition hover:-translate-y-0.5 hover:shadow-xl"><Plus size={16}/> Complete {organizationLabel.toLowerCase()} setup</button>
           </div>
           <section className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
             {[
@@ -111,8 +145,8 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
             </section>
           </div>
           <section className="rounded-2xl border border-white bg-white p-5 shadow-[0_4px_18px_rgba(55,33,111,.055)] sm:p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="rounded-xl bg-sky-100 p-2.5 text-sky-700"><BarChart3 size={20}/></span><div><h2 className="text-base font-extrabold">Institution performance</h2><p className="mt-0.5 text-xs text-slate-500">Your key academic and operational indicators</p></div></div><button onClick={() => select('Reports & Analytics')} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-violet-700 transition hover:bg-violet-50">View reports <ArrowUpRight size={15}/></button></div><div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4"><div className="flex items-center gap-2 text-slate-500"><TrendingUp size={15}/><span className="text-[11px] font-semibold">Enrollment trend</span></div><p className="mt-3 text-sm font-bold text-slate-800">Awaiting data connection</p><p className="mt-1 text-[11px] text-slate-500">Student records will appear here.</p></div><div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4"><div className="flex items-center gap-2 text-slate-500"><CalendarCheck size={15}/><span className="text-[11px] font-semibold">Attendance pulse</span></div><p className="mt-3 text-sm font-bold text-slate-800">Awaiting data connection</p><p className="mt-1 text-[11px] text-slate-500">Daily attendance insights.</p></div><div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4"><div className="flex items-center gap-2 text-slate-500"><CreditCard size={15}/><span className="text-[11px] font-semibold">Fee collection</span></div><p className="mt-3 text-sm font-bold text-slate-800">Awaiting data connection</p><p className="mt-1 text-[11px] text-slate-500">Finance summaries and balances.</p></div></div></section>
-        </> : <><div className="flex flex-wrap items-center justify-between gap-4"><div className="flex items-center gap-3"><span className="rounded-2xl bg-white p-3 text-violet-700 shadow-sm"><ActiveIcon size={23}/></span><div><p className="text-xs font-bold uppercase tracking-[.12em] text-violet-700">Institution workspace</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight">{active}</h1><p className="mt-1 text-sm text-slate-500">Manage {active.toLowerCase()} for {institution}.</p></div></div><button onClick={() => select('Dashboard')} className="inline-flex items-center gap-2 rounded-xl border border-violet-100 bg-white px-4 py-2.5 text-xs font-bold text-violet-800 shadow-sm hover:bg-violet-50"><LayoutDashboard size={15}/> Back to overview</button></div>
-          {active === 'Institution Profile' ? <section className="rounded-2xl border border-white bg-white p-6 shadow-sm"><div className="mb-5 flex items-center gap-3"><span className="rounded-xl bg-violet-100 p-2.5 text-violet-700"><Building2 size={20}/></span><div><h2 className="font-extrabold">Institution information</h2><p className="mt-1 text-xs text-slate-500">Details linked to your authenticated tenant account</p></div></div><dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[['Institution name', institution], ['Institution code', user.tenantCode || 'Not available'], ['Institution type', user.tenantType || 'Not available'], ['Management email', user.email || 'Not available']].map(([k, v]) => <div key={k} className="rounded-xl border border-slate-100 bg-slate-50/80 p-4"><dt className="text-[11px] font-semibold text-slate-500">{k}</dt><dd className="mt-2 break-words text-sm font-bold text-slate-900">{v}</dd></div>)}</dl><div className="mt-5 rounded-xl border border-amber-100 bg-amber-50/70 p-4 text-xs leading-5 text-amber-900">Profile editing will be enabled when the institution settings API is connected.</div></section> : <section className="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-white bg-white p-8 text-center shadow-sm"><span className="rounded-2xl bg-violet-100 p-4 text-violet-700"><CircleHelp size={28}/></span><h2 className="mt-4 text-lg font-extrabold">{active} module</h2><p className="mt-2 max-w-lg text-sm leading-6 text-slate-500">The navigation and premium workspace layout are ready. This module's data tables, forms, permissions and backend operations still need to be connected.</p><button onClick={() => select('Dashboard')} className="mt-5 rounded-xl bg-gradient-to-r from-[#4b1682] to-[#7026a6] px-5 py-3 text-xs font-bold text-white shadow-md">Return to dashboard</button></section>}
+        </> : <><div className="flex flex-wrap items-center justify-between gap-4"><div className="flex items-center gap-3"><span className="rounded-2xl bg-white p-3 text-violet-700 shadow-sm"><ActiveIcon size={23}/></span><div><p className="text-xs font-bold uppercase tracking-[.12em] text-violet-700">{organizationLabel} workspace</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight">{active}</h1><p className="mt-1 text-sm text-slate-500">Manage {active.toLowerCase()} for {institution}.</p></div></div><button onClick={() => select('Dashboard')} className="inline-flex items-center gap-2 rounded-xl border border-violet-100 bg-white px-4 py-2.5 text-xs font-bold text-violet-800 shadow-sm hover:bg-violet-50"><LayoutDashboard size={15}/> Back to overview</button></div>
+          {active === 'Institution Profile' ? <section className="rounded-2xl border border-white bg-white p-6 shadow-sm"><div className="mb-5 flex items-center gap-3"><span className="rounded-xl bg-violet-100 p-2.5 text-violet-700"><Building2 size={20}/></span><div><h2 className="font-extrabold">{organizationLabel} information</h2><p className="mt-1 text-xs text-slate-500">Details linked to your authenticated tenant account</p></div></div><dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[['{organizationLabel} name', institution], ['{organizationLabel} code', user.tenantCode || 'Not available'], ['Organization type', user.tenantType || 'Not available'], ['Management email', user.email || 'Not available']].map(([k, v]) => <div key={k} className="rounded-xl border border-slate-100 bg-slate-50/80 p-4"><dt className="text-[11px] font-semibold text-slate-500">{k}</dt><dd className="mt-2 break-words text-sm font-bold text-slate-900">{v}</dd></div>)}</dl><div className="mt-5 rounded-xl border border-amber-100 bg-amber-50/70 p-4 text-xs leading-5 text-amber-900">Profile editing will be enabled when the organization settings API is connected.</div></section> : <section className="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-white bg-white p-8 text-center shadow-sm"><span className="rounded-2xl bg-violet-100 p-4 text-violet-700"><CircleHelp size={28}/></span><h2 className="mt-4 text-lg font-extrabold">{active} module</h2><p className="mt-2 max-w-lg text-sm leading-6 text-slate-500">The navigation and premium workspace layout are ready. This module's data tables, forms, permissions and backend operations still need to be connected.</p><button onClick={() => select('Dashboard')} className="mt-5 rounded-xl bg-gradient-to-r from-[#4b1682] to-[#7026a6] px-5 py-3 text-xs font-bold text-white shadow-md">Return to dashboard</button></section>}
         </>}
         <footer className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2 text-[10px] text-slate-400"><span>© 2026 EduManage Cloud · {institution}</span><span className="inline-flex items-center gap-1.5"><ShieldCheck size={12}/> Secure management portal</span></footer>
       </main>
