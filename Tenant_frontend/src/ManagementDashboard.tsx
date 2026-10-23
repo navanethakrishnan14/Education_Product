@@ -33,17 +33,21 @@ const typeMenus = {
     { label: 'Transport', icon: Building2 }
   ],
   college: [
-    ...commonMenu,
-    { label: 'Academic Structure', icon: BookOpen },
-    { label: 'Departments', icon: Building2 },
-    { label: 'Courses & Programs', icon: GraduationCap },
     { label: 'Faculty', icon: Users },
     { label: 'Students & Admissions', icon: UserRound },
     { label: 'Semester & Credits', icon: CalendarDays },
     { label: 'Examinations & Results', icon: ClipboardCheck },
     { label: 'Fees & Scholarships', icon: Wallet },
     { label: 'Research & Projects', icon: FileText },
-    { label: 'Placement & Alumni', icon: TrendingUp }
+    { label: 'Placement & Alumni', icon: TrendingUp },
+    { label: 'Academic Structure', icon: BookOpen },
+    { label: 'Departments', icon: Building2 },
+    { label: 'Courses & Programs', icon: GraduationCap },
+    { label: 'Organization Profile', icon: Building2 },
+    { label: 'Management Users', icon: ShieldCheck },
+    { label: 'Communication', icon: Megaphone },
+    { label: 'Reports & Analytics', icon: BarChart3 },
+    { label: 'Settings', icon: Settings }
   ],
   institution: [
     ...commonMenu,
@@ -156,15 +160,15 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   return <div className="min-h-screen bg-[#e8e2ff] text-[#17143a]" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
     {mobileOpen && <button aria-label="Close navigation overlay" className="fixed inset-0 z-30 bg-[#170c36]/50 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />}
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-[236px] flex-col overflow-hidden border-r border-white/10 bg-gradient-to-b from-[#321653] via-[#3b1b5d] to-[#4b2165] text-white shadow-xl shadow-violet-950/20 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="flex items-center gap-3 border-b border-white/10 px-5 pb-6 pt-6">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/15 text-white shadow-lg shadow-black/10"><GraduationCap size={25} /></div>
-        <div className="min-w-0"><p className="truncate text-[17px] font-extrabold tracking-tight">{tenantType === 'college' ? 'EduManage College' : tenantType === 'institution' ? 'EduManage Institution' : 'EduManage School'}</p><p className="mt-0.5 text-[10px] font-bold tracking-wide text-violet-200">{organizationLabel.toUpperCase()} MANAGEMENT SUITE</p></div>
+      <div className="flex items-center gap-3 border-b border-white/10 px-5 pb-4 pt-4">
+        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white/15 text-white shadow-lg shadow-black/10"><GraduationCap size={19} /></div>
+        <div className="min-w-0"><p className="truncate text-[13px] font-extrabold tracking-tight">{tenantType === 'college' ? 'EduManage College' : tenantType === 'institution' ? 'EduManage Institution' : 'EduManage School'}</p><p className="mt-0.5 text-[7px] font-bold tracking-wide text-violet-200">{organizationLabel.toUpperCase()} MANAGEMENT SUITE</p></div>
         <button className="ml-auto rounded-lg p-1 text-white/70 hover:bg-white/10 lg:hidden" aria-label="Close menu" onClick={() => setMobileOpen(false)}><X size={19}/></button>
       </div>
-      <div className="px-4 pb-2 pt-4"><p className="px-3 text-[10px] font-bold uppercase tracking-[.18em] text-violet-200/70">{organizationLabel} workspace</p></div>
-      <nav aria-label="Management navigation" className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
-        {filtered.map(({ label, icon: Icon }) => <button key={label} onClick={() => select(label)} aria-current={active === label ? 'page' : undefined} className={`group flex w-full items-center gap-3 rounded-2xl px-3.5 py-[11px] text-left text-[13px] font-semibold transition-all ${active === label ? 'bg-white text-[#321653] shadow-md' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
-          <span className={`grid h-7 w-7 place-items-center rounded-lg ${active === label ? 'bg-violet-100 text-[#321653]' : 'text-white/65 group-hover:bg-white/10 group-hover:text-white'}`}><Icon size={17}/></span><span className="flex-1">{label}</span>{active === label && <ChevronRight size={15}/>}
+      <div className="px-3 pb-2 pt-3"><p className="px-2 text-[8px] font-bold uppercase tracking-[.14em] text-violet-200/70">{organizationLabel} workspace</p></div>
+      <nav aria-label="Management navigation" className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
+        {filtered.map(({ label, icon: Icon }) => <button key={label} onClick={() => select(label)} aria-current={active === label ? 'page' : undefined} className={`group flex w-full items-center gap-3 rounded-lg px-2 py-[7px] text-left text-[10px] font-semibold transition-all ${active === label ? 'bg-white text-[#321653] shadow-md' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+          <span className={`grid h-5 w-5 place-items-center rounded-md ${active === label ? 'bg-violet-100 text-[#321653]' : 'text-white/65 group-hover:bg-white/10 group-hover:text-white'}`}><Icon size={12}/></span><span className="flex-1">{label}</span>{active === label && <ChevronRight size={15}/>}
         </button>)}
         {filtered.length === 0 && <p className="px-3 py-5 text-sm text-slate-400">No matching modules</p>}
       </nav>
@@ -188,12 +192,12 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
       <main className="relative mx-auto min-h-[calc(100vh-64px)] max-w-[1800px] space-y-4 overflow-hidden rounded-tl-[30px] rounded-tr-[6px] border border-white/80 bg-[#f7f6fb] p-4 shadow-[-10px_-4px_40px_rgba(255,255,255,.18)] sm:p-5 xl:p-6"><div aria-hidden="true" className="pointer-events-none absolute right-0 top-0 h-16 w-16 rounded-bl-[34px] border-b border-l border-violet-200/70 bg-gradient-to-bl from-[#e6dcff] via-[#f4efff] to-transparent"/><div aria-hidden="true" className="pointer-events-none absolute bottom-0 left-0 h-12 w-12 rounded-tr-[28px] border-r border-t border-violet-200/60 bg-gradient-to-tr from-[#e8e0ff] to-transparent"/><div aria-hidden="true" className="pointer-events-none absolute right-0 bottom-0 h-20 w-20 rounded-tl-[38px] border-l border-t border-violet-200/70 bg-gradient-to-tl from-[#e4d8ff] via-[#f1ebff] to-transparent"/>
         {active === 'Dashboard' ? <>
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <div><div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-violet-100 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-violet-700"><Sparkles size={12}/> {organizationLabel} management overview</div><h1 className="text-[25px] font-extrabold tracking-tight text-[#17143a] sm:text-[30px]">Welcome back{firstName ? `, ${firstName}` : ''}</h1><p className="mt-1.5 text-sm text-slate-500">Here’s what’s happening at <span className="font-semibold text-slate-700">{institution}</span>.</p></div>
-            <button onClick={() => select('Organization Profile')} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#4b1682] to-[#7026a6] px-4 py-3 text-xs font-bold text-white shadow-lg shadow-violet-900/15 transition hover:-translate-y-0.5 hover:shadow-xl"><Plus size={16}/> Complete {organizationLabel.toLowerCase()} setup</button>
+            <div><div className="mb-1 inline-flex items-center gap-1 rounded-full border border-violet-100 bg-white/80 px-2 py-1 text-[8px] font-bold uppercase tracking-[.14em] text-violet-700"><Sparkles size={12}/> {organizationLabel} management overview</div><h1 className="text-[22px] font-extrabold tracking-tight text-[#17143a] sm:text-[26px]">Welcome back{firstName ? `, ${firstName}` : ''}</h1><p className="mt-1 text-[11px] text-slate-500">Here’s what’s happening at <span className="font-semibold text-slate-700">{institution}</span>.</p></div>
+            <button onClick={() => select('Organization Profile')} className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#4b1682] to-[#7026a6] px-3 py-2 text-[9px] font-bold text-white shadow-lg shadow-violet-900/15 transition hover:-translate-y-0.5 hover:shadow-xl"><Plus size={16}/> Complete {organizationLabel.toLowerCase()} setup</button>
           </div>
           <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {dashboardMetrics.map(item => <div key={item.label} className="group relative overflow-hidden rounded-xl border border-white bg-white p-4 shadow-[0_3px_14px_rgba(55,33,111,.045)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(55,33,111,.09)]">
-              <div className="absolute right-0 top-0 h-20 w-20 rounded-bl-[50px] bg-violet-50/70 transition group-hover:scale-110"/><div className="relative flex items-start justify-between"><div><p className="text-xs font-semibold text-slate-500">{item.label}</p><p className="mt-3 text-[29px] font-extrabold tracking-tight text-[#1b1740]">{item.value}</p></div><span className={`rounded-2xl p-3 ${item.tone === 'violet' ? 'bg-violet-100 text-violet-700' : item.tone === 'blue' ? 'bg-blue-100 text-blue-700' : item.tone === 'teal' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}><item.icon size={21}/></span></div><p className="relative mt-3 flex items-center gap-1.5 text-[11px] text-slate-500"><span className="h-1.5 w-1.5 rounded-full bg-slate-300"/>{item.hint}</p>
+            {dashboardMetrics.map(item => <div key={item.label} className="group relative overflow-hidden rounded-xl border border-white bg-white p-3 shadow-[0_3px_14px_rgba(55,33,111,.045)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(55,33,111,.09)]">
+              <div className="absolute right-0 top-0 h-20 w-20 rounded-bl-[50px] bg-violet-50/70 transition group-hover:scale-110"/><div className="relative flex items-start justify-between"><div><p className="text-[9px] font-semibold text-slate-500">{item.label}</p><p className="mt-2 text-[21px] font-extrabold tracking-tight text-[#1b1740]">{item.value}</p></div><span className={`rounded-xl p-2 ${item.tone === 'violet' ? 'bg-violet-100 text-violet-700' : item.tone === 'blue' ? 'bg-blue-100 text-blue-700' : item.tone === 'teal' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}><item.icon size={15}/></span></div><p className="relative mt-2 flex items-center gap-1.5 text-[8px] text-slate-500"><span className="h-1.5 w-1.5 rounded-full bg-slate-300"/>{item.hint}</p>
             </div>)}
           </section>
         </> : <><div className="flex flex-wrap items-center justify-between gap-4"><div className="flex items-center gap-3"><span className="rounded-2xl bg-white p-3 text-violet-700 shadow-sm"><ActiveIcon size={23}/></span><div><p className="text-xs font-bold uppercase tracking-[.12em] text-violet-700">{organizationLabel} workspace</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight">{active}</h1><p className="mt-1 text-sm text-slate-500">Manage {active.toLowerCase()} for {institution}.</p></div></div><button onClick={() => select('Dashboard')} className="inline-flex items-center gap-2 rounded-xl border border-violet-100 bg-white px-4 py-2.5 text-xs font-bold text-violet-800 shadow-sm hover:bg-violet-50"><LayoutDashboard size={15}/> Back to overview</button></div>
