@@ -150,7 +150,7 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
       const response = await fetch(base + "/schools", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
-        body: JSON.stringify({ ...form, tenantType: type, workspaceUrl: workspaceUrl() })
+        body: JSON.stringify({ ...form, adminEmail: type === "college" ? form.email : form.adminEmail, tenantType: type, workspaceUrl: workspaceUrl() })
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Unable to create " + title.toLowerCase() + ".");
@@ -195,17 +195,17 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
         <div className="school-fields-grid">
           <Field label="Administrator Name" required><TextInput required value={form.adminName} onChange={e=>update("adminName",e.target.value)} placeholder="Full name"/></Field>
           <Field label="Designation" required><SelectInput required value={form.adminTitle} onChange={e=>update("adminTitle",e.target.value)}>{(type === "college" ? ["Principal","Dean","College Administrator","Director","IT Administrator"] : ["Director","Administrator","Head of Institution","Coordinator","IT Administrator"]).map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
-          <Field label="Administrator Email" required><TextInput required type="email" value={form.adminEmail} onChange={e=>update("adminEmail",e.target.value)} placeholder="admin@example.edu"/></Field>
+          {type !== "college" && <Field label="Administrator Email" required><TextInput required type="email" value={form.adminEmail} onChange={e=>update("adminEmail",e.target.value)} placeholder="admin@example.edu"/></Field>}
           <Field label="Administrator Phone" required><TextInput required type="tel" value={form.adminPhone} onChange={e=>update("adminPhone",e.target.value)} placeholder="+91 98765 43210"/></Field>
         </div>
       </Section>
-      <Section number={4} title="Workspace & Activation" subtitle="Unique tenant URL and initial access status" aside="Platform Settings">
+      {type !== "college" && <Section number={4} title="Workspace & Activation" subtitle="Unique tenant URL and initial access status" aside="Platform Settings">
         <div className="school-fields-grid">
           <Field label="Workspace Subdomain" required><div className="school-subdomain"><TextInput required value={form.subdomain} onChange={e=>update("subdomain",e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,""))} placeholder={type === "college" ? "example-college" : "example-institution"}/><span>.edusphere.cloud</span></div></Field>
           <Field label="Activation Status" required><SelectInput required value={form.activationStatus} onChange={e=>update("activationStatus",e.target.value)}>{["Pending","Active","Suspended"].map(x=><option key={x}>{x}</option>)}</SelectInput></Field>
         </div>
         <Field label="Internal Platform Admin Notes"><textarea className="school-input school-textarea" value={form.notes} onChange={e=>update("notes",e.target.value)} placeholder="Notes visible only to platform administrators."/></Field>
-      </Section>
+      </Section>}
       <div className="school-bottom-actions"><Link className="school-action secondary" to="/dashboard/tenant">Cancel</Link><button className="school-action secondary" type="button" onClick={saveDraft}><Save size={14}/> Save as Draft</button><button className="school-action primary-school" type="submit" disabled={busy || !form.code}><CheckCircle2 size={14}/>{busy ? "Creating…" : "Create " + label + " Tenant"} <ArrowRight size={14}/></button></div>
     </form>
   </div>;
