@@ -22,3 +22,7 @@ See [POSTGRES_MIGRATION_STATUS.md](./POSTGRES_MIGRATION_STATUS.md) for the migra
 5. Run each frontend with its `npm run dev` command after confirming its API base URL and backend CORS origin.
 
 Never commit `.env` files, passwords, database URLs containing credentials, or API keys. Do not use demo credentials in production.
+
+## Tenant implementation plan
+
+See [TENANT_IMPLEMENTATION_PLAN.md](./TENANT_IMPLEMENTATION_PLAN.md) for the verified tenant-side architecture audit, current security/integration gaps, and phased implementation plan. This plan is based on the current repository and avoids assuming tenant APIs or models that have not been verified.
