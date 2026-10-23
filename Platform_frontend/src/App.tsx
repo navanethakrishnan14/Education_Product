@@ -36,7 +36,7 @@ function Login() {
       if (!data.token) throw new Error("The platform API did not return a session token.");
       sessionStorage.setItem("platform_token", data.token);
       sessionStorage.setItem("platform_user", JSON.stringify(data.user || {}));
-      nav("/dashboard");
+      nav("/dashboard/overview");
     } catch (e) {
       setMessage(e instanceof Error && e.message === "Failed to fetch"
         ? "Cannot reach Platform_Backend. Check that it is running and VITE_PLATFORM_API_BASE_URL is correct."
@@ -225,6 +225,7 @@ function Dashboard() {
       <section className="dash-content">
         <Routes>
           <Route index element={<OverviewPage />} />
+          <Route path="overview" element={<OverviewPage />} />
           <Route path="tenant/*" element={<Tenant />} />
           <Route path="users" element={<PlatformUsersPage />} />
           <Route path="settings" element={<SettingsPage />} />
