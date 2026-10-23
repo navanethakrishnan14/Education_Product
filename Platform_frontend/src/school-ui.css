@@ -65,3 +65,14 @@
 .school-bottom-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;padding:20px 0 35px}
 @media(max-width:1000px){.school-form-page{padding:24px 20px}.school-form-top{align-items:flex-start;flex-direction:column}.school-form-actions{width:100%}.school-fields-grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}.school-basic-grid{grid-template-columns:minmax(0,1fr) 200px}.school-plan-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.school-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.school-form-page{padding:18px 12px}.school-form-top h1{font-size:25px}.school-basic-grid{grid-template-columns:1fr}.school-upload-box{min-height:170px}.school-fields-grid,.school-fields-grid.three{grid-template-columns:1fr}.school-section-head{padding:14px}.school-section-body{padding:15px}.school-section-aside{display:none}.school-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.school-bottom-actions{justify-content:stretch}.school-bottom-actions .school-action{flex:1}.school-action{white-space:normal}.school-module-grid{grid-template-columns:1fr}}
+
+
+/* School administrator active/inactive status buttons */
+.admin-status-toggle{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:4px 0}
+.admin-status-button{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:170px;min-height:50px;padding:11px 24px;border-radius:999px;font-size:15px;font-weight:750;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,background .18s ease;border:1px solid transparent}
+.admin-status-button:hover{transform:translateY(-1px)}
+.admin-status-button.active-status{background:#e8fff6;color:#07845f;border-color:#b8f4df;box-shadow:0 4px 12px #10b9811c}
+.admin-status-button.active-status.selected{background:linear-gradient(135deg,#36c99b,#079b75);color:#fff;border-color:#2ec99a;box-shadow:0 7px 16px #10b98145,inset 0 1px 1px #ffffff55}
+.admin-status-button.inactive-status{background:#fff1f2;color:#b91c1c;border-color:#ffd4d8;box-shadow:0 4px 12px #f43f5e12}
+.admin-status-button.inactive-status.selected{background:linear-gradient(135deg,#fff0f1,#ffe3e6);color:#b91c1c;border-color:#ffc5cc;box-shadow:0 6px 15px #f43f5e20,inset 0 1px 1px #fff}
+.admin-status-button:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
