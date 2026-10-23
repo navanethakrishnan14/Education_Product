@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Building2, Users, ChartNoAxesCombined, ArrowRight, Globe2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 type TenantSummary = {
   id: string;
   name: string;
