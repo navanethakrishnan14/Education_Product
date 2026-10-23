@@ -106,7 +106,15 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   const menu = typeMenus[tenantType] || typeMenus.school;
   const organizationLabel = tenantType === 'college' ? 'College' : tenantType === 'institution' ? 'Institution' : 'School';
   const institution = user.institutionName || user.tenantName || 'Your ' + organizationLabel.toLowerCase();
-  const [profileDraft, setProfileDraft] = useState(() => ({ name: user.institutionName || user.tenantName || '', code: user.tenantCode || '', type: user.tenantType || organizationLabel.toLowerCase(), email: user.email || '' }));
+  const [profileDraft, setProfileDraft] = useState(() => {
+    const fallback = { name: user.institutionName || user.tenantName || '', code: user.tenantCode || '', type: user.tenantType || organizationLabel.toLowerCase(), email: user.email || '' };
+    try {
+      const saved = localStorage.getItem('edusphere_profile:' + (user.tenantId || 'tenant'));
+      return saved ? { ...fallback, ...JSON.parse(saved) } : fallback;
+    } catch {
+      return fallback;
+    }
+  });
   const [profileNotice, setProfileNotice] = useState('');
   function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
