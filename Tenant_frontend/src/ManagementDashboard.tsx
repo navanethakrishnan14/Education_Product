@@ -155,7 +155,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   const initials = (user.name || 'Management').split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase();
   return <div className="min-h-screen bg-[#e8e2ff] text-[#17143a]" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
     {mobileOpen && <button aria-label="Close navigation overlay" className="fixed inset-0 z-30 bg-[#170c36]/50 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />}
-    <aside className={`fixed inset-y-0 left-0 z-40 flex w-[184px] flex-col overflow-hidden border-r border-white/10 bg-gradient-to-b from-[#321653] via-[#3b1b5d] to-[#4b2165] text-white shadow-xl shadow-violet-950/20 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <aside className={`fixed inset-y-0 left-0 z-40 flex w-[184px] flex-col overflow-hidden rounded-tr-[24px] border-r border-white/10 bg-gradient-to-b from-[#321653] via-[#3b1b5d] to-[#4b2165] text-white shadow-xl shadow-violet-950/20 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex items-center gap-2 border-b border-white/10 px-3 pb-2 pt-2">
         <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/15 text-white shadow-lg shadow-black/10"><GraduationCap size={15} /></div>
         <div className="min-w-0"><p className="truncate text-[11px] font-extrabold tracking-tight">{tenantType === 'college' ? 'EduManage College' : tenantType === 'institution' ? 'EduManage Institution' : 'EduManage School'}</p><p className="mt-0.5 text-[7px] font-bold tracking-wide text-violet-200">{organizationLabel.toUpperCase()} MANAGEMENT SUITE</p></div>
@@ -171,7 +171,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
       <div className="border-t border-white/10 p-2"><button onClick={onLogout} className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-[8px] font-semibold text-white/80 transition hover:bg-rose-500/20 hover:text-white"><LogOut size={18}/> Sign out securely</button></div>
     </aside>
     <div className="min-w-0 lg:pl-[184px]">
-      <header className="sticky top-0 z-20 flex min-h-[47px] items-center justify-between gap-2 border-b border-white/10 bg-gradient-to-r from-[#321653] via-[#3e1d60] to-[#4a2369] px-3 text-white shadow-lg shadow-violet-950/10 sm:px-3 xl:px-4">
+      <header className="sticky top-0 z-20 flex min-h-[47px] items-center justify-between gap-2 rounded-bl-[24px] border-b border-white/10 bg-gradient-to-r from-[#321653] via-[#3e1d60] to-[#4a2369] px-3 text-white shadow-lg shadow-violet-950/10 sm:px-3 xl:px-4">
         <div className="flex min-w-0 items-center gap-3">
           <button className="rounded-xl border border-violet-100 bg-white p-2.5 text-violet-900 shadow-sm lg:hidden" aria-label="Open navigation" onClick={() => setMobileOpen(true)}><Menu size={19}/></button>
           <div className="hidden items-center gap-2 text-xs text-white/60 sm:flex"><School size={15}/><span>Workspace</span><ChevronRight size={13}/><span className="font-semibold text-white">{active}</span></div>
