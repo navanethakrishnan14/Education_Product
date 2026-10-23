@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { ArrowRight, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { FormEvent } from "react";
 import Brand from "../components/Brand";
