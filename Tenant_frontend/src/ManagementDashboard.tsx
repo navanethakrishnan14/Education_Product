@@ -105,7 +105,6 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   const tenantType = (user.tenantType || 'school').toLowerCase() as keyof typeof typeMenus;
   const menu = typeMenus[tenantType] || typeMenus.school;
   const organizationLabel = tenantType === 'college' ? 'College' : tenantType === 'institution' ? 'Institution' : 'School';
-  const institution = user.institutionName || user.tenantName || 'Your ' + organizationLabel.toLowerCase();
   const [profileDraft, setProfileDraft] = useState(() => {
     const fallback = { name: user.institutionName || user.tenantName || '', code: user.tenantCode || '', type: user.tenantType || organizationLabel.toLowerCase(), email: user.email || '' };
     try {
@@ -115,6 +114,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
       return fallback;
     }
   });
+  const institution = profileDraft.name.trim() || user.institutionName || user.tenantName || 'Your ' + organizationLabel.toLowerCase();
   const [profileNotice, setProfileNotice] = useState('');
   function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
