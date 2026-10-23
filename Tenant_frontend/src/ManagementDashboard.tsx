@@ -132,20 +132,20 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
         { label: 'Enrolled students', value: '—', hint: 'Student enrollment overview', icon: GraduationCap, tone: 'violet' },
         { label: 'Faculty members', value: '—', hint: 'Faculty and department directory', icon: Users, tone: 'blue' },
         { label: 'Departments', value: '—', hint: 'Academic departments and programs', icon: Building2, tone: 'teal' },
-        { label: 'Setup progress', value: '1/4', hint: 'College onboarding checklist', icon: Activity, tone: 'amber' }
+        { label: 'Setup progress', value: '—', hint: 'Onboarding progress is not connected to the backend yet', icon: Activity, tone: 'amber' }
       ]
     : tenantType === 'institution'
     ? [
         { label: 'Members & learners', value: '—', hint: 'People registered with your organization', icon: Users, tone: 'violet' },
         { label: 'Staff members', value: '—', hint: 'Staff and team directory', icon: UserRound, tone: 'blue' },
         { label: 'Programs & services', value: '—', hint: 'Organization service overview', icon: BookOpen, tone: 'teal' },
-        { label: 'Setup progress', value: '1/4', hint: 'Organization onboarding checklist', icon: Activity, tone: 'amber' }
+        { label: 'Setup progress', value: '—', hint: 'Onboarding progress is not connected to the backend yet', icon: Activity, tone: 'amber' }
       ]
     : [
         { label: 'Students', value: '—', hint: 'School enrollment overview', icon: GraduationCap, tone: 'violet' },
         { label: 'Faculty & staff', value: '—', hint: 'Teachers and staff directory', icon: Users, tone: 'blue' },
         { label: 'Attendance today', value: '—', hint: 'Daily school attendance', icon: CalendarCheck, tone: 'teal' },
-        { label: 'Setup progress', value: '1/4', hint: 'School onboarding checklist', icon: Activity, tone: 'amber' }
+        { label: 'Setup progress', value: '—', hint: 'Onboarding progress is not connected to the backend yet', icon: Activity, tone: 'amber' }
       ];
   const filtered = useMemo(() => menu.filter(item => item.label.toLowerCase().includes(search.toLowerCase())), [menu, search]);
   const select = (page: string) => { setActive(page); setMobileOpen(false); };
@@ -179,7 +179,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
         </div>
         <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
           <label className="hidden max-w-[440px] flex-1 items-center gap-2.5 rounded-full border border-violet-100 bg-[#f8f7ff] px-4 py-2.5 text-slate-400 md:flex"><Search size={17}/><input aria-label="Search management modules" value={search} onChange={e => setSearch(e.target.value)} placeholder={tenantType === 'college' ? 'Search students, faculty, departments...' : tenantType === 'institution' ? 'Search members, programs, services...' : 'Search students, teachers, classes...'} className="w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400"/></label>
-          <button onClick={() => setShowNotifications(v => !v)} aria-label="Notifications" className="relative rounded-xl p-2.5 text-violet-900 transition hover:bg-violet-50"><Bell size={19}/><span className="absolute right-2 top-2 h-2 w-2 rounded-full border border-white bg-rose-500"/></button>
+          <button onClick={() => setShowNotifications(v => !v)} aria-label="Notifications" className="relative rounded-xl p-2.5 text-violet-900 transition hover:bg-violet-50"><Bell size={19}/></button>
           {showNotifications && <div className="absolute right-20 top-[62px] w-72 rounded-2xl border border-violet-100 bg-white p-4 shadow-xl"><p className="text-sm font-bold">Notifications</p><p className="mt-2 text-xs leading-5 text-slate-500">You're all caught up. Setup reminders will appear here.</p></div>}
           <div className="h-8 w-px bg-violet-100"/>
           <div className="flex items-center gap-2.5 pl-1"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-violet-200 to-fuchsia-100 text-xs font-extrabold text-violet-900 shadow">{initials}</span><div className="hidden max-w-36 sm:block"><p className="truncate text-xs font-bold text-slate-900">{user.name || 'Management user'}</p><p className="truncate text-[10px] text-slate-500">{user.role || 'Head Administrator'}</p></div></div>
