@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Building2, Users, ChartNoAxesCombined, Settings, LogOut, Menu, X, Search, Bell, ChevronRight, Globe2 } from "lucide-react";
 import { NavLink, Route, Routes, useNavigate } from "react-router-dom";
+import Brand from "./Brand";
 import Tenant from "../Tenant";
 import OverviewPage from "../pages/OverviewPage";
 import PlatformUsersPage from "../pages/PlatformUsersPage";
