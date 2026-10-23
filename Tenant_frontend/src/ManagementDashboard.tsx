@@ -155,14 +155,14 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   const initials = (user.name || 'Management').split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase();
   return <div className="min-h-screen bg-[#e8e2ff] text-[#17143a]" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
     {mobileOpen && <button aria-label="Close navigation overlay" className="fixed inset-0 z-30 bg-[#170c36]/50 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />}
-    <aside className={`fixed inset-y-0 left-0 z-40 flex w-[275px] flex-col overflow-hidden border-r border-white/10 bg-gradient-to-b from-[#321653] via-[#3b1b5d] to-[#4b2165] text-white shadow-xl shadow-violet-950/20 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <aside className={`fixed inset-y-0 left-0 z-40 flex h-screen w-[275px] flex-col overflow-hidden border-r border-white/10 bg-gradient-to-b from-[#321653] via-[#3b1b5d] to-[#4b2165] text-white shadow-xl shadow-violet-950/20 transition-transform duration-300 lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex items-center gap-2 border-b border-white/10 px-5 pb-4 pt-4">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/15 text-white shadow-lg shadow-black/10"><GraduationCap size={15} /></div>
         <div className="min-w-0"><p className="truncate text-[16px] font-extrabold tracking-tight">{tenantType === 'college' ? 'EduManage College' : tenantType === 'institution' ? 'EduManage Institution' : 'EduManage School'}</p><p className="mt-1 text-[10px] font-bold tracking-wide text-violet-200">{organizationLabel.toUpperCase()} MANAGEMENT SUITE</p></div>
         <button className="ml-auto rounded-lg p-1 text-white/70 hover:bg-white/10 lg:hidden" aria-label="Close menu" onClick={() => setMobileOpen(false)}><X size={19}/></button>
       </div>
       <div className="px-5 pb-3 pt-5"><p className="px-3 text-[11px] font-bold uppercase tracking-[.14em] text-violet-200/70">{organizationLabel} workspace</p></div>
-      <nav aria-label="Management navigation" className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
+      <nav aria-label="Management navigation" className="flex-1 space-y-0.5 overflow-y-hidden px-2 pb-3">
         {filtered.map(({ label, icon: Icon }) => <button key={label} onClick={() => select(label)} aria-current={active === label ? 'page' : undefined} className={`group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[14px] font-semibold transition-all ${active === label ? 'bg-white text-[#321653] shadow-md' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
           <span className={`grid h-7 w-7 place-items-center rounded-md ${active === label ? 'bg-violet-100 text-[#321653]' : 'text-white/65 group-hover:bg-white/10 group-hover:text-white'}`}><Icon size={12}/></span><span className="flex-1">{label}</span>{active === label && <ChevronRight size={15}/>}
         </button>)}
