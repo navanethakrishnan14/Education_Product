@@ -58,11 +58,6 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
         <div className="min-w-0"><p className="truncate text-[17px] font-extrabold tracking-tight">EduManage Cloud</p><p className="mt-0.5 text-[10px] font-medium tracking-wide text-violet-200">ENTERPRISE ACADEMIC SUITE</p></div>
         <button className="ml-auto rounded-lg p-1 text-white/70 hover:bg-white/10 lg:hidden" aria-label="Close menu" onClick={() => setMobileOpen(false)}><X size={19}/></button>
       </div>
-      <div className="mx-4 mb-4 rounded-2xl border border-white/10 bg-white/[0.08] p-3.5">
-        <p className="text-[10px] font-bold uppercase tracking-[.16em] text-violet-200">Current institution</p>
-        <p className="mt-1.5 break-words text-sm font-bold leading-5">{institution}</p>
-        <p className="mt-1 text-xs text-violet-200/80">{user.tenantType || 'Education institution'}{user.tenantCode ? ` · ${user.tenantCode}` : ''}</p>
-      </div>
       <div className="px-4 pb-2"><p className="px-3 text-[10px] font-bold uppercase tracking-[.18em] text-violet-300/80">Workspace</p></div>
       <nav aria-label="Management navigation" className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
         {filtered.map(({ label, icon: Icon }) => <button key={label} onClick={() => select(label)} aria-current={active === label ? 'page' : undefined} className={`group flex w-full items-center gap-3 rounded-2xl px-3.5 py-[11px] text-left text-[13px] font-semibold transition-all ${active === label ? 'bg-gradient-to-r from-white to-[#f0eaff] text-[#311056] shadow-lg shadow-black/10' : 'text-violet-100/90 hover:bg-white/10 hover:text-white'}`}>
@@ -70,10 +65,6 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
         </button>)}
         {filtered.length === 0 && <p className="px-3 py-5 text-sm text-violet-200">No matching modules</p>}
       </nav>
-      <div className="mx-4 mb-4 rounded-2xl border border-white/10 bg-black/10 p-3.5">
-        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]"/><span className="text-xs font-semibold text-violet-100">Workspace operational</span></div>
-        <p className="mt-1.5 text-[11px] leading-4 text-violet-200/75">Your institution workspace is ready to configure.</p>
-      </div>
       <div className="border-t border-white/10 p-3"><button onClick={onLogout} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-violet-100 transition hover:bg-rose-500/15 hover:text-rose-100"><LogOut size={18}/> Sign out securely</button></div>
     </aside>
     <div className="min-w-0 lg:pl-[258px]">
