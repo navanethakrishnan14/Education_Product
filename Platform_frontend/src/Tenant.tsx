@@ -66,7 +66,8 @@ function SchoolCreateForm() {
     const token=sessionStorage.getItem("platform_token");
     const response=await fetch(base+"/schools",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:JSON.stringify({...form,tenantType:"school",workspaceUrl:form.subdomain?form.subdomain+".edusphere.cloud":form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-")+".edusphere.cloud"})});
     const result=await response.json();if(!response.ok)throw new Error(result.message||"Unable to create school.");
-    setMessage("School created successfully. Code: " + (result.data?.code || form.code) + ". Password setup email sent to " + form.email + ". Check the inbox or spam folder; the link expires in 30 minutes.");setTimeout(()=>nav("/dashboard/tenant"),3500);
+    const emailSent = result.data?.passwordSetupEmailSent === true;
+    setMessage("School created successfully. Code: " + (result.data?.code || form.code) + (emailSent ? ". Password setup email sent to " + form.email + ". Check the inbox or spam folder; the link expires in 30 minutes." : ". The organization is saved, but the password setup email was not sent. Check SMTP settings in Platform_Backend/.env, restart the backend, then use Resend setup email."));setTimeout(()=>nav("/dashboard/tenant"), emailSent ? 3500 : 6500);
   }catch(err){setMessage(err instanceof Error?err.message:"Unable to create school.");}finally{setBusy(false);}}
   const draft=()=>{sessionStorage.setItem("school_form_draft",JSON.stringify(form));setMessage("Draft saved in this browser.");};
   return <div className="school-form-page">
@@ -153,8 +154,9 @@ function GenericTenantCreateForm({ type, title }: { type: string; title: string 
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Unable to create " + title.toLowerCase() + ".");
-      setMessage(title + " created successfully. Code: " + (result.data?.code || form.code) + ". Password setup email sent to " + form.email + ". Check the inbox or spam folder; the link expires in 30 minutes.");
-      window.setTimeout(() => nav("/dashboard/tenant"), 3500);
+      const emailSent = result.data?.passwordSetupEmailSent === true;
+      setMessage(title + " created successfully. Code: " + (result.data?.code || form.code) + (emailSent ? ". Password setup email sent to " + form.email + ". Check the inbox or spam folder; the link expires in 30 minutes." : ". The organization is saved, but the password setup email was not sent. Check SMTP settings in Platform_Backend/.env, restart the backend, then use Resend setup email."));
+      window.setTimeout(() => nav("/dashboard/tenant"), emailSent ? 3500 : 6500);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Unable to create " + title.toLowerCase() + ".");
     } finally { setBusy(false); }
