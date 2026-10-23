@@ -168,7 +168,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
         </button>)}
         {filtered.length === 0 && <p className="px-3 py-5 text-sm text-slate-400">No matching modules</p>}
       </nav>
-      <div className="border-t border-white/10 p-2"><button onClick={onLogout} className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-[8px] font-semibold text-white/80 transition hover:bg-rose-500/20 hover:text-white"><LogOut size={18}/> Sign out securely</button></div>
+      <div className="border-t border-white/10 p-3"><button onClick={onLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[14px] font-semibold text-white/90 transition hover:bg-rose-500/20 hover:text-white"><LogOut size={20}/> Sign out securely</button></div>
     </aside>
     <div className="min-w-0 lg:pl-[275px]">
       <header className="sticky top-0 z-20 flex min-h-[74px] items-center justify-between gap-2 border-b border-white/10 bg-gradient-to-r from-[#321653] via-[#3e1d60] to-[#4a2369] px-3 text-white shadow-lg shadow-violet-950/10 sm:px-3 xl:px-4">
