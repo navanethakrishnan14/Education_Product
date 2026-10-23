@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import {
   Plus, Search, Pencil, Trash2, X, Save, Download, Users, FileText,
-  CheckCircle2, Clock3, Archive, Filter, Database, AlertCircle
+  CheckCircle2, Clock3, Archive, Filter, Database
 } from 'lucide-react';
 
 type RecordRow = { id: string; name: string; email: string; category: string; status: 'Active' | 'Inactive'; notes: string; updatedAt: string };
@@ -14,7 +15,6 @@ const fields: { key: FieldKey; label: string; placeholder: string }[] = [
   { key: 'notes', label: 'Notes', placeholder: 'Add notes or details (optional)' }
 ];
 const blank = (): Omit<RecordRow, 'id' | 'updatedAt'> => ({ name: '', email: '', category: '', status: 'Active', notes: '' });
-const humanize = (value: string) => value.replace(/&/g, 'and').replace(/([a-z])([A-Z])/g, '$1 $2');
 const getFieldsForPage = (page: string) => {
   const p = page.toLowerCase();
   if (p.includes('attendance')) return ['Student / Staff name', 'Date / Reference', 'Class / Department', 'Status', 'Notes'];
@@ -78,7 +78,7 @@ export default function ModuleWorkspace({ page, tenantId, tenantName }: { page: 
     setEditorOpen(true);
     setNotice('');
   }
-  function save(event: React.FormEvent<HTMLFormElement>) {
+  function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!draft.name.trim()) return;
     const now = new Date().toISOString();
