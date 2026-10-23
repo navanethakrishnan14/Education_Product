@@ -38,14 +38,14 @@ const tenantTypes = [
 type SchoolForm = {
   name: string; code: string; schoolType: string; board: string; category: string; medium: string; establishedYear: string; website: string; email: string; phone: string; alternatePhone: string; description: string;
   address1: string; address2: string; landmark: string; city: string; district: string; state: string; country: string; postalCode: string;
-  adminName: string; adminTitle: string; adminEmail: string; adminPhone: string;
+  adminName: string; adminTitle: string; adminEmail: string; adminPhone: string; adminStatus: "Active" | "Inactive";
   academicYear: string; startDate: string; endDate: string; workingDays: string[]; startTime: string; endTime: string; periods: string; fromClass: string; toClass: string; modules: string[];
   plan: string; billing: string; subdomain: string; activationStatus: string; allowAdmin: boolean; allowFaculty: boolean; allowStudent: boolean; allowParent: boolean; emailNotifications: boolean; smsNotifications: boolean; inAppNotifications: boolean; notes: string;
 };
 const initial: SchoolForm = {
   name:"",code:"",schoolType:"Private",board:"State Board",category:"K-12",medium:"English",establishedYear:"",website:"",email:"",phone:"",alternatePhone:"",description:"",
   address1:"",address2:"",landmark:"",city:"",district:"",state:"",country:"",postalCode:"",
-  adminName:"",adminTitle:"Principal / Head of School",adminEmail:"",adminPhone:"",
+  adminName:"",adminTitle:"Principal / Head of School",adminEmail:"",adminPhone:"",adminStatus:"Active",
   academicYear:"2026-2027",startDate:"2026-06-01",endDate:"2027-04-30",workingDays:["Mon","Tue","Wed","Thu","Fri"],startTime:"08:00",endTime:"15:30",periods:"8 Periods",fromClass:"Kindergarten",toClass:"Grade 12",modules:["Sections","Student Attendance Matrix","Teacher Attendance Tracking","Online Fee Gateway","Exams & Grade Books","Parent Portal Access","Student Portal Access"],
   plan:"Premium",billing:"Yearly",subdomain:"",activationStatus:"Pending",allowAdmin:true,allowFaculty:true,allowStudent:true,allowParent:true,emailNotifications:true,smsNotifications:true,inAppNotifications:true,notes:""
 };
@@ -94,7 +94,7 @@ function SchoolCreateForm() {
       </Section>
       <Section number={3} title="School Administrator Account" subtitle="Initial primary administrative credential for institutional control" aside="Security audited">
         <div className="school-notice"><ShieldCheck size={17}/><div><strong>Access Governance Notice</strong><p>This account will have administrative access only to the school assigned to it. It cannot view district-wide platform billing or other member schools.</p></div></div>
-        <div className="school-fields-grid"><Field label="Administrator Full Name" required><TextInput required value={form.adminName} onChange={e=>update("adminName",e.target.value)} placeholder="Administrator name"/></Field><Field label="Designation / Role Title" required><SelectInput value={form.adminTitle} onChange={e=>update("adminTitle",e.target.value)}>{["Principal / Head of School","School Administrator","Correspondent","Director","IT Administrator"].map(x=><option key={x}>{x}</option>)}</SelectInput></Field><Field label="Direct Mobile Number" required><TextInput required type="tel" value={form.adminPhone} onChange={e=>update("adminPhone",e.target.value)} placeholder="+91 98765 43210"/></Field></div>
+        <div className="school-fields-grid"><Field label="Administrator Full Name" required><TextInput required value={form.adminName} onChange={e=>update("adminName",e.target.value)} placeholder="Administrator name"/></Field><Field label="Designation / Role Title" required><SelectInput value={form.adminTitle} onChange={e=>update("adminTitle",e.target.value)}>{["Principal / Head of School","School Administrator","Correspondent","Director","IT Administrator"].map(x=><option key={x}>{x}</option>)}</SelectInput></Field><Field label="Direct Mobile Number" required><TextInput required type="tel" value={form.adminPhone} onChange={e=>update("adminPhone",e.target.value)} placeholder="+91 98765 43210"/></Field><Field label="Administrator Status" required><div className="school-chip-row" role="group" aria-label="Administrator status"><button type="button" className={"school-action "+(form.adminStatus==="Active"?"primary-school":"secondary")} aria-pressed={form.adminStatus==="Active"} onClick={()=>update("adminStatus","Active")}>Active</button><button type="button" className={"school-action "+(form.adminStatus==="Inactive"?"primary-school":"secondary")} aria-pressed={form.adminStatus==="Inactive"} onClick={()=>update("adminStatus","Inactive")}>Inactive</button></div></Field></div>
       </Section>
       {false && <>
       <Section number={4} title="Academic Configuration" subtitle="Session lifecycle, period timetables, and operational module feature gates" aside="Timetable & Modules">
