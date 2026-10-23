@@ -60,7 +60,7 @@ function Workspace() {
         }
 
         const configuredBase = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').trim();
-        const response = await fetch(configuredBase.replace(/\\/$/, '') + '/auth/me', {
+        const response = await fetch(configuredBase.replace(/\/$/, '') + '/auth/me', {
           headers: { Accept: 'application/json', Authorization: 'Bearer ' + token },
         });
         const payload = await response.json().catch(() => ({})) as {
