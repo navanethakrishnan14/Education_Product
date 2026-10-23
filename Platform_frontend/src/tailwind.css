@@ -251,3 +251,18 @@
 .sidebar .nav-item > svg:last-child { margin-left: auto; }
 .sidebar .sidebar-bottom { width: 100%; text-align: left; }
 .sidebar .sidebar-bottom button { justify-content: flex-start; width: 100%; text-align: left; }
+
+
+/* Tenant activation controls — implemented in the Tailwind stylesheet */
+@layer components {
+  .admin-status-toggle { @apply flex min-h-11 w-full items-center justify-end gap-2; }
+  .admin-status-button { @apply inline-flex h-10 w-[116px] items-center justify-center gap-2 rounded-full border px-3 py-2 text-[13px] font-semibold leading-tight transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2; }
+  .admin-status-button svg { @apply h-[17px] w-[17px] shrink-0; }
+  .admin-status-button.active-status { @apply border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100; }
+  .admin-status-button.active-status.selected { @apply border-emerald-600 bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-sm; }
+  .admin-status-button.inactive-status { @apply border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100; }
+  .admin-status-button.inactive-status.selected { @apply border-rose-500 bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-sm; }
+  .admin-status-button:focus-visible { @apply ring-violet-400; }
+  .school-field:has(.admin-status-toggle) { @apply w-full min-w-0; }
+  .school-field:has(.admin-status-toggle) .admin-status-toggle { @apply ml-0 w-full justify-start p-0; }
+}
