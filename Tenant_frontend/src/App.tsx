@@ -2,9 +2,7 @@ import { ArrowRight, BookOpen, GraduationCap, HeartHandshake, ShieldCheck, Landm
 import { Link, Route, Routes, useNavigate, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import ManagementLogin from './ManagementLogin';
-import SchoolManagementFlow from './SchoolManagementFlow';
-import CollegeManagementFlow from './CollegeManagementFlow';
-import InstitutionManagementFlow from './InstitutionManagementFlow';
+import ManagementDashboard from './ManagementDashboard';
 import FacultyLogin from './FacultyLogin';
 import ParentLogin from './ParentLogin';
 import StudentLogin from './StudentLogin';
@@ -32,7 +30,7 @@ function Landing() {
 }
 function Workspace() {
   const nav = useNavigate();
-  const [user, setUser] = useState<{name?: string; email?: string; role?: string; tenantId?: string; tenantCode?: string | null; tenantType?: string} | null>(null);
+  const [user, setUser] = useState<{name?: string; email?: string; role?: string; tenantId?: string; tenantCode?: string | null; tenantType?: string; tenantName?: string; institutionName?: string} | null>(null);
   useEffect(() => {
     const token = localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token');
     const raw = localStorage.getItem('tenant_user') || sessionStorage.getItem('tenant_user');
@@ -42,13 +40,7 @@ function Workspace() {
   function logout() { localStorage.removeItem('tenant_token'); localStorage.removeItem('tenant_user'); sessionStorage.removeItem('tenant_token'); sessionStorage.removeItem('tenant_user'); nav('/', { replace: true }); }
   if (!user) return <div className="workspace-loading">Checking your secure session…</div>;
   const role = user.role || 'USER';
-  if (role.toLowerCase() === 'management') {
-    const tenantType = (user.tenantType || '').toLowerCase();
-    if (tenantType === 'school') return <SchoolManagementFlow user={user} onLogout={logout}/>;
-    if (tenantType === 'college') return <CollegeManagementFlow user={user} onLogout={logout}/>;
-    if (tenantType === 'institution') return <InstitutionManagementFlow user={user} onLogout={logout}/>;
-    return <main className="grid min-h-screen place-items-center bg-slate-50 p-6"><section className="max-w-lg rounded-2xl border border-amber-200 bg-white p-8 text-center shadow-sm"><h1 className="text-xl font-bold text-slate-900">Organization type unavailable</h1><p className="mt-3 text-sm leading-6 text-slate-600">Your Management session does not include a valid organization type. Sign out and sign in again. If this continues, ask the Platform Admin to verify the tenant profile.</p><button onClick={logout} className="mt-5 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white">Sign out and return</button></section></main>;
-  }
+  if (role.toLowerCase() === 'management') return <ManagementDashboard user={user} onLogout={logout}/>;
   return <main className="workspace-page"><header className="workspace-header"><Brand/><button className="logout" onClick={logout}>Sign out</button></header><section className="workspace-content"><div className="workspace-symbol"><ShieldCheck size={24}/></div><div className="eyebrow">AUTHENTICATED TENANT WORKSPACE</div><h1>Welcome{user.name ? ', ' + user.name : ''}</h1><p>Your identity has been verified for the selected school portal.</p><div className="workspace-summary"><span>Role</span><strong>{role}</strong>{user.tenantCode && <><span>Organization Code</span><code>{user.tenantCode}</code></>}<span>Organization / Tenant ID</span><code>{user.tenantId || 'Not provided'}</code><span>Account</span><strong>{user.email || 'Signed-in user'}</strong></div><p className="workspace-note">Your sign-in is complete. Feature dashboards can be connected here as the Management, Faculty, Parent, and Student modules are implemented.</p><button className="launch" onClick={logout}>Sign out securely <ArrowRight size={14}/></button></section></main>;
 }
 function GuardedWorkspace() {
