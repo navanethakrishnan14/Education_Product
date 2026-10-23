@@ -66,7 +66,6 @@ router.post("/", async (req, res, next) => {
     const parsed = createSchoolSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, message: "Check the required school fields.", errors: parsed.error.flatten().fieldErrors });
     const input = parsed.data;
-    if (!isEmailConfigured()) return res.status(503).json({ success: false, message: "Email delivery is not configured. Add SMTP_HOST, SMTP_USER, SMTP_PASS and SMTP_FROM to Platform_Backend/.env before creating tenants." });
     const officialEmail = input.email.toLowerCase();
     const duplicateEmail = await prisma.schoolTenant.findUnique({ where: { officialEmail } });
     if (duplicateEmail) return res.status(409).json({ success: false, message: "This Official Email is already registered to an organization." });
@@ -144,12 +143,19 @@ router.post("/", async (req, res, next) => {
     setupUrl.searchParams.set("token", rawToken);
     try {
       await sendPasswordSetupEmail({ to: officialEmail, organizationName: school.name, setupUrl: setupUrl.toString() });
-    } catch (_emailError) {
-      await prisma.schoolTenant.delete({ where: { id: school.id } });
-      return res.status(502).json({ success: false, message: "The organization was not saved because the password setup email could not be sent. Check SMTP settings and try again." });
+    } catch (emailError) {
+      // Keep the organization and the hashed, expiring setup token. SMTP outages
+      // must not roll back valid tenant creation; admins can resend the email.
+      console.error("Organization created, but password setup email delivery failed:", emailError);
+      const { passwordSetupTokenHash: _tokenHash, passwordSetupExpiresAt: _expiresAt, adminPasswordHash: _passwordHash, ...safeSchool } = school;
+      return res.status(201).json({
+        success: true,
+        message: "Organization created successfully, but the password setup email could not be delivered. Check SMTP settings, then use Resend setup email for this organization.",
+        data: { ...safeSchool, passwordSetupEmailSent: false }
+      });
     }
     const { passwordSetupTokenHash: _tokenHash, passwordSetupExpiresAt: _expiresAt, adminPasswordHash: _passwordHash, ...safeSchool } = school;
-    return res.status(201).json({ success: true, message: "Organization created. A password setup link was sent to the Official Email.", data: { ...safeSchool, passwordSetupEmailSent: true } });
+    return res.status(201).json({ success: true, message: "Organization created successfully. The password setup email was sent to the Official Email.", data: { ...safeSchool, passwordSetupEmailSent: true } });
   } catch (error) { return next(error); }
 });
 
