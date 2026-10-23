@@ -69,7 +69,7 @@
 
 /* School administrator active/inactive status buttons */
 .admin-status-toggle{display:flex;flex-direction:row;align-items:flex-start;justify-content:flex-end;gap:12px;padding:4px 0}
-.admin-status-button{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:170px;min-height:50px;padding:11px 24px;border-radius:999px;font-size:15px;font-weight:750;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,background .18s ease;border:1px solid transparent}
+.admin-status-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:130px;min-height:40px;padding:8px 18px;border-radius:999px;font-size:13px;font-weight:750;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,background .18s ease;border:1px solid transparent}
 .admin-status-button:hover{transform:translateY(-1px)}
 .admin-status-button.active-status{background:#e8fff6;color:#07845f;border-color:#b8f4df;box-shadow:0 4px 12px #10b9811c}
 .admin-status-button.active-status.selected{background:linear-gradient(135deg,#36c99b,#079b75);color:#fff;border-color:#2ec99a;box-shadow:0 7px 16px #10b98145,inset 0 1px 1px #ffffff55}
