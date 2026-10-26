@@ -1,0 +1,3 @@
+import OrganizationProfilePage from '../../../tenant-shared/OrganizationProfilePage';
+type Props={institution:string;user?:{tenantId?:string;tenantCode?:string|null;email?:string;tenantName?:string;institutionName?:string}};
+export default function ProfilePage({institution,user}:Props){return <OrganizationProfilePage organization="Institution" tenantId={user?.tenantId} name={user?.institutionName||user?.tenantName||institution} code={user?.tenantCode} email={user?.email}/>;}

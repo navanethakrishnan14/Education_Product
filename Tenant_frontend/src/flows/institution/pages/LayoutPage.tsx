@@ -1,0 +1,2 @@
+import DashboardPage from '../../../tenant-shared/DashboardPage';
+export default function LayoutPage({institution,onNavigate}:{institution:string;onNavigate:(page:string)=>void}){return <DashboardPage organization="Institution" institution={institution} onNavigate={onNavigate}/>;}
