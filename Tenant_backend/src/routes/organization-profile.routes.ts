@@ -35,8 +35,8 @@ async function authenticateManagement(req: Request, res: Response, next: NextFun
           const payload = decoded as jwt.JwtPayload;
           if (typeof payload.sub === 'string' && typeof payload.tenantId === 'string' && payload.role === 'MANAGEMENT') {
             claims = { ...payload, platformManagement: true } as Claims;
+            if (claims) break;
           }
-          break;
         }
       } catch { /* Try the next configured platform signing secret. */ }
     }
