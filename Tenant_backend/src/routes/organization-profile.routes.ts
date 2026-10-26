@@ -25,14 +25,17 @@ async function authenticateManagement(req: Request, res: Response, next: NextFun
   // that intentionally share the signing secret across both services.
   const platformSecrets = [...new Set([process.env.PLATFORM_JWT_SECRET?.trim(), process.env.JWT_SECRET?.trim()].filter((value): value is string => Boolean(value && value.length >= 32 && !value.startsWith('replace_with_'))))];
   if (tenantSecret) {
-    try { const decoded = jwt.verify(token, tenantSecret, options); if (typeof decoded !== 'string' && typeof decoded.sub === 'string' && typeof decoded.tenantId === 'string') claims = decoded as Claims; } catch { /* Try platform token. */ }
+    try { const decoded = jwt.verify(token, tenantSecret, options); if (typeof decoded !== 'string') { const payload = decoded as jwt.JwtPayload; if (typeof payload.sub === 'string' && typeof payload.tenantId === 'string') claims = payload as Claims; } } catch { /* Try platform token. */ }
   }
   if (!claims) {
     for (const secret of platformSecrets) {
       try {
         const decoded = jwt.verify(token, secret);
-        if (typeof decoded !== 'string' && typeof decoded.sub === 'string' && typeof decoded.tenantId === 'string' && decoded.role === 'MANAGEMENT') {
-          claims = { ...decoded, platformManagement: true } as Claims;
+        if (typeof decoded !== 'string') {
+          const payload = decoded as jwt.JwtPayload;
+          if (typeof payload.sub === 'string' && typeof payload.tenantId === 'string' && payload.role === 'MANAGEMENT') {
+            claims = { ...payload, platformManagement: true } as Claims;
+          }
           break;
         }
       } catch { /* Try the next configured platform signing secret. */ }
