@@ -33,11 +33,14 @@ async function init() {
     await client.query('ALTER TABLE tenant_records ALTER COLUMN created_by DROP NOT NULL');
     await client.query('CREATE INDEX IF NOT EXISTS tenant_records_tenant_module_idx ON tenant_records(tenant_id, module_key, updated_at DESC)');
     await client.query(`CREATE TABLE IF NOT EXISTS tenant_organization_profiles (
-      tenant_id UUID PRIMARY KEY,
+      tenant_id TEXT PRIMARY KEY,
       organization_type VARCHAR(20) NOT NULL CHECK (organization_type IN ('School','College','Institution')),
       profile JSONB NOT NULL DEFAULT '{}'::jsonb,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`);
+    // Platform tenant IDs are Prisma CUID strings. Upgrade the earlier UUID-only
+    // profile table safely so existing UUID values remain readable as text.
+    await client.query('ALTER TABLE tenant_organization_profiles ALTER COLUMN tenant_id TYPE TEXT USING tenant_id::text');
     await client.query('COMMIT');
     console.log('Tenant database schema is ready (users and operational records).');
   } catch (error) {
