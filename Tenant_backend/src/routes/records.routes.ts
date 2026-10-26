@@ -32,14 +32,20 @@ async function authenticate(req: Request, res: Response, next: NextFunction) {
     if (tenantSecret) {
       try {
         const decoded = jwt.verify(token, tenantSecret, tokenOptions);
-        if (typeof decoded !== 'string' && typeof decoded.sub === 'string' && typeof decoded.tenantId === 'string') claims = decoded as Claims;
+        if (typeof decoded !== 'string') {
+          const payload = decoded as jwt.JwtPayload;
+          if (typeof payload.sub === 'string' && typeof payload.tenantId === 'string') claims = payload as Claims;
+        }
       } catch { /* Try the separately configured Platform Management token below. */ }
     }
     if (!claims && platformSecret) {
       try {
         const decoded = jwt.verify(token, platformSecret);
-        if (typeof decoded !== 'string' && typeof decoded.sub === 'string' && typeof decoded.tenantId === 'string' && decoded.role === 'MANAGEMENT') {
-          claims = { ...(decoded as Claims), platformManagement: true };
+        if (typeof decoded !== 'string') {
+          const payload = decoded as jwt.JwtPayload;
+          if (typeof payload.sub === 'string' && typeof payload.tenantId === 'string' && payload.role === 'MANAGEMENT') {
+            claims = { ...(payload as Claims), platformManagement: true };
+          }
         }
       } catch { /* Rejected by both trusted token issuers. */ }
     }

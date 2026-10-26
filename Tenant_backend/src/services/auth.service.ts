@@ -133,15 +133,18 @@ export async function me(req: Request, res: Response): Promise<Response> {
   let claims: TokenClaims;
   try {
     const decoded = jwt.verify(token, secret, tokenOptions);
+    if (typeof decoded === 'string') {
+      return res.status(401).json({ success: false, message: 'Session is invalid. Please sign in again.' });
+    }
+    const payload = decoded as jwt.JwtPayload;
     if (
-      typeof decoded === 'string' ||
-      typeof decoded.sub !== 'string' ||
-      typeof decoded.tenantId !== 'string' ||
-      !['MANAGEMENT', 'FACULTY', 'PARENT', 'STUDENT'].includes(String(decoded.role))
+      typeof payload.sub !== 'string' ||
+      typeof payload.tenantId !== 'string' ||
+      !['MANAGEMENT', 'FACULTY', 'PARENT', 'STUDENT'].includes(String(payload.role))
     ) {
       return res.status(401).json({ success: false, message: 'Session is invalid. Please sign in again.' });
     }
-    claims = decoded as TokenClaims;
+    claims = payload as TokenClaims;
   } catch {
     return res.status(401).json({ success: false, message: 'Session expired or invalid. Please sign in again.' });
   }
