@@ -36,6 +36,7 @@ export default function OrganizationProfilePage({ organization, tenantId, name, 
       try {
         const response = await fetch(apiBase + '/organization-profile', { headers: { Accept: 'application/json', Authorization: 'Bearer ' + token } });
         const payload = await response.json().catch(() => ({})) as { success?: boolean; profile?: Draft | null; message?: string };
+        if (response.status === 401) throw new Error('Your Management session is not valid for the Tenant API. Sign out and sign in again. If this continues, make sure Tenant_backend .env PLATFORM_JWT_SECRET exactly matches Platform_Backend JWT_SECRET, then restart Tenant_backend.');
         if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to load organization profile.');
         if (!cancelled && payload.profile) { const saved = { ...payload.profile }; delete saved.organizationType; setDraft(current => ({ ...current, ...saved })); }
       } catch (error) { if (!cancelled) setNotice(error instanceof Error ? error.message : 'Unable to connect to the Tenant Backend.'); }
@@ -51,6 +52,7 @@ export default function OrganizationProfilePage({ organization, tenantId, name, 
     try {
       const response = await fetch(apiBase + '/organization-profile', { method: 'PUT', headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ organizationType: organization, profile: draft }) });
       const payload = await response.json().catch(() => ({})) as { success?: boolean; message?: string; profile?: Draft };
+      if (response.status === 401) throw new Error('Your Management session is not valid for the Tenant API. Sign out and sign in again. If this continues, make sure Tenant_backend .env PLATFORM_JWT_SECRET exactly matches Platform_Backend JWT_SECRET, then restart Tenant_backend.');
       if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to save organization profile.');
       if (payload.profile) { const saved = { ...payload.profile }; delete saved.organizationType; setDraft(current => ({ ...current, ...saved })); }
       localStorage.setItem(key, JSON.stringify(draft));
