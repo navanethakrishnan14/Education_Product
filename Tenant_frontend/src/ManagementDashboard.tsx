@@ -98,13 +98,13 @@ const subjectSets = {
     { name: 'Finance & funding', detail: 'Funding sources and financial records', icon: Wallet, color: 'amber', page: 'Finance & Funding' }
   ]
 };
-export default function ManagementDashboard({ user, onLogout }: { user: TenantUser; onLogout: () => void }) {
+export default function ManagementDashboard({ user, onLogout, tenantTypeOverride }: { user: TenantUser; onLogout: () => void; tenantTypeOverride?: 'school' | 'college' | 'institution' }) {
   const location = useLocation();
   const navigate = useNavigate();
   const routePage = decodeURIComponent(location.pathname.split('/').filter(Boolean).at(-1) || 'dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const tenantType = (user.tenantType || 'school').toLowerCase() as keyof typeof typeMenus;
+  const tenantType = (tenantTypeOverride || user.tenantType || 'school').toLowerCase() as keyof typeof typeMenus;
   const menu = typeMenus[tenantType] || typeMenus.school;
   const organizationLabel = tenantType === 'college' ? 'College' : tenantType === 'institution' ? 'Institution' : 'School';
   const [profileDraft, setProfileDraft] = useState(() => {
