@@ -25,7 +25,9 @@ async function authenticateManagement(req: Request, res: Response, next: NextFun
   if (!claims && platformSecret) {
     try { const decoded = jwt.verify(token, platformSecret); if (typeof decoded !== 'string' && typeof decoded.sub === 'string' && typeof decoded.tenantId === 'string' && decoded.role === 'MANAGEMENT') claims = { ...decoded, platformManagement: true } as Claims; } catch { /* Invalid token. */ }
   }
-  if (!claims || claims.role !== 'MANAGEMENT' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(claims.tenantId)) return res.status(401).json({ success: false, message: 'A valid Management session is required.' });
+  // Platform-created tenant IDs are Prisma CUIDs, not UUIDs. Accept the opaque
+  // tenant identifier from the signed token; do not impose a UUID-only format.
+  if (!claims || claims.role !== 'MANAGEMENT' || !claims.tenantId.trim() || claims.tenantId.length > 128) return res.status(401).json({ success: false, message: 'A valid Management session is required.' });
   if (!claims.platformManagement) {
     try {
       const active = await pool.query('SELECT 1 FROM tenant_users WHERE id::text = $1 AND tenant_id = $2 AND role = $3 AND is_active = TRUE LIMIT 1', [claims.sub, claims.tenantId, claims.role]);
