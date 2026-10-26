@@ -32,7 +32,7 @@ const getFieldsForPage = (page: string) => {
 
 export default function ModuleWorkspace({ page, tenantId, tenantName }: { page: string; tenantId?: string; tenantName: string }) {
   const moduleKey = page;
-  const apiBase = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').trim().replace(/\\/$/, '');
+  const apiBase = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').trim().replace(/\/+$/, '');
   const token = localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token');
   const [rows, setRows] = useState<RecordRow[]>([]);
   const [query, setQuery] = useState('');
