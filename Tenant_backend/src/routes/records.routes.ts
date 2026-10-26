@@ -6,7 +6,7 @@ import { pool } from '../db/pool';
 import { getJwtSecret } from '../config/jwt';
 
 export const recordsRouter = Router();
-type Claims = jwt.JwtPayload & { sub: string; tenantId: string; role: string };
+type Claims = jwt.JwtPayload & { sub: string; tenantId: string; role: string; platformManagement?: boolean };
 declare global {
   namespace Express {
     interface Request { tenantClaims?: Claims }
@@ -24,19 +24,35 @@ const tokenOptions: jwt.VerifyOptions = { issuer: 'edusphere-tenant-api', audien
 
 async function authenticate(req: Request, res: Response, next: NextFunction) {
   const token = /^Bearer\s+(.+)$/i.exec(req.header('authorization') || '')?.[1];
-  const secret = getJwtSecret();
-  if (!token || !secret) return res.status(401).json({ success: false, message: 'Authentication required.' });
+  const tenantSecret = getJwtSecret();
+  const platformSecret = process.env.PLATFORM_JWT_SECRET;
+  if (!token || (!tenantSecret && !platformSecret)) return res.status(401).json({ success: false, message: 'Authentication required.' });
   try {
-    const decoded = jwt.verify(token, secret, tokenOptions);
-    if (typeof decoded === 'string' || typeof decoded.sub !== 'string' || typeof decoded.tenantId !== 'string' || !['MANAGEMENT','FACULTY','PARENT','STUDENT'].includes(String(decoded.role))) {
-      return res.status(401).json({ success: false, message: 'Invalid session.' });
+    let claims: Claims | null = null;
+    if (tenantSecret) {
+      try {
+        const decoded = jwt.verify(token, tenantSecret, tokenOptions);
+        if (typeof decoded !== 'string' && typeof decoded.sub === 'string' && typeof decoded.tenantId === 'string') claims = decoded as Claims;
+      } catch { /* Try the separately configured Platform Management token below. */ }
     }
-    const claims = decoded as Claims;
-    const active = await pool.query(
-      'SELECT 1 FROM tenant_users WHERE id::text = $1 AND tenant_id = $2 AND role = $3 AND is_active = TRUE LIMIT 1',
-      [claims.sub, claims.tenantId, claims.role],
-    );
-    if (!active.rowCount) return res.status(401).json({ success: false, message: 'Account is no longer active.' });
+    if (!claims && platformSecret) {
+      try {
+        const decoded = jwt.verify(token, platformSecret);
+        if (typeof decoded !== 'string' && typeof decoded.sub === 'string' && typeof decoded.tenantId === 'string' && decoded.role === 'MANAGEMENT') {
+          claims = { ...(decoded as Claims), platformManagement: true };
+        }
+      } catch { /* Rejected by both trusted token issuers. */ }
+    }
+    if (!claims || !['MANAGEMENT','FACULTY','PARENT','STUDENT'].includes(String(claims.role))) {
+      return res.status(401).json({ success: false, message: 'Session expired or invalid.' });
+    }
+    if (!claims.platformManagement) {
+      const active = await pool.query(
+        'SELECT 1 FROM tenant_users WHERE id::text = $1 AND tenant_id = $2 AND role = $3 AND is_active = TRUE LIMIT 1',
+        [claims.sub, claims.tenantId, claims.role],
+      );
+      if (!active.rowCount) return res.status(401).json({ success: false, message: 'Account is no longer active.' });
+    }
     req.tenantClaims = claims;
     return next();
   } catch {
@@ -69,7 +85,7 @@ recordsRouter.post('/', async (req, res) => {
     const { module, name, email, category, status, notes } = parsed.data;
     const result = await pool.query(
       'INSERT INTO tenant_records (tenant_id, created_by, module_key, name, email, category, status, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id::text, module_key, name, email, category, status, notes, updated_at',
-      [req.tenantClaims!.tenantId, req.tenantClaims!.sub, module, name, email, category, status, notes],
+      [req.tenantClaims!.tenantId, req.tenantClaims!.platformManagement ? null : req.tenantClaims!.sub, module, name, email, category, status, notes],
     );
     return res.status(201).json({ success: true, record: toRecord(result.rows[0]) });
   } catch (error) {
