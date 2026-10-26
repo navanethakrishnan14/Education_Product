@@ -31,6 +31,9 @@ async function init() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`);
     await client.query('ALTER TABLE tenant_records ALTER COLUMN created_by DROP NOT NULL');
+    // Platform Management tokens use Prisma CUID tenant IDs, while older tenant databases
+    // created this column as UUID. Store tenant IDs as text so both CUID and UUID IDs work.
+    await client.query('ALTER TABLE tenant_records ALTER COLUMN tenant_id TYPE TEXT USING tenant_id::text');
     await client.query('CREATE INDEX IF NOT EXISTS tenant_records_tenant_module_idx ON tenant_records(tenant_id, module_key, updated_at DESC)');
     await client.query(`CREATE TABLE IF NOT EXISTS tenant_organization_profiles (
       tenant_id TEXT PRIMARY KEY,
