@@ -101,7 +101,6 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   const [active, setActive] = useState('Dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [showNotifications, setShowNotifications] = useState(false);
   const tenantType = (user.tenantType || 'school').toLowerCase() as keyof typeof typeMenus;
   const menu = typeMenus[tenantType] || typeMenus.school;
   const organizationLabel = tenantType === 'college' ? 'College' : tenantType === 'institution' ? 'Institution' : 'School';
@@ -179,8 +178,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
         </div>
         <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
           <label className="hidden max-w-[285px] flex-1 items-center gap-2 rounded-full border border-white/20 bg-white px-4 py-2.5 text-slate-400 md:flex"><Search size={17}/><input aria-label="Search management modules" value={search} onChange={e => setSearch(e.target.value)} placeholder={tenantType === 'college' ? 'Search students, faculty, departments...' : tenantType === 'institution' ? 'Search members, programs, services...' : 'Search students, teachers, classes...'} className="w-full bg-transparent text-[13px] text-slate-700 outline-none placeholder:text-slate-400"/></label>
-          <button onClick={() => setShowNotifications(v => !v)} aria-label="Notifications" className="relative rounded-lg p-1.5 text-white transition hover:bg-white/10"><Bell size={19}/></button>
-          {showNotifications && <div className="absolute right-20 top-[62px] w-72 rounded-2xl border border-violet-100 bg-white p-4 shadow-xl"><p className="text-sm font-bold">Notifications</p><p className="mt-2 text-xs leading-5 text-slate-500">You're all caught up. Setup reminders will appear here.</p></div>}
+          <button onClick={() => select('Communication')} aria-label="Notifications" title="Open communication" className="relative rounded-lg p-1.5 text-white transition hover:bg-white/10"><Bell size={19}/></button>
           <div className="h-6 w-px bg-white/20"/>
           <div className="flex items-center gap-2.5 pl-1"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-violet-200 to-fuchsia-100 text-[9px] font-extrabold text-violet-900 shadow">{initials}</span><div className="hidden max-w-36 sm:block"><p className="truncate text-[12px] font-bold text-white">{user.name || 'Management user'}</p><p className="truncate text-[10px] text-violet-200">{user.role || 'Head Administrator'}</p></div></div>
         </div>
