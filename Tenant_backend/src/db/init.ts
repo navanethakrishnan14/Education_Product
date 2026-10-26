@@ -30,6 +30,7 @@ async function init() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`);
+    await client.query('ALTER TABLE tenant_records ALTER COLUMN created_by DROP NOT NULL');
     await client.query('CREATE INDEX IF NOT EXISTS tenant_records_tenant_module_idx ON tenant_records(tenant_id, module_key, updated_at DESC)');
     await client.query('COMMIT');
     console.log('Tenant database schema is ready (users and operational records).');
