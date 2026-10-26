@@ -20,7 +20,7 @@ async function init() {
     await client.query(`CREATE TABLE IF NOT EXISTS tenant_records (
       id BIGSERIAL PRIMARY KEY,
       tenant_id UUID NOT NULL,
-      created_by BIGINT NOT NULL REFERENCES tenant_users(id) ON DELETE CASCADE,
+      created_by BIGINT REFERENCES tenant_users(id) ON DELETE SET NULL,
       module_key VARCHAR(100) NOT NULL,
       name VARCHAR(200) NOT NULL,
       email VARCHAR(254) NOT NULL DEFAULT '',
