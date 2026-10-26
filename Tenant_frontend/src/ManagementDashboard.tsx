@@ -102,7 +102,6 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   const location = useLocation();
   const navigate = useNavigate();
   const routePage = decodeURIComponent(location.pathname.split('/').filter(Boolean).at(-1) || 'dashboard');
-  const [active, setActive] = useState('Dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState('');
   const tenantType = (user.tenantType || 'school').toLowerCase() as keyof typeof typeMenus;
@@ -155,7 +154,6 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
   const pageFromRoute = menu.find(item => slugify(item.label) === routePage)?.label || (routePage === 'management' || routePage === 'workspace' ? 'Dashboard' : 'Dashboard');
   const currentPage = location.pathname === '/workspace' || location.pathname === '/workspace/' ? 'Dashboard' : pageFromRoute;
   const select = (page: string) => {
-    setActive(page);
     setMobileOpen(false);
     navigate(page === 'Dashboard' ? '/workspace/management/dashboard' : '/workspace/management/' + slugify(page));
   };
