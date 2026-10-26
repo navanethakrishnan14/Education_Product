@@ -67,7 +67,6 @@ export default function LoginPage({ role, title, color }: { role: LoginRole; tit
         sessionStorage.removeItem('tenant_token');
         sessionStorage.removeItem('tenant_user');
       }
-      setMessage('Sign-in successful. Opening your workspace…');
       nav('/workspace', { replace: true });
     } catch (err) {
       const fallback = err instanceof TypeError
@@ -99,7 +98,7 @@ export default function LoginPage({ role, title, color }: { role: LoginRole; tit
           {role === "Management" ? <div className="exam" style={{marginBottom:16}}><b>Organization lookup:</b> Your Official Email identifies your organization. You do not need a separate Tenant ID for Management sign-in.</div> : <><label htmlFor="tenant">School / Tenant ID</label><input id="tenant" value={tenantId} onChange={e => setTenantId(e.target.value)} placeholder="School tenant UUID" autoComplete="organization" required pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}" title="Enter the UUID provided by your school administrator."/></>}
           <label htmlFor="email">{role === "Management" ? "Official Organization Email" : "School Email"}</label>
           <div className="field"><Mail size={14}/><input id="email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@school.edu" maxLength={254} required/></div>
-          <div className="password-label"><label htmlFor="password">Password</label><button type="button" onClick={() => setMessage(role === 'Management' ? 'For a new setup or reset link, contact your platform administrator.' : 'For a password reset, contact your school administrator. Self-service reset is not configured yet.')}>Forgot password?</button></div>
+          <div className="password-label"><label htmlFor="password">Password</label><span className="text-xs text-slate-500">Forgot password? Contact your administrator.</span></div>
           <div className="field"><LockKeyhole size={14}/><input id="password" type={visible ? 'text' : 'password'} autoComplete="current-password" minLength={8} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" required/><button className="eye" type="button" aria-label={visible ? 'Hide password' : 'Show password'} onClick={() => setVisible(!visible)}><Eye size={14}/></button></div>
           <label className="remember"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}/> Keep me logged in on this personal device</label>
           <button className="launch" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in to ' + role} <ArrowRight size={14}/></button>
