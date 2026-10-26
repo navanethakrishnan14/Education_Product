@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { authRouter } from './routes/auth.routes';
+import { recordsRouter } from './routes/records.routes';
 import { pool } from './db/pool';
 import { getJwtSecret } from './config/jwt';
 
@@ -73,6 +74,7 @@ app.get('/health/ready', async (_req, res) => {
 });
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/records', recordsRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ success: false, message: 'Endpoint not found.' });
