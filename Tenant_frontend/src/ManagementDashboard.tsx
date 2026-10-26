@@ -155,7 +155,8 @@ export default function ManagementDashboard({ user, onLogout, tenantTypeOverride
   const currentPage = location.pathname === '/workspace' || location.pathname === '/workspace/' ? 'Dashboard' : pageFromRoute;
   const select = (page: string) => {
     setMobileOpen(false);
-    navigate(page === 'Dashboard' ? '/workspace/management/dashboard' : '/workspace/management/' + slugify(page));
+    const flowBase = '/workspace/' + tenantType;
+      navigate(flowBase + '/' + slugify(page));
   };
   const firstName = user.name?.trim().split(/\s+/)[0];
   const activeIcon = menu.find(item => item.label === currentPage)?.icon || LayoutDashboard;
