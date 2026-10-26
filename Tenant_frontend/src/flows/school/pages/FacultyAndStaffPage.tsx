@@ -1,0 +1,2 @@
+import ModulePage from '../../../tenant-shared/ModulePage';
+export default function FacultyAndStaffPage({tenantId,institution}:{tenantId?:string;institution:string}){return <ModulePage page="Faculty & Staff" tenantId={tenantId} tenantName={institution}/>;}

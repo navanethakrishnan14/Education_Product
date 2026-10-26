@@ -1,0 +1,2 @@
+import ModulePage from '../../../tenant-shared/ModulePage';
+export default function ParentsAndGuardiansPage({tenantId,institution}:{tenantId?:string;institution:string}){return <ModulePage page="Parents & Guardians" tenantId={tenantId} tenantName={institution}/>;}

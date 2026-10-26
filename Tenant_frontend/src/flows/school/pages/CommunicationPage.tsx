@@ -1,0 +1,2 @@
+import ModulePage from '../../../tenant-shared/ModulePage';
+export default function CommunicationPage({tenantId,institution}:{tenantId?:string;institution:string}){return <ModulePage page="Communication" tenantId={tenantId} tenantName={institution}/>;}
