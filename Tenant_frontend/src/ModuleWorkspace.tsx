@@ -5,7 +5,7 @@ import {
   CheckCircle2, Clock3, Archive, Filter, Database
 } from 'lucide-react';
 
-type RecordRow = { id: string; name: string; email: string; category: string; status: 'Active' | 'Inactive'; notes: string; updatedAt: string };
+type RecordRow = { id: string; module?: string; name: string; email: string; category: string; status: 'Active' | 'Inactive'; notes: string; updatedAt: string };
 type FieldKey = 'name' | 'email' | 'category' | 'status' | 'notes';
 const fields: { key: FieldKey; label: string; placeholder: string }[] = [
   { key: 'name', label: 'Name / Title', placeholder: 'Enter a name or title' },
@@ -31,7 +31,9 @@ const getFieldsForPage = (page: string) => {
 };
 
 export default function ModuleWorkspace({ page, tenantId, tenantName }: { page: string; tenantId?: string; tenantName: string }) {
-  const storageKey = 'edusphere_module_records:' + (tenantId || 'tenant') + ':' + page;
+  const moduleKey = page;
+  const apiBase = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').trim().replace(/\\/$/, '');
+  const token = localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token');
   const [rows, setRows] = useState<RecordRow[]>([]);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -39,25 +41,71 @@ export default function ModuleWorkspace({ page, tenantId, tenantName }: { page: 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState(blank());
   const [notice, setNotice] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const labels = getFieldsForPage(page);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      const parsed = raw ? JSON.parse(raw) as RecordRow[] : [];
-      setRows(Array.isArray(parsed) ? parsed : []);
-    } catch {
-      setRows([]);
+    let cancelled = false;
+    async function loadRecords() {
+      setLoading(true);
+      setNotice('');
+      try {
+        if (!token) throw new Error('Your session has expired. Please sign in again.');
+        const response = await fetch(apiBase + '/records?module=' + encodeURIComponent(moduleKey), {
+          headers: { Accept: 'application/json', Authorization: 'Bearer ' + token },
+        });
+        const payload = await response.json().catch(() => ({})) as { success?: boolean; records?: RecordRow[]; message?: string };
+        if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to load records from the server.');
+        if (!cancelled) setRows(Array.isArray(payload.records) ? payload.records : []);
+      } catch (error) {
+        if (!cancelled) setNotice(error instanceof Error ? error.message : 'Unable to load records from the server.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
-  }, [storageKey]);
+    void loadRecords();
+    return () => { cancelled = true; };
+  }, [apiBase, moduleKey, token, tenantId]);
 
-  function persist(next: RecordRow[]) {
-    setRows(next);
+  async function saveRecord(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!draft.name.trim() || saving) return;
+    setSaving(true);
+    setNotice('');
     try {
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      setNotice('Saved in this browser for this tenant and module.');
-    } catch {
-      setNotice('Unable to save in this browser. Check browser storage settings.');
+      if (!token) throw new Error('Your session has expired. Please sign in again.');
+      const response = await fetch(apiBase + '/records' + (editingId ? '/' + encodeURIComponent(editingId) : ''), {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ module: moduleKey, ...draft, name: draft.name.trim() }),
+      });
+      const payload = await response.json().catch(() => ({})) as { success?: boolean; record?: RecordRow; message?: string };
+      if (!response.ok || !payload.success || !payload.record) throw new Error(payload.message || 'Unable to save record.');
+      setRows(current => editingId ? current.map(row => row.id === editingId ? payload.record! : row) : [payload.record!, ...current]);
+      setNotice('Saved to the tenant database.');
+      setEditorOpen(false);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Unable to save record.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove(id: string) {
+    setNotice('');
+    try {
+      if (!token) throw new Error('Your session has expired. Please sign in again.');
+      const response = await fetch(apiBase + '/records/' + encodeURIComponent(id) + '?module=' + encodeURIComponent(moduleKey), {
+        method: 'DELETE',
+        headers: { Accept: 'application/json', Authorization: 'Bearer ' + token },
+      });
+      const payload = await response.json().catch(() => ({})) as { success?: boolean; message?: string };
+      if (!response.ok || !payload.success) throw new Error(payload.message || 'Unable to delete record.');
+      setRows(current => current.filter(row => row.id !== id));
+      setNotice('Record deleted from the tenant database.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Unable to delete record.');
     }
   }
 
@@ -78,20 +126,7 @@ export default function ModuleWorkspace({ page, tenantId, tenantName }: { page: 
     setEditorOpen(true);
     setNotice('');
   }
-  function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!draft.name.trim()) return;
-    const now = new Date().toISOString();
-    if (editingId) {
-      persist(rows.map(row => row.id === editingId ? { ...row, ...draft, name: draft.name.trim(), updatedAt: now } : row));
-    } else {
-      persist([{ ...draft, name: draft.name.trim(), id: globalThis.crypto?.randomUUID?.() || String(Date.now()), updatedAt: now }, ...rows]);
-    }
-    setEditorOpen(false);
-  }
-  function remove(id: string) {
-    persist(rows.filter(row => row.id !== id));
-  }
+
   function exportCsv() {
     const escape = (value: string) => '"' + value.replace(/"/g, '""') + '"';
     const csv = [['Name / Title', 'Email / Reference', 'Department / Category', 'Status', 'Notes', 'Updated at'], ...filtered.map(row => [row.name, row.email, row.category, row.status, row.notes, row.updatedAt])].map(line => line.map(escape).join(',')).join('\r\n');
@@ -121,19 +156,20 @@ export default function ModuleWorkspace({ page, tenantId, tenantName }: { page: 
         <label className="flex flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-400"><Search size={16}/><input value={query} onChange={event => setQuery(event.target.value)} placeholder={'Search ' + page.toLowerCase() + '...'} className="w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400"/></label>
         <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-500"><Filter size={15}/><select value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="bg-transparent font-semibold text-slate-700 outline-none"><option>All</option><option>Active</option><option>Inactive</option></select></label>
       </div>
-      {notice && <div className="mx-4 mt-4 flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-[11px] text-emerald-800 sm:mx-5"><CheckCircle2 size={15} className="mt-0.5 shrink-0"/>{notice}</div>}
+      {notice && <div className={'mx-4 mt-4 flex items-start gap-2 rounded-xl border px-3 py-2.5 text-[11px] sm:mx-5 ' + (notice.toLowerCase().includes('unable') || notice.toLowerCase().includes('expired') || notice.toLowerCase().includes('error') ? 'border-rose-100 bg-rose-50 text-rose-800' : 'border-emerald-100 bg-emerald-50 text-emerald-800')}><CheckCircle2 size={15} className="mt-0.5 shrink-0"/>{notice}</div>}
+      {loading && <div className="px-5 py-10 text-center text-xs font-semibold text-slate-500">Loading records from the database…</div>}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-left">
           <thead className="bg-white text-[10px] uppercase tracking-[.12em] text-slate-400"><tr><th className="px-5 py-3 font-bold">Name / Title</th><th className="px-5 py-3 font-bold">Email / Reference</th><th className="px-5 py-3 font-bold">Category</th><th className="px-5 py-3 font-bold">Status</th><th className="px-5 py-3 text-right font-bold">Actions</th></tr></thead>
           <tbody className="divide-y divide-slate-100">{filtered.map(row => <tr key={row.id} className="transition hover:bg-violet-50/40"><td className="px-5 py-4"><div className="font-bold text-slate-800 text-xs">{row.name}</div>{row.notes && <div className="mt-1 max-w-xs truncate text-[10px] text-slate-400">{row.notes}</div>}</td><td className="px-5 py-4 text-xs text-slate-600">{row.email || '—'}</td><td className="px-5 py-4 text-xs text-slate-600">{row.category || '—'}</td><td className="px-5 py-4"><span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${row.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}><span className={`h-1.5 w-1.5 rounded-full ${row.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-400'}`}/>{row.status}</span></td><td className="px-5 py-4"><div className="flex justify-end gap-1"><button onClick={() => openEdit(row)} aria-label={'Edit ' + row.name} className="rounded-lg p-2 text-violet-700 hover:bg-violet-100"><Pencil size={15}/></button><button onClick={() => remove(row.id)} aria-label={'Delete ' + row.name} className="rounded-lg p-2 text-rose-600 hover:bg-rose-50"><Trash2 size={15}/></button></div></td></tr>)}</tbody>
         </table>
       </div>
-      {filtered.length === 0 && <div className="flex flex-col items-center px-5 py-12 text-center"><span className="rounded-2xl bg-violet-50 p-4 text-violet-600"><Database size={25}/></span><h3 className="mt-3 text-sm font-extrabold text-slate-800">{rows.length ? 'No matching records' : 'No records yet'}</h3><p className="mt-1 max-w-md text-xs leading-5 text-slate-500">{rows.length ? 'Try a different search or status filter.' : 'Add your first record to start managing this module.'}</p>{!rows.length && <button onClick={openNew} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-violet-800"><Plus size={15}/> Add first record</button>}</div>}
-      <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-[10px] text-slate-400"><span>Showing {filtered.length} of {rows.length} records</span><span className="inline-flex items-center gap-1"><Clock3 size={12}/> Browser-saved workspace</span></div>
+      {!loading && filtered.length === 0 && <div className="flex flex-col items-center px-5 py-12 text-center"><span className="rounded-2xl bg-violet-50 p-4 text-violet-600"><Database size={25}/></span><h3 className="mt-3 text-sm font-extrabold text-slate-800">{rows.length ? 'No matching records' : 'No records yet'}</h3><p className="mt-1 max-w-md text-xs leading-5 text-slate-500">{rows.length ? 'Try a different search or status filter.' : 'Add your first record to start managing this module.'}</p>{!rows.length && <button onClick={openNew} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-violet-800"><Plus size={15}/> Add first record</button>}</div>}
+      <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-[10px] text-slate-400"><span>Showing {filtered.length} of {rows.length} records</span><span className="inline-flex items-center gap-1"><Clock3 size={12}/> Live database workspace</span></div>
     </section>
-    {editorOpen && <section className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm sm:p-6"><form onSubmit={save} className="w-full rounded-2xl bg-white sm:p-2"><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.15em] text-violet-700">{page}</p><h2 id="module-editor-title" className="mt-1 text-xl font-extrabold text-slate-900">{editingId ? 'Edit record' : 'Add record'}</h2><p className="mt-1 text-xs text-slate-500">Enter the details below. Name / Title is required.</p></div><button type="button" onClick={() => setEditorOpen(false)} aria-label="Close form" className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"><X size={18}/></button></div>
+    {editorOpen && <section className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm sm:p-6"><form onSubmit={saveRecord} className="w-full rounded-2xl bg-white sm:p-2"><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.15em] text-violet-700">{page}</p><h2 id="module-editor-title" className="mt-1 text-xl font-extrabold text-slate-900">{editingId ? 'Edit record' : 'Add record'}</h2><p className="mt-1 text-xs text-slate-500">Enter the details below. Name / Title is required.</p></div><button type="button" onClick={() => setEditorOpen(false)} aria-label="Close form" className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"><X size={18}/></button></div>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">{fields.map((field, index) => <label key={field.key} className={field.key === 'notes' ? 'sm:col-span-2' : ''}><span className="mb-1.5 block text-xs font-bold text-slate-700">{labels[index]}{field.key === 'name' ? ' *' : ''}</span>{field.key === 'status' ? <select value={draft.status} onChange={event => setDraft(current => ({ ...current, status: event.target.value as RecordRow['status'] }))} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"><option>Active</option><option>Inactive</option></select> : field.key === 'notes' ? <textarea value={draft.notes} onChange={event => setDraft(current => ({ ...current, notes: event.target.value }))} placeholder={field.placeholder} rows={3} className="w-full resize-y rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"/> : <input required={field.key === 'name'} type={field.key === 'email' && draft.email.includes('@') ? 'email' : 'text'} value={draft[field.key]} onChange={event => setDraft(current => ({ ...current, [field.key]: event.target.value }))} placeholder={field.placeholder} className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"/>}</label>)}</div>
-      <div className="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4"><button type="button" onClick={() => setEditorOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50">Cancel</button><button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-violet-800"><Save size={15}/>{editingId ? 'Save changes' : 'Create record'}</button></div>
+      <div className="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4"><button type="button" onClick={() => setEditorOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50">Cancel</button><button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-violet-800"><Save size={15}/>{saving ? 'Saving…' : editingId ? 'Save changes' : 'Create record'}</button></div>
     </form></section>}
   </div>;
 }
