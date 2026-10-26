@@ -23,7 +23,8 @@ async function authenticateManagement(req: Request, res: Response, next: NextFun
   // In production, PLATFORM_JWT_SECRET should be set to that same value.
   // JWT_SECRET is also accepted as a compatibility fallback for deployments
   // that intentionally share the signing secret across both services.
-  const platformSecrets = [...new Set([process.env.PLATFORM_JWT_SECRET?.trim(), process.env.JWT_SECRET?.trim()].filter((value): value is string => Boolean(value && value.length >= 32 && !value.startsWith('replace_with_'))))];
+  const configuredPlatformSecrets = [process.env.PLATFORM_JWT_SECRET?.trim(), process.env.JWT_SECRET?.trim()];
+  const platformSecrets = [...new Set(configuredPlatformSecrets.filter((value): value is string => Boolean(value && value.length >= 32 && !/^replace[-_]with[-_]/i.test(value))))];
   if (tenantSecret) {
     try { const decoded = jwt.verify(token, tenantSecret, options); if (typeof decoded !== 'string') { const payload = decoded as jwt.JwtPayload; if (typeof payload.sub === 'string' && typeof payload.tenantId === 'string') claims = payload as Claims; } } catch { /* Try platform token. */ }
   }
@@ -43,7 +44,19 @@ async function authenticateManagement(req: Request, res: Response, next: NextFun
   }
   // Platform-created tenant IDs are Prisma CUIDs, not UUIDs. Accept the opaque
   // tenant identifier from the signed token; do not impose a UUID-only format.
-  if (!claims || claims.role !== 'MANAGEMENT' || !claims.tenantId.trim() || claims.tenantId.length > 128) return res.status(401).json({ success: false, message: 'A valid Management session is required.' });
+  if (!claims || claims.role !== 'MANAGEMENT' || !claims.tenantId.trim() || claims.tenantId.length > 128) {
+    // Give developers a safe, non-secret diagnostic so local configuration errors
+    // can be distinguished from an expired/invalid token without exposing credentials.
+    const hasPlatformSecret = Boolean(process.env.PLATFORM_JWT_SECRET?.trim() && process.env.PLATFORM_JWT_SECRET.trim().length >= 32 && !/^replace[-_]with[-_]/i.test(process.env.PLATFORM_JWT_SECRET.trim()));
+    return res.status(401).json({
+      success: false,
+      message: 'A valid Management session is required.',
+      code: hasPlatformSecret ? 'MANAGEMENT_TOKEN_INVALID' : 'PLATFORM_JWT_SECRET_MISSING',
+      hint: hasPlatformSecret
+        ? 'The token could not be verified as a Management session. Sign out, sign in again, and confirm Tenant_backend PLATFORM_JWT_SECRET exactly matches Platform_Backend JWT_SECRET.'
+        : 'Set Tenant_backend PLATFORM_JWT_SECRET to the exact JWT_SECRET value from Platform_Backend/.env, then restart both backends and sign in again.'
+    });
+  }
   if (!claims.platformManagement) {
     try {
       const active = await pool.query('SELECT 1 FROM tenant_users WHERE id::text = $1 AND tenant_id = $2 AND role = $3 AND is_active = TRUE LIMIT 1', [claims.sub, claims.tenantId, claims.role]);
