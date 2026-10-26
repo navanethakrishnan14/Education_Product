@@ -1,17 +1,29 @@
-import ManagementDashboard from '../../ManagementDashboard';
-
-type TenantUser = {
-  name?: string;
-  email?: string;
-  role?: string;
-  tenantId?: string;
-  tenantCode?: string | null;
-  tenantType?: string;
-  tenantName?: string;
-  institutionName?: string;
-};
-
-/** Institution-specific entry point. Institution navigation and modules are configured in this flow. */
-export default function InstitutionFlow({ user, onLogout }: { user: TenantUser; onLogout: () => void }) {
-  return <ManagementDashboard user={{ ...user, tenantType: 'institution' }} onLogout={onLogout} tenantTypeOverride="institution" />;
-}
+import {useLocation,useNavigate} from 'react-router-dom';import WorkspaceShell from '../../tenant-shared/WorkspaceShell';import InstitutionSidebar from './InstitutionSidebar';import {LayoutPage} from './pages';
+import {ProfilePage} from './pages';
+import {ManagementUsersPage} from './pages';
+import {CommunicationPage} from './pages';
+import {ReportsAndAnalyticsPage} from './pages';
+import {SettingsPage} from './pages';
+import {OrganizationUnitsPage} from './pages';
+import {ProgramsAndServicesPage} from './pages';
+import {MembersAndStaffPage} from './pages';
+import {LearnersBeneficiariesPage} from './pages';
+import {SchedulesAndActivitiesPage} from './pages';
+import {ParticipationAndRecordsPage} from './pages';
+import {FinanceAndFundingPage} from './pages';
+import {ComplianceAndDocumentsPage} from './pages';
+type TenantUser={name?:string;email?:string;role?:string;tenantId?:string;tenantCode?:string|null;tenantType?:string;tenantName?:string;institutionName?:string};
+export default function InstitutionFlow({user,onLogout}:{user:TenantUser;onLogout:()=>void}){const loc=useLocation();const nav=useNavigate();const key=loc.pathname.split('/').filter(Boolean).at(-1)||'institution';const institution=user.institutionName||user.tenantName||'Your institution';const map:Record<string,string>={"Dashboard":"layout","Organization Profile":"profile","Management Users":"management-users","Communication":"communication","Reports & Analytics":"reports-and-analytics","Settings":"settings","Organization Units":"organization-units","Programs & Services":"programs-and-services","Members & Staff":"members-and-staff","Learners / Beneficiaries":"learners-beneficiaries","Schedules & Activities":"schedules-and-activities","Participation & Records":"participation-and-records","Finance & Funding":"finance-and-funding","Compliance & Documents":"compliance-and-documents"};const go=(p:string)=>nav('/workspace/institution/'+(map[p]||'layout'));let page;switch(key){case 'layout': page=<LayoutPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'profile': page=<ProfilePage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'management-users': page=<ManagementUsersPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'communication': page=<CommunicationPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'reports-and-analytics': page=<ReportsAndAnalyticsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'settings': page=<SettingsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'organization-units': page=<OrganizationUnitsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'programs-and-services': page=<ProgramsAndServicesPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'members-and-staff': page=<MembersAndStaffPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'learners-beneficiaries': page=<LearnersBeneficiariesPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'schedules-and-activities': page=<SchedulesAndActivitiesPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'participation-and-records': page=<ParticipationAndRecordsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'finance-and-funding': page=<FinanceAndFundingPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'compliance-and-documents': page=<ComplianceAndDocumentsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;default:page=<LayoutPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;}const titles:Record<string,string>={"layout":"Dashboard","profile":"Organization Profile","management-users":"Management Users","communication":"Communication","reports-and-analytics":"Reports & Analytics","settings":"Settings","organization-units":"Organization Units","programs-and-services":"Programs & Services","members-and-staff":"Members & Staff","learners-beneficiaries":"Learners / Beneficiaries","schedules-and-activities":"Schedules & Activities","participation-and-records":"Participation & Records","finance-and-funding":"Finance & Funding","compliance-and-documents":"Compliance & Documents"};return <WorkspaceShell organization="Institution" institution={institution} userName={user.name||''} role={user.role||'Management'} onLogout={onLogout} sidebar={<InstitutionSidebar onLogout={onLogout}/>} title={titles[key]||'Dashboard'}>{page}</WorkspaceShell>}

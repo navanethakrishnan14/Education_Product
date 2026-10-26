@@ -1,17 +1,33 @@
-import ManagementDashboard from '../../ManagementDashboard';
-
-type TenantUser = {
-  name?: string;
-  email?: string;
-  role?: string;
-  tenantId?: string;
-  tenantCode?: string | null;
-  tenantType?: string;
-  tenantName?: string;
-  institutionName?: string;
-};
-
-/** School-specific entry point. School navigation and modules are configured in the school flow. */
-export default function SchoolFlow({ user, onLogout }: { user: TenantUser; onLogout: () => void }) {
-  return <ManagementDashboard user={{ ...user, tenantType: 'school' }} onLogout={onLogout} tenantTypeOverride="school" />;
-}
+import {useLocation,useNavigate} from 'react-router-dom';import WorkspaceShell from '../../tenant-shared/WorkspaceShell';import SchoolSidebar from './SchoolSidebar';import {LayoutPage} from './pages';
+import {ProfilePage} from './pages';
+import {ManagementUsersPage} from './pages';
+import {CommunicationPage} from './pages';
+import {ReportsAndAnalyticsPage} from './pages';
+import {SettingsPage} from './pages';
+import {AcademicSetupPage} from './pages';
+import {ClassesAndSectionsPage} from './pages';
+import {FacultyAndStaffPage} from './pages';
+import {StudentsPage} from './pages';
+import {ParentsAndGuardiansPage} from './pages';
+import {AttendancePage} from './pages';
+import {TimetablePage} from './pages';
+import {ExaminationsAndResultsPage} from './pages';
+import {SchoolFeesPage} from './pages';
+import {TransportPage} from './pages';
+type TenantUser={name?:string;email?:string;role?:string;tenantId?:string;tenantCode?:string|null;tenantType?:string;tenantName?:string;institutionName?:string};
+export default function SchoolFlow({user,onLogout}:{user:TenantUser;onLogout:()=>void}){const loc=useLocation();const nav=useNavigate();const key=loc.pathname.split('/').filter(Boolean).at(-1)||'school';const institution=user.institutionName||user.tenantName||'Your school';const map:Record<string,string>={"Dashboard":"layout","Organization Profile":"profile","Management Users":"management-users","Communication":"communication","Reports & Analytics":"reports-and-analytics","Settings":"settings","Academic Setup":"academic-setup","Classes & Sections":"classes-and-sections","Faculty & Staff":"faculty-and-staff","Students":"students","Parents & Guardians":"parents-and-guardians","Attendance":"attendance","Timetable":"timetable","Examinations & Results":"examinations-and-results","School Fees":"school-fees","Transport":"transport"};const go=(p:string)=>nav('/workspace/school/'+(map[p]||'layout'));let page;switch(key){case 'layout': page=<LayoutPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'profile': page=<ProfilePage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'management-users': page=<ManagementUsersPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'communication': page=<CommunicationPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'reports-and-analytics': page=<ReportsAndAnalyticsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'settings': page=<SettingsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'academic-setup': page=<AcademicSetupPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'classes-and-sections': page=<ClassesAndSectionsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'faculty-and-staff': page=<FacultyAndStaffPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'students': page=<StudentsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'parents-and-guardians': page=<ParentsAndGuardiansPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'attendance': page=<AttendancePage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'timetable': page=<TimetablePage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'examinations-and-results': page=<ExaminationsAndResultsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'school-fees': page=<SchoolFeesPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'transport': page=<TransportPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;default:page=<LayoutPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;}const titles:Record<string,string>={"layout":"Dashboard","profile":"Organization Profile","management-users":"Management Users","communication":"Communication","reports-and-analytics":"Reports & Analytics","settings":"Settings","academic-setup":"Academic Setup","classes-and-sections":"Classes & Sections","faculty-and-staff":"Faculty & Staff","students":"Students","parents-and-guardians":"Parents & Guardians","attendance":"Attendance","timetable":"Timetable","examinations-and-results":"Examinations & Results","school-fees":"School Fees","transport":"Transport"};return <WorkspaceShell organization="School" institution={institution} userName={user.name||''} role={user.role||'Management'} onLogout={onLogout} sidebar={<SchoolSidebar onLogout={onLogout}/>} title={titles[key]||'Dashboard'}>{page}</WorkspaceShell>}

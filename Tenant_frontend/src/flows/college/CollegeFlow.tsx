@@ -1,17 +1,33 @@
-import ManagementDashboard from '../../ManagementDashboard';
-
-type TenantUser = {
-  name?: string;
-  email?: string;
-  role?: string;
-  tenantId?: string;
-  tenantCode?: string | null;
-  tenantType?: string;
-  tenantName?: string;
-  institutionName?: string;
-};
-
-/** College-specific entry point. College navigation and modules are configured in the college flow. */
-export default function CollegeFlow({ user, onLogout }: { user: TenantUser; onLogout: () => void }) {
-  return <ManagementDashboard user={{ ...user, tenantType: 'college' }} onLogout={onLogout} tenantTypeOverride="college" />;
-}
+import {useLocation,useNavigate} from 'react-router-dom';import WorkspaceShell from '../../tenant-shared/WorkspaceShell';import CollegeSidebar from './CollegeSidebar';import {LayoutPage} from './pages';
+import {ProfilePage} from './pages';
+import {ManagementUsersPage} from './pages';
+import {CommunicationPage} from './pages';
+import {ReportsAndAnalyticsPage} from './pages';
+import {SettingsPage} from './pages';
+import {AcademicStructurePage} from './pages';
+import {DepartmentsPage} from './pages';
+import {CoursesAndProgramsPage} from './pages';
+import {FacultyPage} from './pages';
+import {StudentsAndAdmissionsPage} from './pages';
+import {SemesterAndCreditsPage} from './pages';
+import {ExaminationsAndResultsPage} from './pages';
+import {FeesAndScholarshipsPage} from './pages';
+import {ResearchAndProjectsPage} from './pages';
+import {PlacementAndAlumniPage} from './pages';
+type TenantUser={name?:string;email?:string;role?:string;tenantId?:string;tenantCode?:string|null;tenantType?:string;tenantName?:string;institutionName?:string};
+export default function CollegeFlow({user,onLogout}:{user:TenantUser;onLogout:()=>void}){const loc=useLocation();const nav=useNavigate();const key=loc.pathname.split('/').filter(Boolean).at(-1)||'college';const institution=user.institutionName||user.tenantName||'Your college';const map:Record<string,string>={"Dashboard":"layout","Organization Profile":"profile","Management Users":"management-users","Communication":"communication","Reports & Analytics":"reports-and-analytics","Settings":"settings","Academic Structure":"academic-structure","Departments":"departments","Courses & Programs":"courses-and-programs","Faculty":"faculty","Students & Admissions":"students-and-admissions","Semester & Credits":"semester-and-credits","Examinations & Results":"examinations-and-results","Fees & Scholarships":"fees-and-scholarships","Research & Projects":"research-and-projects","Placement & Alumni":"placement-and-alumni"};const go=(p:string)=>nav('/workspace/college/'+(map[p]||'layout'));let page;switch(key){case 'layout': page=<LayoutPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'profile': page=<ProfilePage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'management-users': page=<ManagementUsersPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'communication': page=<CommunicationPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'reports-and-analytics': page=<ReportsAndAnalyticsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'settings': page=<SettingsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'academic-structure': page=<AcademicStructurePage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'departments': page=<DepartmentsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'courses-and-programs': page=<CoursesAndProgramsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'faculty': page=<FacultyPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'students-and-admissions': page=<StudentsAndAdmissionsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'semester-and-credits': page=<SemesterAndCreditsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'examinations-and-results': page=<ExaminationsAndResultsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'fees-and-scholarships': page=<FeesAndScholarshipsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'research-and-projects': page=<ResearchAndProjectsPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;
+case 'placement-and-alumni': page=<PlacementAndAlumniPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;break;default:page=<LayoutPage tenantId={user.tenantId} institution={institution} user={user} onNavigate={go}/>;}const titles:Record<string,string>={"layout":"Dashboard","profile":"Organization Profile","management-users":"Management Users","communication":"Communication","reports-and-analytics":"Reports & Analytics","settings":"Settings","academic-structure":"Academic Structure","departments":"Departments","courses-and-programs":"Courses & Programs","faculty":"Faculty","students-and-admissions":"Students & Admissions","semester-and-credits":"Semester & Credits","examinations-and-results":"Examinations & Results","fees-and-scholarships":"Fees & Scholarships","research-and-projects":"Research & Projects","placement-and-alumni":"Placement & Alumni"};return <WorkspaceShell organization="College" institution={institution} userName={user.name||''} role={user.role||'Management'} onLogout={onLogout} sidebar={<CollegeSidebar onLogout={onLogout}/>} title={titles[key]||'Dashboard'}>{page}</WorkspaceShell>}
