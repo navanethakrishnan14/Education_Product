@@ -18,12 +18,25 @@ async function authenticateManagement(req: Request, res: Response, next: NextFun
   if (!token) return res.status(401).json({ success: false, message: 'Authentication required.' });
   let claims: Claims | null = null;
   const tenantSecret = getJwtSecret();
-  const platformSecret = process.env.PLATFORM_JWT_SECRET;
+  // Platform Management sessions are signed by Platform_Backend with its
+  // JWT_SECRET and do not include the Tenant API issuer/audience claims.
+  // In production, PLATFORM_JWT_SECRET should be set to that same value.
+  // JWT_SECRET is also accepted as a compatibility fallback for deployments
+  // that intentionally share the signing secret across both services.
+  const platformSecrets = [...new Set([process.env.PLATFORM_JWT_SECRET?.trim(), process.env.JWT_SECRET?.trim()].filter((value): value is string => Boolean(value && value.length >= 32 && !value.startsWith('replace_with_'))))];
   if (tenantSecret) {
     try { const decoded = jwt.verify(token, tenantSecret, options); if (typeof decoded !== 'string' && typeof decoded.sub === 'string' && typeof decoded.tenantId === 'string') claims = decoded as Claims; } catch { /* Try platform token. */ }
   }
-  if (!claims && platformSecret) {
-    try { const decoded = jwt.verify(token, platformSecret); if (typeof decoded !== 'string' && typeof decoded.sub === 'string' && typeof decoded.tenantId === 'string' && decoded.role === 'MANAGEMENT') claims = { ...decoded, platformManagement: true } as Claims; } catch { /* Invalid token. */ }
+  if (!claims) {
+    for (const secret of platformSecrets) {
+      try {
+        const decoded = jwt.verify(token, secret);
+        if (typeof decoded !== 'string' && typeof decoded.sub === 'string' && typeof decoded.tenantId === 'string' && decoded.role === 'MANAGEMENT') {
+          claims = { ...decoded, platformManagement: true } as Claims;
+          break;
+        }
+      } catch { /* Try the next configured platform signing secret. */ }
+    }
   }
   // Platform-created tenant IDs are Prisma CUIDs, not UUIDs. Accept the opaque
   // tenant identifier from the signed token; do not impose a UUID-only format.
