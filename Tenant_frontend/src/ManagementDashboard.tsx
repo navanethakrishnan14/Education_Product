@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { FormEvent } from 'react';
 import {
   LayoutDashboard, Building2, GraduationCap, Users, UserRound, CalendarDays,
@@ -98,6 +99,9 @@ const subjectSets = {
   ]
 };
 export default function ManagementDashboard({ user, onLogout }: { user: TenantUser; onLogout: () => void }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const routePage = decodeURIComponent(location.pathname.split('/').filter(Boolean).at(-1) || 'dashboard');
   const [active, setActive] = useState('Dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -147,9 +151,16 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
         { label: 'Setup progress', value: '—', hint: 'Onboarding progress is not connected to the backend yet', icon: Activity, tone: 'amber' }
       ];
   const filtered = useMemo(() => menu.filter(item => item.label.toLowerCase().includes(search.toLowerCase())), [menu, search]);
-  const select = (page: string) => { setActive(page); setMobileOpen(false); };
+  const slugify = (page: string) => page.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const pageFromRoute = menu.find(item => slugify(item.label) === routePage)?.label || (routePage === 'management' || routePage === 'workspace' ? 'Dashboard' : 'Dashboard');
+  const currentPage = location.pathname === '/workspace' || location.pathname === '/workspace/' ? 'Dashboard' : pageFromRoute;
+  const select = (page: string) => {
+    setActive(page);
+    setMobileOpen(false);
+    navigate(page === 'Dashboard' ? '/workspace/management/dashboard' : '/workspace/management/' + slugify(page));
+  };
   const firstName = user.name?.trim().split(/\s+/)[0];
-  const activeIcon = menu.find(item => item.label === active)?.icon || LayoutDashboard;
+  const activeIcon = menu.find(item => item.label === currentPage)?.icon || LayoutDashboard;
   const ActiveIcon = activeIcon;
   const initials = (user.name || 'Management').split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase();
   return <div className="min-h-screen bg-[#e8e2ff] text-[#17143a]" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
@@ -162,7 +173,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
       </div>
       <div className="px-5 pb-3 pt-5"><p className="px-3 text-[11px] font-bold uppercase tracking-[.14em] text-violet-200/70">{organizationLabel} workspace</p></div>
       <nav aria-label="Management navigation" className="tenant-sidebar-nav flex-1 space-y-0.5 overflow-y-auto px-2 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {filtered.map(({ label, icon: Icon }) => <button key={label} onClick={() => select(label)} aria-current={active === label ? 'page' : undefined} className={`group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[14px] font-semibold transition-all ${active === label ? 'bg-white text-[#321653] shadow-md' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+        {filtered.map(({ label, icon: Icon }) => <button key={label} onClick={() => select(label)} aria-current={currentPage === label ? 'page' : undefined} className={`group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[14px] font-semibold transition-all ${active === label ? 'bg-white text-[#321653] shadow-md' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
           <span className={`grid h-7 w-7 place-items-center rounded-md ${active === label ? 'bg-violet-100 text-[#321653]' : 'text-white/65 group-hover:bg-white/10 group-hover:text-white'}`}><Icon size={12}/></span><span className="flex-1">{label}</span>{active === label && <ChevronRight size={15}/>}
         </button>)}
         {filtered.length === 0 && <p className="px-3 py-5 text-sm text-slate-400">No matching modules</p>}
@@ -173,8 +184,8 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
       <header className="sticky top-0 z-20 flex min-h-[74px] items-center justify-between gap-2 border-b border-white/10 bg-gradient-to-r from-[#321653] via-[#3e1d60] to-[#4a2369] px-3 text-white shadow-lg shadow-violet-950/10 sm:px-3 xl:px-4">
         <div className="flex min-w-0 items-center gap-3">
           <button className="rounded-xl border border-violet-100 bg-white p-2.5 text-violet-900 shadow-sm lg:hidden" aria-label="Open navigation" onClick={() => setMobileOpen(true)}><Menu size={19}/></button>
-          <div className="hidden items-center gap-2 text-xs text-white/60 sm:flex"><School size={15}/><span>Workspace</span><ChevronRight size={13}/><span className="font-semibold text-white">{active}</span></div>
-          <div className="sm:hidden"><p className="truncate text-sm font-bold">{active}</p><p className="truncate text-[11px] text-slate-500">{institution}</p></div>
+          <div className="hidden items-center gap-2 text-xs text-white/60 sm:flex"><School size={15}/><span>Workspace</span><ChevronRight size={13}/><span className="font-semibold text-white">{currentPage}</span></div>
+          <div className="sm:hidden"><p className="truncate text-sm font-bold">{currentPage}</p><p className="truncate text-[11px] text-slate-500">{institution}</p></div>
         </div>
         <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
           <label className="hidden max-w-[285px] flex-1 items-center gap-2 rounded-full border border-white/20 bg-white px-4 py-2.5 text-slate-400 md:flex"><Search size={17}/><input aria-label="Search management modules" value={search} onChange={e => setSearch(e.target.value)} placeholder={tenantType === 'college' ? 'Search students, faculty, departments...' : tenantType === 'institution' ? 'Search members, programs, services...' : 'Search students, teachers, classes...'} className="w-full bg-transparent text-[13px] text-slate-700 outline-none placeholder:text-slate-400"/></label>
@@ -184,7 +195,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
         </div>
       </header>
       <main className="relative mx-auto min-h-[calc(100vh-74px)] max-w-[1800px] space-y-6 overflow-hidden rounded-tl-[34px] rounded-tr-none border border-white/80 bg-[#f7f6fb] p-6 shadow-[-10px_-4px_40px_rgba(255,255,255,.18)] sm:p-8 xl:p-10">
-        {active === 'Dashboard' ? <>
+        {currentPage === 'Dashboard' ? <>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div><div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-violet-100 bg-violet-100/60 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-800"><Sparkles size={13}/> {organizationLabel} overview</div><h1 className="text-[32px] font-extrabold leading-tight tracking-tight text-[#17132f] sm:text-[40px]">Welcome back{firstName ? `, ${firstName}` : ''}</h1><p className="mt-1 text-[15px] text-slate-500">Here's what's happening at <span className="font-semibold text-slate-700">{institution}</span>.</p></div>
             <button onClick={() => select(tenantType === 'college' ? 'Students & Admissions' : tenantType === 'institution' ? 'Members & Staff' : 'Students')} className="inline-flex items-center gap-2 rounded-xl bg-[#45116f] px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-violet-950/20 transition hover:bg-[#551887]"><Plus size={18}/> {tenantType === 'college' ? 'Add new student' : tenantType === 'institution' ? 'Add new member' : 'Add new student'}</button>
@@ -208,7 +219,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
             </section>
           </div>
         </> : <><div className="flex flex-wrap items-center justify-between gap-4"><div className="flex items-center gap-3"><span className="rounded-2xl bg-white p-3 text-violet-700 shadow-sm"><ActiveIcon size={23}/></span><div><p className="text-xs font-bold uppercase tracking-[.12em] text-violet-700">{organizationLabel} workspace</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight">{active}</h1><p className="mt-1 text-sm text-slate-500">Manage {active.toLowerCase()} for {institution}.</p></div></div><button onClick={() => select('Dashboard')} className="inline-flex items-center gap-2 rounded-xl border border-violet-100 bg-white px-4 py-2.5 text-xs font-bold text-violet-800 shadow-sm hover:bg-violet-50"><LayoutDashboard size={15}/> Back to overview</button></div>
-          {(active === 'Institution Profile' || active === 'Organization Profile') ? <div className="space-y-5">
+          {(currentPage === 'Institution Profile' || currentPage === 'Organization Profile') ? <div className="space-y-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div><p className="text-[11px] font-semibold text-slate-400">Dashboard / Settings / Organization Profile</p><h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">Organization Profile</h1><p className="mt-1 text-sm text-slate-500">Manage your institution’s identity, contact information, and organizational details.</p></div>
               <div className="flex flex-wrap gap-2"><button type="button" onClick={() => setProfileNotice('Preview mode: review your organization profile before saving.')} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50"><Search size={14}/> View Public Directory</button><button type="submit" form="organization-profile-form" className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-teal-800"><CheckCircle2 size={14}/> Edit Profile</button></div>
@@ -238,7 +249,7 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
               </div>
               <div className="flex justify-end"><button type="submit" className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-5 py-3 text-xs font-bold text-white shadow-sm hover:bg-teal-800"><CheckCircle2 size={15}/> Save organization profile</button></div>
             </form>
-          </div> : <ModuleWorkspace page={active} tenantId={user.tenantId} tenantName={institution} />}
+          </div> : <ModuleWorkspace page={currentPage} tenantId={user.tenantId} tenantName={institution} />}
         </>}
         <footer className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2 text-[10px] text-slate-400"><span>© 2026 EduManage Cloud · {institution}</span><span className="inline-flex items-center gap-1.5"><ShieldCheck size={12}/> Secure management portal</span></footer>
       </main>
