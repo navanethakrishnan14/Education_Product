@@ -1,0 +1,2 @@
+import ModulePage from '../../../tenant-shared/ModulePage';
+export default function ComplianceAndDocumentsPage({tenantId,institution}:{tenantId?:string;institution:string}){return <ModulePage page="Compliance & Documents" tenantId={tenantId} tenantName={institution}/>;}

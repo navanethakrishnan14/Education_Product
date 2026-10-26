@@ -1,0 +1,2 @@
+import ModulePage from '../../../tenant-shared/ModulePage';
+export default function SettingsPage({tenantId,institution}:{tenantId?:string;institution:string}){return <ModulePage page="Settings" tenantId={tenantId} tenantName={institution}/>;}

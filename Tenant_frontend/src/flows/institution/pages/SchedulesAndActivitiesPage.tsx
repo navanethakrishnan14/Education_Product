@@ -1,0 +1,2 @@
+import ModulePage from '../../../tenant-shared/ModulePage';
+export default function SchedulesAndActivitiesPage({tenantId,institution}:{tenantId?:string;institution:string}){return <ModulePage page="Schedules & Activities" tenantId={tenantId} tenantName={institution}/>;}
