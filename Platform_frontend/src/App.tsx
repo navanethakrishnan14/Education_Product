@@ -1,9 +1,10 @@
+import type { ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import DashboardLayout from "./components/DashboardLayout";
 import SetPassword from "./SetPassword";
 
-function RequirePlatformAuth({ children }: { children: React.ReactNode }) {
+function RequirePlatformAuth({ children }: { children: ReactNode }) {
   const location = useLocation();
   const token = sessionStorage.getItem("platform_token");
 
@@ -14,7 +15,7 @@ function RequirePlatformAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function PublicOnly({ children }: { children: React.ReactNode }) {
+function PublicOnly({ children }: { children: ReactNode }) {
   const token = sessionStorage.getItem("platform_token");
   return token ? <Navigate to="/dashboard" replace /> : <>{children}</>;
 }
