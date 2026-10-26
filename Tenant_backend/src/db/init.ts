@@ -1,1 +1,47 @@
-import 'dotenv/config';import{pool}from'./pool';async function init(){const c=await pool.connect();try{await c.query('BEGIN');await c.query("CREATE TABLE IF NOT EXISTS tenant_users(id BIGSERIAL PRIMARY KEY,tenant_id UUID NOT NULL,full_name VARCHAR(160) NOT NULL,email VARCHAR(254) NOT NULL,password_hash TEXT NOT NULL,role VARCHAR(20) NOT NULL CHECK(role IN ('MANAGEMENT','FACULTY','PARENT','STUDENT')),is_active BOOLEAN NOT NULL DEFAULT TRUE,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),UNIQUE(tenant_id,email,role))");await c.query('CREATE INDEX IF NOT EXISTS tenant_users_tenant_role_idx ON tenant_users(tenant_id,role)');await c.query('COMMIT');console.log('Tenant database schema is ready.')}catch(e){await c.query('ROLLBACK');throw e}finally{c.release();await pool.end()}}init().catch(e=>{console.error('Database initialization failed:',e instanceof Error?e.message:e);process.exitCode=1});
+import 'dotenv/config';
+import { pool } from './pool';
+
+async function init() {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(`CREATE TABLE IF NOT EXISTS tenant_users (
+      id BIGSERIAL PRIMARY KEY,
+      tenant_id UUID NOT NULL,
+      full_name VARCHAR(160) NOT NULL,
+      email VARCHAR(254) NOT NULL,
+      password_hash TEXT NOT NULL,
+      role VARCHAR(20) NOT NULL CHECK (role IN ('MANAGEMENT','FACULTY','PARENT','STUDENT')),
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (tenant_id, email, role)
+    )`);
+    await client.query('CREATE INDEX IF NOT EXISTS tenant_users_tenant_role_idx ON tenant_users(tenant_id, role)');
+    await client.query(`CREATE TABLE IF NOT EXISTS tenant_records (
+      id BIGSERIAL PRIMARY KEY,
+      tenant_id UUID NOT NULL,
+      created_by BIGINT NOT NULL REFERENCES tenant_users(id) ON DELETE CASCADE,
+      module_key VARCHAR(100) NOT NULL,
+      name VARCHAR(200) NOT NULL,
+      email VARCHAR(254) NOT NULL DEFAULT '',
+      category VARCHAR(200) NOT NULL DEFAULT '',
+      status VARCHAR(10) NOT NULL DEFAULT 'Active' CHECK (status IN ('Active','Inactive')),
+      notes TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`);
+    await client.query('CREATE INDEX IF NOT EXISTS tenant_records_tenant_module_idx ON tenant_records(tenant_id, module_key, updated_at DESC)');
+    await client.query('COMMIT');
+    console.log('Tenant database schema is ready (users and operational records).');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+init().catch(error => {
+  console.error('Database initialization failed:', error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});
