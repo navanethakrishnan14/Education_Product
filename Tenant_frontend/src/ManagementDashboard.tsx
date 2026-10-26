@@ -173,8 +173,8 @@ export default function ManagementDashboard({ user, onLogout }: { user: TenantUs
       </div>
       <div className="px-5 pb-3 pt-5"><p className="px-3 text-[11px] font-bold uppercase tracking-[.14em] text-violet-200/70">{organizationLabel} workspace</p></div>
       <nav aria-label="Management navigation" className="tenant-sidebar-nav flex-1 space-y-0.5 overflow-y-auto px-2 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {filtered.map(({ label, icon: Icon }) => <button key={label} onClick={() => select(label)} aria-current={currentPage === label ? 'page' : undefined} className={`group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[14px] font-semibold transition-all ${active === label ? 'bg-white text-[#321653] shadow-md' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
-          <span className={`grid h-7 w-7 place-items-center rounded-md ${active === label ? 'bg-violet-100 text-[#321653]' : 'text-white/65 group-hover:bg-white/10 group-hover:text-white'}`}><Icon size={12}/></span><span className="flex-1">{label}</span>{active === label && <ChevronRight size={15}/>}
+        {filtered.map(({ label, icon: Icon }) => <button key={label} onClick={() => select(label)} aria-current={currentPage === label ? 'page' : undefined} className={`group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[14px] font-semibold transition-all ${currentPage === label ? 'bg-white text-[#321653] shadow-md' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+          <span className={`grid h-7 w-7 place-items-center rounded-md ${currentPage === label ? 'bg-violet-100 text-[#321653]' : 'text-white/65 group-hover:bg-white/10 group-hover:text-white'}`}><Icon size={12}/></span><span className="flex-1">{label}</span>{currentPage === label && <ChevronRight size={15}/>}
         </button>)}
         {filtered.length === 0 && <p className="px-3 py-5 text-sm text-slate-400">No matching modules</p>}
       </nav>
