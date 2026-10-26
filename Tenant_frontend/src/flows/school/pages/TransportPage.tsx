@@ -1,0 +1,2 @@
+import ModulePage from '../../../tenant-shared/ModulePage';
+export default function TransportPage({tenantId,institution}:{tenantId?:string;institution:string}){return <ModulePage page="Transport" tenantId={tenantId} tenantName={institution}/>;}

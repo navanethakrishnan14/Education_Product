@@ -1,0 +1,2 @@
+import ModulePage from '../../../tenant-shared/ModulePage';
+export default function TimetablePage({tenantId,institution}:{tenantId?:string;institution:string}){return <ModulePage page="Timetable" tenantId={tenantId} tenantName={institution}/>;}
