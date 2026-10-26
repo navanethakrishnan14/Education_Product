@@ -79,6 +79,7 @@ recordsRouter.get('/', async (req, res) => {
   }
 });
 recordsRouter.post('/', async (req, res) => {
+  if (req.tenantClaims!.role !== 'MANAGEMENT') return res.status(403).json({ success: false, message: 'Only Management can create tenant records.' });
   const parsed = recordSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ success: false, message: 'Please provide valid record details.' });
   try {
@@ -94,6 +95,7 @@ recordsRouter.post('/', async (req, res) => {
   }
 });
 recordsRouter.put('/:id', async (req, res) => {
+  if (req.tenantClaims!.role !== 'MANAGEMENT') return res.status(403).json({ success: false, message: 'Only Management can update tenant records.' });
   const parsed = recordSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ success: false, message: 'Please provide valid record details.' });
   try {
@@ -110,6 +112,7 @@ recordsRouter.put('/:id', async (req, res) => {
   }
 });
 recordsRouter.delete('/:id', async (req, res) => {
+  if (req.tenantClaims!.role !== 'MANAGEMENT') return res.status(403).json({ success: false, message: 'Only Management can delete tenant records.' });
   const moduleKey = String(req.query.module || '').trim();
   if (!moduleKey) return res.status(400).json({ success: false, message: 'A module query is required.' });
   try {
