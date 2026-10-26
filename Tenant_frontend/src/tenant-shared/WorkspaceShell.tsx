@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ChevronRight, GraduationCap, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronRight, GraduationCap, ShieldCheck } from "lucide-react";
 
 type WorkspaceShellProps = {
   organization: "School" | "College" | "Institution";
@@ -22,6 +22,8 @@ export default function WorkspaceShell({
   title,
   children,
 }: WorkspaceShellProps) {
+  void onLogout;
+
   return (
     <div
       className="min-h-screen bg-[#f1effb] text-slate-900"
@@ -48,14 +50,6 @@ export default function WorkspaceShell({
               </p>
               <p className="text-[10px] text-slate-500">{role || "Management"}</p>
             </div>
-            <button
-              type="button"
-              onClick={onLogout}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold hover:bg-rose-50 hover:text-rose-700"
-            >
-              <LogOut size={15} />
-              Sign out
-            </button>
           </div>
         </header>
         <main className="mx-auto min-h-[calc(100vh-74px)] max-w-[1800px] p-4 sm:p-7 xl:p-9">
