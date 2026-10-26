@@ -2,7 +2,9 @@ import { ArrowRight, BookOpen, GraduationCap, HeartHandshake, ShieldCheck, Landm
 import { Link, Route, Routes, useNavigate, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import ManagementLogin from './ManagementLogin';
-import ManagementDashboard from './ManagementDashboard';
+import SchoolFlow from './flows/school/SchoolFlow';
+import CollegeFlow from './flows/college/CollegeFlow';
+import InstitutionFlow from './flows/institution/InstitutionFlow';
 import FacultyLogin from './FacultyLogin';
 import ParentLogin from './ParentLogin';
 import StudentLogin from './StudentLogin';
@@ -88,7 +90,12 @@ function Workspace() {
   function logout() { localStorage.removeItem('tenant_token'); localStorage.removeItem('tenant_user'); sessionStorage.removeItem('tenant_token'); sessionStorage.removeItem('tenant_user'); nav('/', { replace: true }); }
   if (!user) return <div className="workspace-loading">Checking your secure session…</div>;
   const role = user.role || 'USER';
-  if (role.toLowerCase() === 'management') return <ManagementDashboard user={user} onLogout={logout}/>;
+  if (role.toLowerCase() === 'management') {
+    const tenantType = (user.tenantType || 'school').toLowerCase();
+    if (tenantType === 'college') return <CollegeFlow user={user} onLogout={logout}/>;
+    if (tenantType === 'institution') return <InstitutionFlow user={user} onLogout={logout}/>;
+    return <SchoolFlow user={user} onLogout={logout}/>;
+  }
   return <main className="workspace-page"><header className="workspace-header"><Brand/><button className="logout" onClick={logout}>Sign out</button></header><section className="workspace-content"><div className="workspace-symbol"><ShieldCheck size={24}/></div><div className="eyebrow">AUTHENTICATED TENANT WORKSPACE</div><h1>Welcome{user.name ? ', ' + user.name : ''}</h1><p>Your identity has been verified for the selected school portal.</p><div className="workspace-summary"><span>Role</span><strong>{role}</strong>{user.tenantCode && <><span>Organization Code</span><code>{user.tenantCode}</code></>}<span>Organization / Tenant ID</span><code>{user.tenantId || 'Not provided'}</code><span>Account</span><strong>{user.email || 'Signed-in user'}</strong></div><p className="workspace-note">Your sign-in is complete. Feature dashboards can be connected here as the Management, Faculty, Parent, and Student modules are implemented.</p><button className="launch" onClick={logout}>Sign out securely <ArrowRight size={14}/></button></section></main>;
 }
 function GuardedWorkspace() {
