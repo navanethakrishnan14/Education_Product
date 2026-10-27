@@ -187,7 +187,7 @@ organizationProfileRouter.put('/', async (req, res) => {
     const profile = Object.fromEntries(Object.entries(parsed.data.profile).map(([key, value]) => [key, value.trim()])) as Record<string, string>;
     delete profile.organizationType;
     const logo = profile.logoUrl;
-    if (logo && logo.startsWith('data:') && !/^data:image\\/(png|jpeg|webp|svg\\+xml);base64,/i.test(logo)) return res.status(400).json({ success: false, message: 'Logo must be a PNG, JPG, WEBP or SVG image.' });
+    if (logo && logo.startsWith('data:') && !['data:image/png;base64,', 'data:image/jpeg;base64,', 'data:image/webp;base64,', 'data:image/svg+xml;base64,'].some(prefix => logo.startsWith(prefix))) return res.status(400).json({ success: false, message: 'Logo must be a PNG, JPG, WEBP or SVG image.' });
     if (logo && logo.startsWith('data:') && logo.length > 1_400_000) return res.status(413).json({ success: false, message: 'Logo is too large. Please use an image under 1 MB.' });
     const existing = await pool.query(
       'SELECT organization_type FROM tenant_organization_profiles WHERE tenant_id = $1 LIMIT 1',
