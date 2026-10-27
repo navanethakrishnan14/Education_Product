@@ -10,13 +10,13 @@ Use a dedicated PostgreSQL database for Tenant Backend, separate from Platform B
 - **Tenant database: `edusphere_tenant`** — tenant-scoped users, organization profile form data and operational records.
 - `DATABASE_URL` must point only to the Tenant database. Never put a Platform connection string in `DATABASE_URL`.
 - `PLATFORM_JWT_SECRET` must exactly match the private `JWT_SECRET` configured in `Platform_Backend/.env`; keep it server-side and never expose either secret through frontend environment variables.
-- When tenant type and lifecycle verification is required, configure the optional server-only `PLATFORM_DATABASE_URL` to the Platform database. The Organization Profile API will then verify that the signed tenant exists, is active, and is registered as School, College or Institution before returning or saving profile data. Use a database role with read-only access to the `edusphere_platform.school_tenants` table, if possible.
+- `PLATFORM_DATABASE_URL` is required for Platform Management Organization Profile requests. It must point to the Platform PostgreSQL database (`edusphere_platform`), not the Tenant database. Without it, the profile API correctly returns HTTP 503 because it cannot securely load the registered legal name, short code, official email, type, or status. Use a read-only database role with `SELECT` access to `edusphere_platform.school_tenants`, if possible.
 - Platform remains the source of truth for tenant type/status. Tenant Backend stores form fields in `tenant_organization_profiles` keyed by the signed `tenantId`; no profile access trusts a client-supplied tenant ID.
 
 ## Local setup
 
 1. Create a PostgreSQL database named `edusphere_tenant` (or another dedicated tenant database).
-2. Copy `.env.example` to `.env`. Set a private Tenant `JWT_SECRET` of at least 32 characters. Set `PLATFORM_JWT_SECRET` to the exact Platform `JWT_SECRET`. If enabling registry verification, set `PLATFORM_DATABASE_URL` separately to the Platform database.
+2. Copy `.env.example` to `.env`. Set a private Tenant `JWT_SECRET` of at least 32 characters. Set `PLATFORM_JWT_SECRET` to the exact Platform `JWT_SECRET`. Set `PLATFORM_DATABASE_URL` to the actual Platform database connection string; do not leave the example credentials in place.
 3. Run `npm install`.
 4. Run `npm run db:init` to create/upgrade Tenant tables. The initializer uses additive table/index creation and type widening to preserve existing rows; it does not reset the database.
 5. Run `npm run dev`.
