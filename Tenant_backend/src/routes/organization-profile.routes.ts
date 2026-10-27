@@ -27,10 +27,10 @@ function normalizedTenantType(value: unknown): TenantType | null {
   return null;
 }
 
-async function resolvePlatformTenant(tenantId: string): Promise<{ tenantType: TenantType; status: string } | null> {
-  // Platform and Tenant use separate databases. If PLATFORM_DATABASE_URL is configured,
-  // read the canonical registration/type/status from Platform's registry. Do not copy
-  // the Platform database URL into DATABASE_URL or write profile data to Platform tables.
+type CanonicalPlatformTenant = { tenantType: TenantType; status: string; name: string; code: string; email: string };
+
+async function resolvePlatformTenant(tenantId: string): Promise<CanonicalPlatformTenant | null> {
+  // Platform is the source of truth for tenant identity fields.
   const platformUrl = process.env.PLATFORM_DATABASE_URL?.trim();
   if (!platformUrl) return null;
   const { Pool } = await import('pg');
@@ -42,13 +42,13 @@ async function resolvePlatformTenant(tenantId: string): Promise<{ tenantType: Te
   });
   try {
     const result = await platformPool.query(
-      'SELECT tenant_type, status FROM edusphere_platform.school_tenants WHERE id = $1 LIMIT 1',
+      'SELECT tenant_type, status, name, tenant_code, official_email FROM edusphere_platform.school_tenants WHERE id = $1 LIMIT 1',
       [tenantId],
     );
-    const row = result.rows[0] as { tenant_type?: string; status?: string } | undefined;
+    const row = result.rows[0] as { tenant_type?: string; status?: string; name?: string; tenant_code?: string | null; official_email?: string | null } | undefined;
     const tenantType = normalizedTenantType(row?.tenant_type);
     if (!row || !tenantType) return null;
-    return { tenantType, status: String(row.status || '') };
+    return { tenantType, status: String(row.status || ''), name: String(row.name || ''), code: String(row.tenant_code || ''), email: String(row.official_email || '') };
   } finally {
     await platformPool.end();
   }
@@ -140,11 +140,25 @@ organizationProfileRouter.get('/', async (req, res) => {
   const claims = req.organizationClaims!;
   const tenantType = normalizedTenantType(claims.tenantType);
   try {
+    if (claims.platformManagement && !process.env.PLATFORM_DATABASE_URL?.trim()) {
+      return res.status(503).json({ success: false, code: 'PLATFORM_DATABASE_NOT_CONFIGURED', message: 'Organization identity fields are managed by Platform. Configure PLATFORM_DATABASE_URL in Tenant_backend to load the registered legal name, short code, and official email.' });
+    }
+    const canonicalTenant = claims.platformManagement ? await resolvePlatformTenant(claims.tenantId) : null;
+    if (claims.platformManagement && !canonicalTenant) {
+      return res.status(403).json({ success: false, message: 'This organization was not found in the Platform registry.' });
+    }
+    const canonicalFields = canonicalTenant ? { name: canonicalTenant.name, displayName: canonicalTenant.name, code: canonicalTenant.code, email: canonicalTenant.email } : {};
     const result = await pool.query(
       'SELECT organization_type, profile, updated_at FROM tenant_organization_profiles WHERE tenant_id = $1 LIMIT 1',
       [claims.tenantId],
     );
-    if (!result.rowCount) return res.json({ success: true, profile: null, updatedAt: null, organizationType: tenantType });
+    if (!result.rowCount) return res.json({
+      success: true,
+      profile: { ...canonicalFields, organizationType: canonicalTenant?.tenantType || tenantType },
+      updatedAt: null,
+      organizationType: canonicalTenant?.tenantType || tenantType,
+      lockedFields: canonicalTenant ? ['name', 'displayName', 'code', 'email'] : [],
+    });
 
     const storedType = normalizedTenantType(result.rows[0].organization_type);
     if (tenantType && storedType && tenantType !== storedType) {
@@ -156,9 +170,10 @@ organizationProfileRouter.get('/', async (req, res) => {
     }
     return res.json({
       success: true,
-      organizationType: storedType || tenantType,
-      profile: { ...result.rows[0].profile, organizationType: storedType || tenantType },
+      organizationType: canonicalTenant?.tenantType || storedType || tenantType,
+      profile: { ...result.rows[0].profile, ...canonicalFields, organizationType: canonicalTenant?.tenantType || storedType || tenantType },
       updatedAt: result.rows[0].updated_at,
+      lockedFields: canonicalTenant ? ['name', 'displayName', 'code', 'email'] : [],
     });
   } catch (error) {
     const pgError = error as { code?: string };
@@ -186,6 +201,20 @@ organizationProfileRouter.put('/', async (req, res) => {
   try {
     const profile = Object.fromEntries(Object.entries(parsed.data.profile).map(([key, value]) => [key, value.trim()])) as Record<string, string>;
     delete profile.organizationType;
+    if (claims.platformManagement && !process.env.PLATFORM_DATABASE_URL?.trim()) {
+      return res.status(503).json({ success: false, code: 'PLATFORM_DATABASE_NOT_CONFIGURED', message: 'Organization identity fields are managed by Platform. Configure PLATFORM_DATABASE_URL in Tenant_backend before saving.' });
+    }
+    const canonicalTenant = claims.platformManagement ? await resolvePlatformTenant(claims.tenantId) : null;
+    if (claims.platformManagement && !canonicalTenant) {
+      return res.status(403).json({ success: false, message: 'This organization was not found in the Platform registry. Changes were not saved.' });
+    }
+    // Ignore submitted identity values and always persist the canonical Platform registration.
+    if (canonicalTenant) {
+      profile.name = canonicalTenant.name;
+      profile.displayName = canonicalTenant.name;
+      profile.code = canonicalTenant.code;
+      profile.email = canonicalTenant.email;
+    }
     const logo = profile.logoUrl;
     if (logo && logo.startsWith('data:') && !['data:image/png;base64,', 'data:image/jpeg;base64,', 'data:image/webp;base64,', 'data:image/svg+xml;base64,'].some(prefix => logo.startsWith(prefix))) return res.status(400).json({ success: false, message: 'Logo must be a PNG, JPG, WEBP or SVG image.' });
     if (logo && logo.startsWith('data:') && logo.length > 1_400_000) return res.status(413).json({ success: false, message: 'Logo is too large. Please use an image under 1 MB.' });
