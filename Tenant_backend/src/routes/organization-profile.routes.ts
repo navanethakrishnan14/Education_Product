@@ -27,6 +27,33 @@ function normalizedTenantType(value: unknown): TenantType | null {
   return null;
 }
 
+async function resolvePlatformTenant(tenantId: string): Promise<{ tenantType: TenantType; status: string } | null> {
+  // Platform and Tenant use separate databases. If PLATFORM_DATABASE_URL is configured,
+  // read the canonical registration/type/status from Platform's registry. Do not copy
+  // the Platform database URL into DATABASE_URL or write profile data to Platform tables.
+  const platformUrl = process.env.PLATFORM_DATABASE_URL?.trim();
+  if (!platformUrl) return null;
+  const { Pool } = await import('pg');
+  const platformPool = new Pool({
+    connectionString: platformUrl,
+    ssl: process.env.PLATFORM_DATABASE_SSL === 'true' ? { rejectUnauthorized: true } : undefined,
+    max: 2,
+    connectionTimeoutMillis: 5000,
+  });
+  try {
+    const result = await platformPool.query(
+      'SELECT tenant_type, status FROM edusphere_platform.school_tenants WHERE id = $1 LIMIT 1',
+      [tenantId],
+    );
+    const row = result.rows[0] as { tenant_type?: string; status?: string } | undefined;
+    const tenantType = normalizedTenantType(row?.tenant_type);
+    if (!row || !tenantType) return null;
+    return { tenantType, status: String(row.status || '') };
+  } finally {
+    await platformPool.end();
+  }
+}
+
 async function authenticateManagement(req: Request, res: Response, next: NextFunction) {
   const token = /^Bearer\s+(.+)$/i.exec(req.header('authorization') || '')?.[1];
   if (!token) return res.status(401).json({ success: false, message: 'Authentication required.' });
@@ -72,11 +99,6 @@ async function authenticateManagement(req: Request, res: Response, next: NextFun
     });
   }
 
-  const tokenTenantType = normalizedTenantType(claims.tenantType);
-  if (claims.platformManagement && !tokenTenantType) {
-    return res.status(403).json({ success: false, message: 'The signed Management session does not contain a valid school/college tenant type. Sign out and sign in again.' });
-  }
-
   if (!claims.platformManagement) {
     try {
       const active = await pool.query(
@@ -87,6 +109,25 @@ async function authenticateManagement(req: Request, res: Response, next: NextFun
     } catch {
       return res.status(503).json({ success: false, message: 'Unable to validate the account against the database.' });
     }
+  }
+
+  if (claims.platformManagement && process.env.PLATFORM_DATABASE_URL?.trim()) {
+    try {
+      const canonicalTenant = await resolvePlatformTenant(claims.tenantId);
+      if (!canonicalTenant) return res.status(403).json({ success: false, message: 'This organization could not be found in the Platform tenant registry.' });
+      if (canonicalTenant.status.toLowerCase() !== 'active') {
+        return res.status(403).json({ success: false, message: 'This organization is not active. Contact your Platform Administrator.' });
+      }
+      claims.tenantType = canonicalTenant.tenantType;
+    } catch (error) {
+      console.error('Platform tenant registry lookup failed:', error instanceof Error ? error.message : error);
+      return res.status(503).json({ success: false, message: 'Unable to verify the organization status. Check PLATFORM_DATABASE_URL and try again.' });
+    }
+  }
+
+  const tokenTenantType = normalizedTenantType(claims.tenantType);
+  if (claims.platformManagement && !tokenTenantType) {
+    return res.status(403).json({ success: false, message: 'The Management session does not contain a valid tenant type. Ensure the Platform tenant is registered as school, college or institution, then sign in again.' });
   }
 
   req.organizationClaims = claims;
