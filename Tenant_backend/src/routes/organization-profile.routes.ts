@@ -6,28 +6,45 @@ import { pool } from '../db/pool';
 import { getJwtSecret } from '../config/jwt';
 
 export const organizationProfileRouter = Router();
-type Claims = jwt.JwtPayload & { sub: string; tenantId: string; role: string; platformManagement?: boolean };
+
+type Claims = jwt.JwtPayload & { sub: string; tenantId: string; role: string; tenantType?: string; platformManagement?: boolean };
 declare global { namespace Express { interface Request { organizationClaims?: Claims } } }
+
+const tenantTypes = ['School', 'College', 'Institution'] as const;
+type TenantType = typeof tenantTypes[number];
 const options: jwt.VerifyOptions = { issuer: 'edusphere-tenant-api', audience: 'edusphere-tenant-portal' };
 const profileSchema = z.object({
-  organizationType: z.enum(['School', 'College', 'Institution']),
-  profile: z.record(z.string(), z.string().max(5000)).refine((value) => Object.keys(value).length <= 100, 'Too many profile fields'),
+  organizationType: z.enum(tenantTypes),
+  profile: z.record(z.string(), z.string().max(5000)).refine(value => Object.keys(value).length <= 100, 'Too many profile fields'),
 });
+
+function normalizedTenantType(value: unknown): TenantType | null {
+  if (typeof value !== 'string') return null;
+  const lower = value.trim().toLowerCase();
+  if (lower === 'school') return 'School';
+  if (lower === 'college') return 'College';
+  if (lower === 'institution') return 'Institution';
+  return null;
+}
+
 async function authenticateManagement(req: Request, res: Response, next: NextFunction) {
   const token = /^Bearer\s+(.+)$/i.exec(req.header('authorization') || '')?.[1];
   if (!token) return res.status(401).json({ success: false, message: 'Authentication required.' });
+
   let claims: Claims | null = null;
   const tenantSecret = getJwtSecret();
-  // Platform Management sessions are signed by Platform_Backend with its
-  // JWT_SECRET and do not include the Tenant API issuer/audience claims.
-  // In production, PLATFORM_JWT_SECRET should be set to that same value.
-  // JWT_SECRET is also accepted as a compatibility fallback for deployments
-  // that intentionally share the signing secret across both services.
+  if (tenantSecret) {
+    try {
+      const decoded = jwt.verify(token, tenantSecret, options);
+      if (typeof decoded !== 'string') {
+        const payload = decoded as jwt.JwtPayload;
+        if (typeof payload.sub === 'string' && typeof payload.tenantId === 'string') claims = payload as Claims;
+      }
+    } catch { /* The token may have been issued by Platform_Backend. */ }
+  }
+
   const configuredPlatformSecrets = [process.env.PLATFORM_JWT_SECRET?.trim(), process.env.JWT_SECRET?.trim()];
   const platformSecrets = [...new Set(configuredPlatformSecrets.filter((value): value is string => Boolean(value && value.length >= 32 && !/^replace[-_]with[-_]/i.test(value))))];
-  if (tenantSecret) {
-    try { const decoded = jwt.verify(token, tenantSecret, options); if (typeof decoded !== 'string') { const payload = decoded as jwt.JwtPayload; if (typeof payload.sub === 'string' && typeof payload.tenantId === 'string') claims = payload as Claims; } } catch { /* Try platform token. */ }
-  }
   if (!claims) {
     for (const secret of platformSecrets) {
       try {
@@ -36,50 +53,132 @@ async function authenticateManagement(req: Request, res: Response, next: NextFun
           const payload = decoded as jwt.JwtPayload;
           if (typeof payload.sub === 'string' && typeof payload.tenantId === 'string' && payload.role === 'MANAGEMENT') {
             claims = { ...payload, platformManagement: true } as Claims;
-            if (claims) break;
+            break;
           }
         }
-      } catch { /* Try the next configured platform signing secret. */ }
+      } catch { /* Try the next configured secret. */ }
     }
   }
-  // Platform-created tenant IDs are Prisma CUIDs, not UUIDs. Accept the opaque
-  // tenant identifier from the signed token; do not impose a UUID-only format.
+
   if (!claims || claims.role !== 'MANAGEMENT' || !claims.tenantId.trim() || claims.tenantId.length > 128) {
-    // Give developers a safe, non-secret diagnostic so local configuration errors
-    // can be distinguished from an expired/invalid token without exposing credentials.
     const hasPlatformSecret = Boolean(process.env.PLATFORM_JWT_SECRET?.trim() && process.env.PLATFORM_JWT_SECRET.trim().length >= 32 && !/^replace[-_]with[-_]/i.test(process.env.PLATFORM_JWT_SECRET.trim()));
     return res.status(401).json({
       success: false,
       message: 'A valid Management session is required.',
       code: hasPlatformSecret ? 'MANAGEMENT_TOKEN_INVALID' : 'PLATFORM_JWT_SECRET_MISSING',
       hint: hasPlatformSecret
-        ? 'The token could not be verified as a Management session. Sign out, sign in again, and confirm Tenant_backend PLATFORM_JWT_SECRET exactly matches Platform_Backend JWT_SECRET.'
-        : 'Set Tenant_backend PLATFORM_JWT_SECRET to the exact JWT_SECRET value from Platform_Backend/.env, then restart both backends and sign in again.'
+        ? 'Sign out and sign in again. Confirm Tenant_backend PLATFORM_JWT_SECRET exactly matches Platform_Backend JWT_SECRET.'
+        : 'Set Tenant_backend PLATFORM_JWT_SECRET to Platform_Backend JWT_SECRET, then restart Tenant_backend and sign in again.',
     });
   }
+
+  const tokenTenantType = normalizedTenantType(claims.tenantType);
+  if (claims.platformManagement && !tokenTenantType) {
+    return res.status(403).json({ success: false, message: 'The signed Management session does not contain a valid school/college tenant type. Sign out and sign in again.' });
+  }
+
   if (!claims.platformManagement) {
     try {
-      const active = await pool.query('SELECT 1 FROM tenant_users WHERE id::text = $1 AND tenant_id = $2 AND role = $3 AND is_active = TRUE LIMIT 1', [claims.sub, claims.tenantId, claims.role]);
+      const active = await pool.query(
+        'SELECT 1 FROM tenant_users WHERE id::text = $1 AND tenant_id = $2 AND role = $3 AND is_active = TRUE LIMIT 1',
+        [claims.sub, claims.tenantId, claims.role],
+      );
       if (!active.rowCount) return res.status(401).json({ success: false, message: 'Management account is no longer active.' });
-    } catch { return res.status(503).json({ success: false, message: 'Unable to validate the account against the database.' }); }
+    } catch {
+      return res.status(503).json({ success: false, message: 'Unable to validate the account against the database.' });
+    }
   }
+
   req.organizationClaims = claims;
   return next();
 }
+
 organizationProfileRouter.use(authenticateManagement);
+
 organizationProfileRouter.get('/', async (req, res) => {
+  const claims = req.organizationClaims!;
+  const tenantType = normalizedTenantType(claims.tenantType);
   try {
-    const result = await pool.query('SELECT organization_type, profile, updated_at FROM tenant_organization_profiles WHERE tenant_id = $1 LIMIT 1', [req.organizationClaims!.tenantId]);
-    if (!result.rowCount) return res.json({ success: true, profile: null });
-    return res.json({ success: true, profile: { organizationType: result.rows[0].organization_type, ...result.rows[0].profile }, updatedAt: result.rows[0].updated_at });
-  } catch (error) { console.error('Organization profile fetch failed:', error); return res.status(500).json({ success: false, message: 'Unable to load the organization profile.' }); }
+    const result = await pool.query(
+      'SELECT organization_type, profile, updated_at FROM tenant_organization_profiles WHERE tenant_id = $1 LIMIT 1',
+      [claims.tenantId],
+    );
+    if (!result.rowCount) return res.json({ success: true, profile: null, updatedAt: null, organizationType: tenantType });
+
+    const storedType = normalizedTenantType(result.rows[0].organization_type);
+    if (tenantType && storedType && tenantType !== storedType) {
+      return res.status(409).json({
+        success: false,
+        code: 'ORGANIZATION_TYPE_MISMATCH',
+        message: 'The saved profile type does not match this tenant. No data was changed; contact your platform administrator to correct the tenant classification.',
+      });
+    }
+    return res.json({
+      success: true,
+      organizationType: storedType || tenantType,
+      profile: { ...result.rows[0].profile, organizationType: storedType || tenantType },
+      updatedAt: result.rows[0].updated_at,
+    });
+  } catch (error) {
+    const pgError = error as { code?: string };
+    console.error('Organization profile fetch failed:', error);
+    if (pgError.code === '42P01') return res.status(503).json({ success: false, code: 'PROFILE_SCHEMA_MISSING', message: 'The Tenant profile table is missing. Back up the Tenant database, then run npm run db:init from Tenant_backend.' });
+    return res.status(500).json({ success: false, message: 'Unable to load the organization profile.' });
+  }
 });
+
 organizationProfileRouter.put('/', async (req, res) => {
   const parsed = profileSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ success: false, message: 'Invalid organization profile details.' });
+  if (!parsed.success) return res.status(400).json({ success: false, message: 'Invalid organization profile details.', errors: parsed.error.flatten().fieldErrors });
+
+  const claims = req.organizationClaims!;
+  const signedType = normalizedTenantType(claims.tenantType);
+  const { organizationType } = parsed.data;
+  if (signedType && organizationType !== signedType) {
+    return res.status(403).json({
+      success: false,
+      code: 'ORGANIZATION_TYPE_MISMATCH',
+      message: 'The selected profile type does not match this tenant’s registered type. Your changes were not saved.',
+    });
+  }
+
   try {
-    const { organizationType, profile } = parsed.data;
-    const result = await pool.query(`INSERT INTO tenant_organization_profiles (tenant_id, organization_type, profile, updated_at) VALUES ($1, $2, $3::jsonb, NOW()) ON CONFLICT (tenant_id) DO UPDATE SET organization_type = EXCLUDED.organization_type, profile = EXCLUDED.profile, updated_at = NOW() RETURNING organization_type, profile, updated_at`, [req.organizationClaims!.tenantId, organizationType, JSON.stringify(profile)]);
-    return res.json({ success: true, message: 'Organization profile saved.', profile: { organizationType: result.rows[0].organization_type, ...result.rows[0].profile }, updatedAt: result.rows[0].updated_at });
-  } catch (error) { console.error('Organization profile save failed:', error); return res.status(500).json({ success: false, message: 'Unable to save the organization profile.' }); }
+    const { profile } = parsed.data;
+    const existing = await pool.query(
+      'SELECT organization_type FROM tenant_organization_profiles WHERE tenant_id = $1 LIMIT 1',
+      [claims.tenantId],
+    );
+    const storedType = existing.rowCount ? normalizedTenantType(existing.rows[0].organization_type) : null;
+    if (storedType && storedType !== organizationType) {
+      return res.status(409).json({
+        success: false,
+        code: 'ORGANIZATION_TYPE_MISMATCH',
+        message: 'This tenant already has a different profile type. No changes were saved.',
+      });
+    }
+
+    const safeProfile = { ...profile };
+    delete (safeProfile as Record<string, string>).organizationType;
+    const result = await pool.query(
+      `INSERT INTO tenant_organization_profiles (tenant_id, organization_type, profile, updated_at)
+       VALUES ($1, $2, $3::jsonb, NOW())
+       ON CONFLICT (tenant_id) DO UPDATE
+         SET organization_type = EXCLUDED.organization_type, profile = EXCLUDED.profile, updated_at = NOW()
+       RETURNING organization_type, profile, updated_at`,
+      [claims.tenantId, organizationType, JSON.stringify(safeProfile)],
+    );
+
+    return res.json({
+      success: true,
+      message: 'Organization profile saved.',
+      organizationType: result.rows[0].organization_type,
+      profile: { ...result.rows[0].profile, organizationType: result.rows[0].organization_type },
+      updatedAt: result.rows[0].updated_at,
+    });
+  } catch (error) {
+    const pgError = error as { code?: string };
+    console.error('Organization profile save failed:', error);
+    if (pgError.code === '42P01') return res.status(503).json({ success: false, code: 'PROFILE_SCHEMA_MISSING', message: 'The Tenant profile table is missing. Back up the Tenant database, then run npm run db:init from Tenant_backend.' });
+    return res.status(500).json({ success: false, message: 'Unable to save the organization profile.' });
+  }
 });
