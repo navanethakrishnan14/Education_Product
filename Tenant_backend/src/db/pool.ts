@@ -1,5 +1,10 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'node:path';
 import { Pool } from 'pg';
+
+// Resolve .env relative to Tenant_backend, not process.cwd(). This keeps the
+// API working whether it is started from Tenant_backend or the monorepo root.
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const rawDatabaseUrl = process.env.DATABASE_URL;
 if (!rawDatabaseUrl) {
