@@ -1,176 +1,32 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { FormEvent } from 'react';
-import { Building2, Save, ShieldCheck, MapPin, GraduationCap, Image, Landmark, Users, CalendarDays, BookOpen, BadgeCheck, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
-
-type Draft = Record<string, string>;
-type Props = { organization: 'School' | 'College' | 'Institution' | string; tenantId?: string; name?: string; code?: string | null; email?: string };
-type ApiPayload = { success?: boolean; profile?: Draft | null; organizationType?: string | null; updatedAt?: string | null; message?: string; hint?: string; code?: string };
-const schoolSections = [
-  { title: 'Basic Organization Information', subtitle: 'Official identity and primary contact information', icon: Building2, fields: [['Organization Legal Name','name'],['Trade / Display Name','displayName'],['Institution Classification','classification'],['System Identification Code','systemCode'],['Board / Affiliation / Registration No.','registration'],['Academic System Model','academicModel'],['Primary Official Email','email'],['Primary Contact Phone','phone'],['Official Website Address','website'],['Primary Address','address']] },
-  { title: 'Campus Headquarters & Regional Liaison', subtitle: 'Main campus location and administrative contacts', icon: MapPin, fields: [['Address Line 1','address1'],['Address Line 2','address2'],['City','city'],['State / Province','state'],['Postal / ZIP Code','postal'],['Country / Jurisdiction','country'],['Primary Administrative Liaison','liaison'],['Liaison Email','liaisonEmail'],['Liaison Phone','liaisonPhone']] },
-  { title: 'Academic Configuration & Standards', subtitle: 'Academic year, curriculum and grading configuration', icon: GraduationCap, fields: [['Active Academic Session','session'],['Academic Calendar','calendar'],['Academic Departments','departments'],['Grading / Evaluation Scale','grading'],['Academic Calendar Sync Hook','calendarSync']] },
-];
-const collegeSections = [
-  { title: 'Basic College Information', subtitle: 'Official college identity, affiliation and contact details', icon: Building2, fields: [['College Legal Name','name'],['College Display Name','displayName'],['College Type','classification'],['University Affiliation','affiliation'],['UGC / AICTE / Approval Number','approval'],['NAAC Grade','naac'],['Official Email','email'],['Contact Phone','phone'],['Official Website','website'],['Year Established','established']] },
-  { title: 'Campus Address & Administration', subtitle: 'College campus location and administration contacts', icon: MapPin, fields: [['Address Line 1','address1'],['Address Line 2','address2'],['City','city'],['State / Province','state'],['Postal / ZIP Code','postal'],['Country','country'],['Principal / Dean Name','liaison'],['Administrative Email','liaisonEmail'],['Administrative Phone','liaisonPhone']] },
-  { title: 'Academic Configuration & Standards', subtitle: 'Courses, departments, academic calendar and grading', icon: GraduationCap, fields: [['Active Academic Year','session'],['Semester / Term System','calendar'],['Departments / Faculties','departments'],['Degree Programs Offered','programs'],['Grading / Evaluation Scale','grading'],['Academic Calendar Sync','calendarSync']] },
-];
-const defaults: Draft = { name:'', displayName:'', code:'', email:'', phone:'', website:'', address:'', address1:'', address2:'', city:'', state:'', country:'India', postal:'', classification:'', systemCode:'', registration:'', academicModel:'Semester & Dual Credit System', affiliation:'', approval:'', naac:'', established:'', liaison:'', liaisonEmail:'', liaisonPhone:'', session:'', calendar:'Semester Model', departments:'', programs:'', grading:'4.0 Scale / Letter Grade', calendarSync:'' };
-const inputClass = 'mt-1.5 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-800 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500';
-function normalizedType(value: string): 'School' | 'College' | 'Institution' {
-  const lower = value.toLowerCase();
-  return lower.includes('college') ? 'College' : lower.includes('institution') ? 'Institution' : 'School';
-}
-function freshDraft(name?: string, code?: string | null, email?: string): Draft {
-  return { ...defaults, name: name || '', displayName: name || '', code: code || '', email: email || '' };
-}
-function readToken(): string {
-  return localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token') || '';
-}
-async function readApiPayload(response: Response): Promise<ApiPayload> {
-  const payload = await response.json().catch(() => ({})) as ApiPayload;
-  if (!response.ok || !payload.success) {
-    const error = new Error(payload.message || `Request failed (HTTP ${response.status}).`) as Error & { code?: string; hint?: string; status?: number };
-    error.code = payload.code;
-    error.hint = payload.hint;
-    error.status = response.status;
-    throw error;
-  }
-  return payload;
-}
-
-export default function OrganizationProfilePage({ organization, tenantId, name, code, email }: Props) {
-  const type = useMemo(() => normalizedType(organization), [organization]);
-  const key = 'edusphere_profile:' + (tenantId || 'tenant');
-  const sections = type === 'College' ? collegeSections : schoolSections;
-  const [draft, setDraft] = useState<Draft>(() => freshDraft(name, code, email));
-  const [savedDraft, setSavedDraft] = useState<Draft>(() => freshDraft(name, code, email));
-  const [notice, setNotice] = useState<{ kind: 'success' | 'error' | 'info'; text: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const apiBase = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').trim().replace(/\/$/, '');
-  const isDirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(savedDraft), [draft, savedDraft]);
-
-  const loadProfile = useCallback(async (showNotice = false) => {
-    const token = readToken();
-    if (!token) {
-      setNotice({ kind: 'error', text: 'Your sign-in session was not found. Please sign out and sign in again with your Management account.' });
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const response = await fetch(apiBase + '/organization-profile', {
-        headers: { Accept: 'application/json', Authorization: 'Bearer ' + token },
-        cache: 'no-store',
-      });
-      const payload = await readApiPayload(response);
-      const serverType = normalizedType(payload.organizationType || payload.profile?.organizationType || type);
-      if (serverType !== type) {
-        throw new Error(`This tenant is registered as a ${serverType.toLowerCase()}, but this workspace is configured for ${type.toLowerCase()}. No profile was changed. Please correct the tenant type in Platform Admin, then sign in again.`);
-      }
-      const base = freshDraft(name, code, email);
-      const serverProfile = { ...(payload.profile || {}) };
-      delete serverProfile.organizationType;
-      const merged = { ...base, ...serverProfile };
-      setDraft(merged);
-      setSavedDraft(merged);
-      setLoaded(true);
-      try { localStorage.setItem(key, JSON.stringify(merged)); } catch { /* Browser storage is a convenience cache only. */ }
-      if (showNotice) setNotice({ kind: 'success', text: payload.updatedAt ? 'Profile reloaded from the database.' : 'No saved profile yet. Complete the details and save to the database.' });
-      else setNotice(null);
-    } catch (error) {
-      const err = error as Error & { code?: string; hint?: string; status?: number };
-      const extra = err.hint ? ' ' + err.hint : '';
-      setNotice({ kind: 'error', text: (err.message || 'Unable to load the organization profile.') + extra });
-    } finally {
-      setLoading(false);
-    }
-  }, [apiBase, email, key, name, code, type]);
-
-  useEffect(() => { void loadProfile(); }, [loadProfile]);
-
-  async function save(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (saving || loading) return;
-    const token = readToken();
-    if (!token) {
-      setNotice({ kind: 'error', text: 'Your sign-in session was not found. Please sign out and sign in again.' });
-      return;
-    }
-    setSaving(true);
-    setNotice(null);
-    try {
-      const profileToSave = Object.fromEntries(Object.entries(draft).map(([fieldKey, value]) => [fieldKey, value.trim()])) as Draft;
-      const response = await fetch(apiBase + '/organization-profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ organizationType: type, profile: profileToSave }),
-      });
-      const payload = await readApiPayload(response);
-      const returnedType = normalizedType(payload.organizationType || payload.profile?.organizationType || type);
-      if (returnedType !== type) throw new Error('The server returned a different organization type. The profile was not updated in this screen.');
-      const saved = { ...freshDraft(name, code, email), ...(payload.profile || profileToSave) };
-      delete saved.organizationType;
-      setDraft(saved);
-      setSavedDraft(saved);
-      try { localStorage.setItem(key, JSON.stringify(saved)); } catch { /* Database remains the source of truth. */ }
-      setNotice({ kind: 'success', text: 'Organization profile saved to the database successfully.' });
-      setLoaded(true);
-    } catch (error) {
-      const err = error as Error & { hint?: string };
-      setNotice({ kind: 'error', text: (err.message || 'Unable to save the organization profile.') + (err.hint ? ' ' + err.hint : '') });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const updateField = (fieldKey: string, value: string) => {
-    setDraft(current => ({ ...current, [fieldKey]: value }));
-    setNotice(current => current?.kind === 'success' ? null : current);
-  };
-  const field = (label: string, fieldKey: string) => {
-    const isEmail = fieldKey.toLowerCase().includes('email');
-    const isUrl = fieldKey === 'website';
-    const isPhone = fieldKey.toLowerCase().includes('phone');
-    return <label key={fieldKey} className="block min-w-0 text-xs font-semibold text-slate-600">{label}
-      {['classification','academicModel','calendar','grading','country','naac'].includes(fieldKey) ? (
-        <select className={inputClass} value={draft[fieldKey] || ''} disabled={loading || saving} onChange={e => updateField(fieldKey, e.target.value)}>
-          {(fieldKey === 'classification' ? (type === 'College' ? ['Arts & Science College','Engineering College','Medical College','Polytechnic College','University College','Autonomous College','Other'] : ['Primary & Secondary School','Higher Secondary School','Matriculation School','CBSE School','ICSE School','International School','Other']) : fieldKey === 'academicModel' ? ['Semester & Dual Credit System','Annual System','Semester System'] : fieldKey === 'calendar' ? ['Semester Model','Trimester Model','Annual Model','Quarter System'] : fieldKey === 'grading' ? ['4.0 Scale / Letter Grade','Percentage','CGPA / GPA','Grade Points'] : fieldKey === 'naac' ? ['Not Accredited','A++','A+','A','B++','B+','B'] : ['India','United States','United Kingdom','Canada','Australia','Other']).map(value => <option key={value} value={value}>{value}</option>)}
-        </select>
-      ) : <input className={inputClass} type={isEmail ? 'email' : isUrl ? 'url' : isPhone ? 'tel' : fieldKey === 'established' ? 'number' : 'text'} inputMode={isPhone ? 'tel' : undefined} min={fieldKey === 'established' ? 1800 : undefined} max={fieldKey === 'established' ? new Date().getFullYear() : undefined} maxLength={fieldKey === 'established' ? undefined : 5000} value={draft[fieldKey] || ''} disabled={loading || saving} onChange={e => updateField(fieldKey, e.target.value)} />
-      }
-    </label>;
-  };
-
-  return <div className="mx-auto max-w-7xl space-y-6 pb-8">
-    <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <div className="mb-2 text-xs font-medium text-slate-400">ORGANIZATION SETTINGS</div>
-        <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{type} Profile</h1><span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-800">● Tenant profile</span></div>
-        <p className="mt-1 text-sm text-slate-500">Manage official identity, contact information, campus details and academic configuration.</p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600"><ShieldCheck size={15}/> {loaded ? 'Database connected' : 'Profile status'}</span>
-        <button type="button" onClick={() => void loadProfile(true)} disabled={loading || saving} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"><RefreshCw size={14}/> Reload</button>
-        <button type="submit" form="org-profile-form" disabled={loading || saving || !isDirty} className="inline-flex items-center gap-2 rounded-lg bg-violet-800 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"><Save size={15}/> {saving ? 'Saving…' : 'Save Profile'}</button>
-      </div>
-    </div>
-
-    {loading && <p role="status" className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-500">Loading organization profile from the database…</p>}
-    {notice && <div role="status" aria-live="polite" className={`flex items-start gap-2 rounded-xl border p-3 text-sm font-medium ${notice.kind === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : notice.kind === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>{notice.kind === 'success' ? <CheckCircle2 size={17} className="mt-0.5 shrink-0"/> : <AlertCircle size={17} className="mt-0.5 shrink-0"/>}<span>{notice.text}</span></div>}
-    {!loading && !loaded && notice?.kind === 'error' && <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-sm font-bold text-slate-800">Your data has not been changed.</p><p className="mt-1 text-xs text-slate-500">Fix the connection or session issue and use Reload to try again. The profile is not saved only to this browser.</p></div>}
-
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
-      <div className="min-w-0 space-y-5">
-        <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-[1fr_auto] sm:items-center"><div className="flex min-w-0 items-center gap-4"><div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-violet-800"><Building2 size={28}/></div><div className="min-w-0"><h2 className="truncate text-lg font-extrabold text-slate-900">{draft.displayName || draft.name || (type === 'College' ? 'College Name' : type === 'Institution' ? 'Institution Name' : 'School Name')}</h2><p className="mt-1 text-xs text-slate-500">{type === 'College' ? 'Higher education institution' : type === 'Institution' ? 'Institution workspace' : 'School / K–12 education institution'}</p><div className="mt-2 flex flex-wrap gap-2"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600">{draft.classification || (type === 'College' ? 'College / University' : type === 'Institution' ? 'Institution' : 'School / K–12')}</span><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">Tenant-scoped</span></div></div></div><div className="grid grid-cols-2 gap-3 sm:min-w-48"><div className="rounded-xl bg-slate-50 p-3"><p className="text-[10px] font-semibold text-slate-500">Organization Code</p><p className="mt-1 text-sm font-extrabold text-slate-800">{draft.code || 'Not assigned'}</p></div><div className="rounded-xl bg-slate-50 p-3"><p className="text-[10px] font-semibold text-slate-500">Established</p><p className="mt-1 text-sm font-extrabold text-slate-800">{draft.established || 'Not provided'}</p></div></div></div>
-        <form id="org-profile-form" onSubmit={save} className="space-y-5">{sections.map((section, index) => { const Icon = section.icon; return <section key={section.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-5 flex items-start justify-between gap-3"><div className="flex items-start gap-3"><div className="rounded-lg bg-violet-50 p-2 text-violet-800"><Icon size={17}/></div><div><h3 className="text-sm font-extrabold text-slate-800">{section.title}</h3><p className="mt-1 text-xs text-slate-500">{section.subtitle}</p></div></div><span className="shrink-0 rounded-md bg-slate-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">Section 0{index + 1}</span></div><div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">{section.fields.map(([label, fieldKey]) => field(label, fieldKey))}</div></section>; })}<div className="flex justify-end"><button type="submit" disabled={loading || saving || !isDirty} className="inline-flex items-center gap-2 rounded-lg bg-violet-800 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-violet-900 disabled:cursor-not-allowed disabled:opacity-50"><Save size={16}/>{saving ? 'Saving…' : 'Save organization profile'}</button></div></form>
-      </div>
-      <aside className="space-y-5">
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="mb-4 flex items-center gap-2"><Image size={16} className="text-violet-800"/><h3 className="text-sm font-extrabold text-slate-800">Visual Identity & Theme</h3></div><div className="space-y-3"><div className="flex items-center gap-3"><span className="h-8 w-8 rounded-lg bg-violet-800"/><div><p className="text-xs font-bold text-slate-700">Primary Brand Accent</p><p className="text-[10px] text-slate-400">Violet · #5B21B6</p></div></div><div className="flex items-center gap-3"><span className="h-8 w-8 rounded-lg bg-slate-900"/><div><p className="text-xs font-bold text-slate-700">Navigation / Header</p><p className="text-[10px] text-slate-400">Midnight Slate</p></div></div><div className="rounded-xl bg-slate-900 p-3 text-white"><div className="flex items-center gap-2"><GraduationCap size={18}/><span className="text-xs font-bold">{draft.displayName || draft.name || organization}</span></div><p className="mt-2 text-[10px] text-slate-300">Institution workspace preview</p><div className="mt-3 rounded-md bg-violet-700 px-3 py-2 text-center text-[10px] font-bold">Academic Session: {draft.session || 'Not set'}</div></div></div></section>
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="mb-3 flex items-center gap-2"><BadgeCheck size={16} className="text-violet-800"/><h3 className="text-sm font-extrabold text-slate-800">Profile Details</h3></div><div className="mt-3 space-y-3 text-xs">{[[Users,'Tenant ID',tenantId || 'Unavailable'],[BookOpen,'Organization Type',type],[Landmark,'Organization Code',code || 'Not assigned'],[CalendarDays,'Saved Status',loaded ? (isDirty ? 'Unsaved changes' : 'Up to date') : 'Not loaded']].map(([Icon,label,value]: any) => <div key={label} className="flex items-start justify-between gap-2"><span className="flex items-center gap-2 text-slate-500"><Icon size={13}/>{label}</span><span className="max-w-[145px] break-words text-right font-bold text-slate-700">{value}</span></div>)}</div><div className="mt-4 rounded-lg bg-slate-50 p-3 text-[10px] leading-relaxed text-slate-500">The database is the source of truth. Browser storage is only a convenience cache and is never treated as a successful save.</div></section>
-      </aside>
-    </div>
-  </div>;
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import type {ChangeEvent,FormEvent} from 'react';
+import {Activity,AlertCircle,BadgeCheck,BookOpen,Camera,CheckCircle2,Clock3,Contact,GraduationCap,Globe2,Landmark,Mail,MapPin,Phone,RefreshCw,Save,School,ShieldCheck,X,PencilLine} from 'lucide-react';
+type Draft=Record<string,string>;type Props={organization:'School'|'College'|'Institution'|string;tenantId?:string;name?:string;code?:string|null;email?:string};type Payload={success?:boolean;profile?:Draft|null;organizationType?:string|null;updatedAt?:string|null;message?:string;hint?:string};type Field={label:string;key:string;type?:string;wide?:boolean;options?:string[]};type Section={title:string;subtitle:string;icon:typeof School;fields:Field[]};
+const school:Section[]=[
+{title:'School Information',subtitle:'Core institutional profile and administrative leadership',icon:School,fields:[{label:'School Legal Name',key:'name',wide:true},{label:'School Short Code',key:'code'},{label:'Establishment Year',key:'established',type:'number'},{label:'School Type & Classification',key:'classification',type:'select',wide:true,options:['Private Independent / Day & Boarding','Government','Government Aided','Matriculation School','CBSE School','ICSE School','International School','Other']},{label:'Principal / Head of School',key:'principal'},{label:'Vice Principal',key:'vicePrincipal'}]},
+{title:'Contact Information & Web',subtitle:'Electronic channels, institutional phone lines, and portals',icon:Contact,fields:[{label:'Official Administrative Email',key:'email',type:'email'},{label:'Admissions Desk Email',key:'admissionsEmail',type:'email'},{label:'Primary Phone Switchboard',key:'phone',type:'tel'},{label:'Emergency Operations Hotline',key:'emergencyPhone',type:'tel'},{label:'Official Web Portal',key:'website',type:'url',wide:true},{label:'Twitter / X Handle',key:'twitter'},{label:'LinkedIn Institution Page',key:'linkedin'}]},
+{title:'Address & Campus Location',subtitle:'Physical facility coordinates, landmarks, and regional timezone',icon:MapPin,fields:[{label:'Street Address',key:'address'},{label:'Campus Wing / Landmark',key:'landmark'},{label:'City',key:'city'},{label:'State / Province',key:'state'},{label:'Postal / ZIP Code',key:'postal'},{label:'Country',key:'country'},{label:'Regional Operating Time Zone',key:'timezone',type:'select',wide:true,options:['Asia/Kolkata (IST) UTC+5:30','Eastern Time (US & Canada) GMT-4','Central Time (US & Canada)','Pacific Time (US & Canada)','Europe/London','Australia/Sydney','Other']}]},
+{title:'Academic Information & Curriculum',subtitle:'Grading frameworks, capacity limits, and session tracks',icon:BookOpen,fields:[{label:'Current Academic Session',key:'session'},{label:'Total Campus Capacity',key:'capacity',type:'number'},{label:'School Board / Curriculum Framework',key:'curriculum',wide:true},{label:'Grading Scale Standard',key:'grading',wide:true}]},
+{title:'Affiliation & Accreditation',subtitle:'Official regulatory compliance registries and tax declarations',icon:ShieldCheck,fields:[{label:'Primary Accreditation Agency',key:'accreditationAgency'},{label:'Accreditation Status',key:'accreditationStatus'},{label:'State Board License',key:'license'},{label:'Tax Exemption Status',key:'taxStatus'}]}];
+const college:Section[]=school.map((s,i)=>i===0?{...s,title:'College Information',subtitle:'Core institutional profile and administrative leadership',icon:Landmark,fields:s.fields.map(f=>f.key==='name'?{...f,label:'College Legal Name'}:f.key==='classification'?{...f,label:'College Type & Classification',options:['Arts & Science College','Engineering College','Medical College','Polytechnic College','Autonomous College','University College','Government College','Private College','Other']}:f.key==='principal'?{...f,label:'Principal / Dean'}:f.key==='vicePrincipal'?{...f,label:'Vice Principal / Registrar'}:f)}:i===3?{...s,fields:[{label:'Current Academic Session',key:'session'},{label:'Total Campus Capacity',key:'capacity',type:'number'},{label:'University Affiliation',key:'affiliation',wide:true},{label:'Courses / Programs Offered',key:'programs',wide:true},{label:'Departments / Faculties',key:'departments',wide:true},{label:'Grading Scale Standard',key:'grading',wide:true}]}:i===4?{...s,fields:[{label:'Primary Accreditation Agency',key:'accreditationAgency'},{label:'Accreditation Status',key:'accreditationStatus'},{label:'UGC / AICTE / Council Approval',key:'license'},{label:'Tax Exemption / Registration',key:'taxStatus'}]}:s);
+const defaults:Draft={name:'',displayName:'',code:'',established:'',classification:'',principal:'',vicePrincipal:'',email:'',admissionsEmail:'',phone:'',emergencyPhone:'',website:'',twitter:'',linkedin:'',address:'',landmark:'',city:'',state:'',postal:'',country:'India',timezone:'Asia/Kolkata (IST) UTC+5:30',session:'2026 - 2027',capacity:'',curriculum:'',grading:'4.0 GPA Weighted / 7-Point IB Scale',accreditationAgency:'',accreditationStatus:'',license:'',taxStatus:'',affiliation:'',programs:'',departments:'',logoUrl:'',organizationType:'School',academicTerm:'Fall Term',capacityEnrolled:'0'};
+const input='mt-1.5 w-full min-w-0 rounded-lg border border-transparent bg-[#f0f2ff] px-3 py-2.5 text-[13px] font-medium text-slate-800 outline-none focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100 disabled:opacity-60';
+const norm=(v:string):'School'|'College'|'Institution'=>v.toLowerCase().includes('college')?'College':v.toLowerCase().includes('institution')?'Institution':'School';const fresh=(n?:string,c?:string|null,e?:string):Draft=>({...defaults,name:n||'',displayName:n||'',code:c||'',email:e||''});const getToken=()=>localStorage.getItem('tenant_token')||sessionStorage.getItem('tenant_token')||'';
+async function parse(r:Response):Promise<Payload>{const p=await r.json().catch(()=>({})) as Payload;if(!r.ok||!p.success){const e=new Error(p.message||'Request failed (HTTP '+r.status+').') as Error&{hint?:string};e.hint=p.hint;throw e;}return p;}
+export default function OrganizationProfilePage({organization,tenantId,name,code,email}:Props){
+const type=useMemo(()=>norm(organization),[organization]),key='edusphere_profile:'+(tenantId||'tenant'),sections=type==='College'?college:school,api=String(import.meta.env.VITE_API_BASE_URL||'http://localhost:5000/api/v1').trim().replace(/\\/$/,'');
+const [draft,setDraft]=useState<Draft>(()=>fresh(name,code,email)),[saved,setSaved]=useState<Draft>(()=>fresh(name,code,email)),[notice,setNotice]=useState<{kind:'success'|'error';text:string}|null>(null),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[editing,setEditing]=useState(true),[modified,setModified]=useState<string|null>(null);const logoRef=useRef<HTMLInputElement>(null);const dirty=useMemo(()=>JSON.stringify(draft)!==JSON.stringify(saved),[draft,saved]);
+const update=(k:string,v:string)=>{setDraft(d=>({...d,[k]:v}));setNotice(n=>n?.kind==='success'?null:n);};
+const load=useCallback(async(show=false)=>{if(!getToken()){setNotice({kind:'error',text:'Sign-in session not found. Please sign in again with your Management account.'});setLoading(false);return;}setLoading(true);try{const p=await parse(await fetch(api+'/organization-profile',{headers:{Accept:'application/json',Authorization:'Bearer '+getToken()},cache:'no-store'}));const st=norm(p.organizationType||p.profile?.organizationType||type);if(st!==type)throw new Error('This tenant is registered as a '+st.toLowerCase()+', but this workspace is configured for '+type.toLowerCase()+'.');const next={...fresh(name,code,email),...(p.profile||{}),organizationType:type};setDraft(next);setSaved(next);setModified(p.updatedAt||null);try{localStorage.setItem(key,JSON.stringify(next));}catch{}setNotice(show?{kind:'success',text:p.updatedAt?'Profile reloaded from database.':'No profile saved yet. Complete details and save.'}:null);}catch(e){const x=e as Error&{hint?:string};setNotice({kind:'error',text:(x.message||'Unable to load profile.')+(x.hint?' '+x.hint:'')});}finally{setLoading(false);}},[api,email,key,name,code,type]);useEffect(()=>{void load();},[load]);
+async function save(ev?:FormEvent){ev?.preventDefault();if(saving||loading)return;if(!getToken()){setNotice({kind:'error',text:'Sign-in session not found. Please sign in again.'});return;}setSaving(true);setNotice(null);try{const profile=Object.fromEntries(Object.entries(draft).map(([k,v])=>[k,v.trim()])) as Draft;const p=await parse(await fetch(api+'/organization-profile',{method:'PUT',headers:{'Content-Type':'application/json',Accept:'application/json',Authorization:'Bearer '+getToken()},body:JSON.stringify({organizationType:type,profile})}));if(norm(p.organizationType||p.profile?.organizationType||type)!==type)throw new Error('Server returned a different organization type. Changes were not saved.');const next={...fresh(name,code,email),...(p.profile||profile),organizationType:type};setDraft(next);setSaved(next);setModified(p.updatedAt||new Date().toISOString());try{localStorage.setItem(key,JSON.stringify(next));}catch{}setNotice({kind:'success',text:'Organization profile saved successfully.'});setEditing(false);}catch(e){const x=e as Error&{hint?:string};setNotice({kind:'error',text:(x.message||'Unable to save profile.')+(x.hint?' '+x.hint:'')});}finally{setSaving(false);}}
+function changeLogo(ev:ChangeEvent<HTMLInputElement>){const f=ev.target.files?.[0];ev.target.value='';if(!f)return;if(!['image/png','image/jpeg','image/webp','image/svg+xml'].includes(f.type)||f.size>1024*1024){setNotice({kind:'error',text:'Choose a PNG, JPG, WEBP, or SVG logo under 1 MB.'});return;}const r=new FileReader();r.onload=()=>{if(typeof r.result==='string'){update('logoUrl',r.result);setEditing(true);setNotice({kind:'success',text:'Logo selected. Save Changes to store it.'});}};r.onerror=()=>setNotice({kind:'error',text:'Could not read logo file.'});r.readAsDataURL(f);}
+const field=(f:Field)=><label key={f.key} className={'block min-w-0 text-[11px] font-bold text-slate-700'+(f.wide?' sm:col-span-2':'')}>{f.label}{f.type==='select'?<select className={input} value={draft[f.key]||''} disabled={loading||saving||!editing} onChange={e=>update(f.key,e.target.value)}>{(f.options||[]).map(o=><option key={o}>{o}</option>)}</select>:<span className="relative block"><input className={input+(['email','tel','url'].includes(f.type||'')?' pl-9':'')} type={f.type||'text'} min={f.type==='number'?0:undefined} max={f.key==='established'?new Date().getFullYear():undefined} value={draft[f.key]||''} disabled={loading||saving||!editing} onChange={e=>update(f.key,e.target.value)} placeholder={'Enter '+f.label.toLowerCase()}/>{f.type==='email'&&<Mail size={14} className="absolute left-3 top-4 text-slate-500"/>}{f.type==='tel'&&<Phone size={14} className="absolute left-3 top-4 text-slate-500"/>}{f.type==='url'&&<Globe2 size={14} className="absolute left-3 top-4 text-slate-500"/>}</span>}</label>;
+const cap=Math.max(0,Number(draft.capacity||0)),enrolled=Math.max(0,Number(draft.capacityEnrolled||0)),util=cap?Math.min(100,Math.round(enrolled/cap*1000)/10):0;
+return <div className="mx-auto max-w-[1500px] space-y-5 pb-24 text-slate-900">
+<div className="overflow-hidden rounded-xl border border-violet-100 bg-white shadow-sm"><div className="h-1.5 bg-gradient-to-r from-violet-950 via-violet-700 to-violet-400"/><div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-6"><div className="flex shrink-0 flex-col items-center gap-2"><div className="grid h-20 w-20 place-items-center overflow-hidden rounded-xl border border-indigo-100 bg-indigo-50 sm:h-[90px] sm:w-[90px]">{draft.logoUrl?<img src={draft.logoUrl} alt="Organization logo" className="h-full w-full object-contain p-2"/>:<div className="grid h-14 w-14 place-items-center rounded-2xl bg-violet-900 text-white"><GraduationCap size={34}/></div>}</div><button type="button" onClick={()=>logoRef.current?.click()} className="inline-flex items-center gap-1 text-[10px] font-bold text-violet-700"><Camera size={12}/> Change Logo</button><input ref={logoRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={changeLogo}/><span className="text-[9px] text-slate-400">PNG, SVG, JPG · Max 1 MB</span></div><div className="min-w-0 flex-1"><div className="mb-2 flex flex-wrap items-center gap-2"><span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-extrabold text-violet-900">{draft.code||'ORG-CODE-PENDING'}</span><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">● {draft.accreditationStatus||'Accredited & Active'}</span><span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600">Campus Est. {draft.established||'—'}</span></div><h2 className="truncate text-xl font-extrabold sm:text-2xl">{draft.displayName||draft.name||(type==='College'?'College Name':'School Name')}</h2><p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500"><BadgeCheck size={13} className="text-violet-600"/>{draft.classification||(type==='College'?'Higher Education Institution':'School / K–12 Education Institution')} · {draft.license||'Registration details not added'}</p><p className="mt-1 flex items-center gap-1 text-xs text-slate-500"><MapPin size={13}/>{[draft.city,draft.state,draft.country].filter(Boolean).join(', ')||'Campus address not provided'}</p></div><div className="flex shrink-0 flex-wrap items-center gap-2"><button type="button" onClick={()=>setEditing(true)} className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2.5 text-xs font-bold"><PencilLine size={14}/> Edit Profile</button><button type="button" onClick={()=>void save()} disabled={!dirty||loading||saving} className="inline-flex items-center gap-2 rounded-lg bg-violet-950 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-45"><CheckCircle2 size={14}/>{saving?'Saving…':'Save Changes'}</button><button type="button" onClick={()=>{setDraft(saved);setEditing(false);setNotice(null);}} disabled={!dirty||saving} className="rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-600 disabled:opacity-40">Cancel</button></div></div></div>
+{notice&&<div role="status" aria-live="polite" className={'flex items-start gap-2 rounded-lg border p-3 text-xs font-semibold '+(notice.kind==='success'?'border-emerald-200 bg-emerald-50 text-emerald-800':'border-rose-200 bg-rose-50 text-rose-800')}>{notice.kind==='success'?<CheckCircle2 size={15}/>:<AlertCircle size={15}/>}<span className="flex-1">{notice.text}</span><button type="button" onClick={()=>setNotice(null)}><X size={14}/></button></div>}
+{loading&&<div role="status" className="rounded-lg border border-violet-100 bg-white p-4 text-sm text-slate-500">Loading organization profile from the database…</div>}
+<form onSubmit={save} className="grid min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-2">{sections.map(s=>{const Icon=s.icon;return <section key={s.title} className={'min-w-0 rounded-xl border border-slate-100 bg-white p-4 shadow-[0_2px_10px_rgba(33,18,75,0.025)] sm:p-5'+(s.title==='Affiliation & Accreditation'?' lg:col-span-2':'')}><div className="mb-5 flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-violet-100 text-violet-800"><Icon size={17}/></span><div><h3 className="text-sm font-extrabold">{s.title}</h3><p className="mt-1 text-[11px] text-slate-500">{s.subtitle}</p></div></div>{s.title==='Affiliation & Accreditation'?<span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">✓ Valid Status</span>:<Activity size={15} className="text-slate-300"/>}</div><div className="grid min-w-0 grid-cols-1 gap-x-3 gap-y-3 sm:grid-cols-2">{s.fields.map(field)}</div>{s.title==='Address & Campus Location'&&<div className="mt-4 flex h-20 items-center justify-center rounded-lg border border-indigo-100 bg-[linear-gradient(135deg,#dbeafe,#e0e7ff_35%,#dcfce7_65%,#dbeafe)]"><span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold shadow-sm"><MapPin size={13} className="text-violet-700"/>{[draft.city,draft.name||draft.displayName].filter(Boolean).join(' Main Campus • ')||'Campus location preview'}</span></div>}{s.title==='Academic Information & Curriculum'&&<div className="mt-4 rounded-lg bg-indigo-50 p-3"><div className="mb-2 flex justify-between gap-2 text-[10px] font-semibold text-slate-600"><span>Capacity Utilization ({enrolled.toLocaleString()} / {cap.toLocaleString()} enrolled)</span><span className="font-extrabold text-violet-800">{util}%</span></div><div className="h-1.5 overflow-hidden rounded-full bg-indigo-100"><div className="h-full rounded-full bg-violet-700" style={{width:util+'%'}}/></div></div>}{s.title==='Affiliation & Accreditation'&&<div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{[['Accreditation',draft.accreditationAgency||'Not provided',draft.accreditationStatus||'Pending review'],['Registration / License',draft.license||'Not provided','Official approval reference'],['Tax / Registration Status',draft.taxStatus||'Not provided','Compliance record'],['Academic Session',draft.session||'Not set',draft.academicTerm||'Term not set']].map(a=><div key={a[0]} className="rounded-lg bg-indigo-50 p-3"><p className="text-[10px] font-bold text-slate-600">{a[0]}</p><p className="mt-1 break-words text-xs font-extrabold">{a[1]}</p><p className="mt-1 text-[10px] text-slate-500">{a[2]}</p></div>)}</div>}</section>;})}</form>
+<div className="sticky bottom-3 z-20 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-xl backdrop-blur sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-center gap-2 text-[11px] text-slate-500"><Clock3 size={14} className="shrink-0 text-violet-600"/><span className="truncate">Last modified: <strong className="text-slate-700">{modified?new Date(modified).toLocaleString(undefined,{weekday:'long',hour:'numeric',minute:'2-digit',month:'short',day:'numeric'}):'Not saved yet'}</strong></span>{dirty&&<span className="rounded-full bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700">Unsaved changes</span>}</div><div className="flex flex-wrap justify-end gap-2"><button type="button" onClick={()=>void load(true)} disabled={loading||saving} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-xs font-bold"><RefreshCw size={13}/> Reload</button><button type="button" onClick={()=>{setDraft(saved);setEditing(false);setNotice(null);}} disabled={!dirty||saving} className="rounded-lg bg-indigo-50 px-3 py-2.5 text-xs font-bold disabled:opacity-45">Discard Changes</button><button type="button" onClick={()=>void save()} disabled={!dirty||loading||saving} className="inline-flex items-center gap-2 rounded-lg bg-violet-950 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-45"><Save size={14}/>{saving?'Saving…':'Save All Changes'}</button></div></div>
+</div>;
 }

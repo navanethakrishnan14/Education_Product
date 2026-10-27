@@ -15,7 +15,7 @@ type TenantType = typeof tenantTypes[number];
 const options: jwt.VerifyOptions = { issuer: 'edusphere-tenant-api', audience: 'edusphere-tenant-portal' };
 const profileSchema = z.object({
   organizationType: z.enum(tenantTypes),
-  profile: z.record(z.string(), z.string().max(5000)).refine(value => Object.keys(value).length <= 100, 'Too many profile fields'),
+  profile: z.record(z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]{0,79}$/), z.string().max(1_500_000)).refine(value => Object.keys(value).length <= 100, 'Too many profile fields'),
 });
 
 function normalizedTenantType(value: unknown): TenantType | null {
@@ -184,7 +184,11 @@ organizationProfileRouter.put('/', async (req, res) => {
   }
 
   try {
-    const { profile } = parsed.data;
+    const profile = Object.fromEntries(Object.entries(parsed.data.profile).map(([key, value]) => [key, value.trim()])) as Record<string, string>;
+    delete profile.organizationType;
+    const logo = profile.logoUrl;
+    if (logo && logo.startsWith('data:') && !/^data:image\\/(png|jpeg|webp|svg\\+xml);base64,/i.test(logo)) return res.status(400).json({ success: false, message: 'Logo must be a PNG, JPG, WEBP or SVG image.' });
+    if (logo && logo.startsWith('data:') && logo.length > 1_400_000) return res.status(413).json({ success: false, message: 'Logo is too large. Please use an image under 1 MB.' });
     const existing = await pool.query(
       'SELECT organization_type FROM tenant_organization_profiles WHERE tenant_id = $1 LIMIT 1',
       [claims.tenantId],
