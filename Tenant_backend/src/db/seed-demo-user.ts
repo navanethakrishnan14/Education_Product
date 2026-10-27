@@ -13,15 +13,9 @@ const DEMO_USERS = [
 ] as const;
 
 async function seedDemoUsers(): Promise<void> {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('Demo seeding is disabled in production.');
-  }
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required. Configure Tenant_backend/.env first.');
-  }
-  if (DEMO_PASSWORD.length < 8) {
-    throw new Error('DEMO_TENANT_PASSWORD must be at least 8 characters.');
-  }
+  if (process.env.NODE_ENV === 'production') throw new Error('Demo seeding is disabled in production.');
+  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required. Configure Tenant_backend/.env first.');
+  if (DEMO_PASSWORD.length < 8) throw new Error('DEMO_TENANT_PASSWORD must be at least 8 characters.');
 
   const client = await pool.connect();
   try {
@@ -29,7 +23,7 @@ async function seedDemoUsers(): Promise<void> {
     await client.query(`
       CREATE TABLE IF NOT EXISTS tenant_users (
         id BIGSERIAL PRIMARY KEY,
-        tenant_id UUID NOT NULL,
+        tenant_id TEXT NOT NULL,
         full_name VARCHAR(160) NOT NULL,
         email VARCHAR(254) NOT NULL,
         password_hash TEXT NOT NULL,
@@ -39,6 +33,8 @@ async function seedDemoUsers(): Promise<void> {
         UNIQUE (tenant_id, email, role)
       )
     `);
+    // Existing demo DBs may still have a UUID tenant_id column; preserve their data.
+    await client.query('ALTER TABLE tenant_users ALTER COLUMN tenant_id TYPE TEXT USING tenant_id::text');
     await client.query('CREATE INDEX IF NOT EXISTS tenant_users_tenant_role_idx ON tenant_users(tenant_id, role)');
 
     const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
@@ -57,9 +53,7 @@ async function seedDemoUsers(): Promise<void> {
 
     console.log('All four demo tenant users are ready:');
     console.log('Tenant ID: ' + DEMO_TENANT_ID);
-    for (const user of DEMO_USERS) {
-      console.log(user.role + ': ' + user.email);
-    }
+    for (const user of DEMO_USERS) console.log(user.role + ': ' + user.email);
     console.log('Shared demo password: ' + DEMO_PASSWORD);
   } catch (error) {
     await client.query('ROLLBACK');
