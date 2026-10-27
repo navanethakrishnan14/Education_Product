@@ -52,7 +52,7 @@ app.options('*', cors({
   optionsSuccessStatus: 204,
 }));
 
-app.use(express.json({ limit: '20kb' }));
+app.use(express.json({ limit: '2mb' }));
 
 app.get('/health', (_req, res) => {
   res.json({ success: true, service: 'tenant-backend', status: 'healthy' });
