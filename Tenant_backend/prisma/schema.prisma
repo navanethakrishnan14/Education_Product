@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TenantUser {
+  id           BigInt   @id @default(autoincrement())
+  tenantId     String   @map("tenant_id")
+  fullName     String   @map("full_name") @db.VarChar(160)
+  email        String   @db.VarChar(254)
+  passwordHash String   @map("password_hash")
+  role         String   @db.VarChar(20)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  invites      TenantUserInvite[]
+  createdRecords TenantRecord[] @relation("RecordCreator")
+
+  @@unique([tenantId, email, role])
+  @@index([tenantId, role], map: "tenant_users_tenant_role_idx")
+  @@map("tenant_users")
+}
+
+model TenantUserInvite {
+  id        BigInt    @id @default(autoincrement())
+  userId    BigInt    @map("user_id")
+  tenantId  String    @map("tenant_id")
+  tokenHash String    @unique @map("token_hash") @db.Char(64)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user TenantUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "tenant_user_invites_user_idx")
+  @@map("tenant_user_invites")
+}
+
+model TenantRecord {
+  id        BigInt   @id @default(autoincrement())
+  tenantId  String   @map("tenant_id")
+  createdBy BigInt?  @map("created_by")
+  moduleKey String   @map("module_key") @db.VarChar(100)
+  name      String   @db.VarChar(200)
+  email     String   @default("") @db.VarChar(254)
+  category  String   @default("") @db.VarChar(200)
+  status    String   @default("Active") @db.VarChar(10)
+  notes     String   @default("")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  creator TenantUser? @relation("RecordCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, moduleKey, updatedAt(sort: Desc)], map: "tenant_records_tenant_module_idx")
+  @@map("tenant_records")
+}
+
+model TenantOrganizationProfile {
+  tenantId         String   @id @map("tenant_id")
+  organizationType String   @map("organization_type") @db.VarChar(20)
+  profile          Json     @default("{}")
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([updatedAt(sort: Desc)], map: "tenant_organization_profiles_updated_at_idx")
+  @@map("tenant_organization_profiles")
+}
