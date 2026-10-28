@@ -65,7 +65,12 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
         profilePhoto:form.profilePhoto, status:'Active'
       })});
       const data=await response.json().catch(()=>({}));
-      if(!response.ok) throw new Error(data.message || 'Unable to create the account. Check the Tenant API and database.');
+      if(!response.ok) {
+        const details = Array.isArray(data.errors)
+          ? data.errors.map((item: { field?: string; message?: string }) => `${item.field || 'Request body'}: ${item.message || 'Invalid value'}`).join(' · ')
+          : '';
+        throw new Error([data.message || 'Unable to create the account. Check the Tenant API and database.', details].filter(Boolean).join(' '));
+      }
       setNotice('Faculty/staff account created. A secure password setup link has been sent to the employee email ID.');
       setForm(initial);setStep(0);setShowForm(false);await load();
     } catch(err) { setError(err instanceof Error?err.message:'Something went wrong while creating the account.'); }
