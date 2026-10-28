@@ -122,7 +122,18 @@ function escapeHtml(value: string): string {
 recordsRouter.post('/accounts', async (req, res) => {
   if (req.tenantClaims!.role !== 'MANAGEMENT') return res.status(403).json({ success: false, message: 'Only Management can create faculty and staff accounts.' });
   const parsed = staffAccountSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ success: false, message: 'Check all required staff details.' });
+  if (!parsed.success) {
+    const errors = parsed.error.issues.map((issue) => ({
+      field: issue.path.join('.'),
+      message: issue.message,
+    }));
+    console.error('Staff validation failed:', errors);
+    return res.status(400).json({
+      success: false,
+      message: 'Check all required staff details.',
+      errors,
+    });
+  }
   const data = parsed.data;
   const frontendBase = (process.env.TENANT_FRONTEND_URL || process.env.FRONTEND_URL || '').trim().replace(/\/$/, '');
   if (!getJwtSecret() || !frontendBase || !process.env.SMTP_USER || !process.env.SMTP_PASS || !(process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER)) {
