@@ -102,7 +102,7 @@ async function sendPasswordSetupEmail(to: string, name: string, setupUrl: string
   const secure = String(process.env.SMTP_SECURE || 'true').toLowerCase() === 'true';
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM_EMAIL || user;
+  const from = process.env.SMTP_FROM_EMAIL || process.env.SMTP_FROM || user;
   if (!user || !pass || !from || !Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('SMTP is not configured. Set SMTP_USER, SMTP_PASS, and SMTP_FROM_EMAIL (optional if it matches SMTP_USER).');
   }
@@ -135,8 +135,8 @@ recordsRouter.post('/accounts', async (req, res) => {
     });
   }
   const data = parsed.data;
-  const frontendBase = (process.env.TENANT_FRONTEND_URL || process.env.FRONTEND_URL || '').trim().replace(/\/$/, '');
-  if (!getJwtSecret() || !frontendBase || !process.env.SMTP_USER || !process.env.SMTP_PASS || !(process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER)) {
+  const frontendBase = (process.env.TENANT_FRONTEND_URL || process.env.FRONTEND_URL || (process.env.NODE_ENV !== 'production' ? 'http://localhost:5173' : '')).trim().replace(/\/$/, '');
+  if (!getJwtSecret() || !frontendBase || !process.env.SMTP_USER || !process.env.SMTP_PASS || !(process.env.SMTP_FROM_EMAIL || process.env.SMTP_FROM || process.env.SMTP_USER)) {
     return res.status(503).json({ success: false, message: 'Password setup email is not configured. Set JWT_SECRET, TENANT_FRONTEND_URL, SMTP_USER, and SMTP_PASS.' });
   }
   const client = await pool.connect();
