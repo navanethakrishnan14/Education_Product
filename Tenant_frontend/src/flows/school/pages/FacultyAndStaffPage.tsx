@@ -38,7 +38,7 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
   useEffect(()=>{ void load(); },[base,token,tenantId]);
   function set<K extends keyof Form>(key:K,value:Form[K]) { setForm(old=>({...old,[key]:value})); }
   function validateStep() {
-    if(step===0 && (!form.firstName.trim() || !form.gender || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(form.email))) return 'Enter the employee name, a valid employee email ID, and gender.';
+    if(step===0 && (!form.firstName.trim() || !form.gender || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))) return 'Enter the employee name, a valid employee email ID, and gender.';
     if(step===1 && (!form.designation.trim() || !form.department.trim() || !form.joiningDate || !form.employmentType)) return 'Complete designation, department, and joining date.';
     if(step===2 && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) || !form.phone.trim())) return 'Enter a valid official email and phone number.';
     if(step===3) {
