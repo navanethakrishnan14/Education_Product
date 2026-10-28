@@ -28,6 +28,8 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
   const [notice,setNotice] = useState('');
   const [search,setSearch] = useState('');
   const [showForm,setShowForm] = useState(false);
+  const [editingRecord,setEditingRecord] = useState<StaffRecord | null>(null);
+  const [editForm,setEditForm] = useState({name:'',email:'',designation:'',department:'',status:'Active' as 'Active'|'Inactive'});
   const base = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').trim().replace(/\/$/,'');
   const token = localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token') || '';
   const headers = useMemo(()=>({ 'Content-Type':'application/json', Accept:'application/json', Authorization:'Bearer '+token }),[token]);
@@ -76,26 +78,37 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
     } catch(err) { setError(err instanceof Error?err.message:'Something went wrong while creating the account.'); }
     finally { setBusy(false); }
   }
-  async function editRecord(record: StaffRecord) {
-    const name = window.prompt('Edit full name:', record.name);
-    if (name === null) return;
-    if (!name.trim()) { setError('Name cannot be empty.'); return; }
-    const email = window.prompt('Edit email address:', record.email);
-    if (email === null) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Enter a valid email address.'); return; }
-    const category = window.prompt('Edit designation / department:', record.category);
-    if (category === null) return;
-    if (!category.trim()) { setError('Designation / department cannot be empty.'); return; }
-    const status = window.confirm('Choose OK to keep this account Active, or Cancel to set it Inactive.') ? 'Active' : 'Inactive';
+  function startEdit(record: StaffRecord) {
+    const [designation = '', department = ''] = (record.category || '').split(' · ');
+    setEditingRecord(record);
+    setEditForm({ name: record.name || '', email: record.email || '', designation, department, status: record.status || 'Active' });
+    setError('');
+    setNotice('');
+    setShowForm(false);
+  }
+  async function saveEdit(e: FormEvent) {
+    e.preventDefault();
+    if (!editingRecord) return;
+    if (!editForm.name.trim()) { setError('Enter the faculty/staff full name.'); return; }
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(editForm.email.trim())) { setError('Enter a valid email address.'); return; }
+    if (!editForm.designation.trim() || !editForm.department.trim()) { setError('Enter both designation and department.'); return; }
     setBusy(true); setError(''); setNotice('');
     try {
-      const response = await fetch(base + '/records/' + encodeURIComponent(record.id), {
+      const response = await fetch(base + '/records/' + encodeURIComponent(editingRecord.id), {
         method: 'PUT', headers,
-        body: JSON.stringify({ module: 'Faculty & Staff', name: name.trim(), email: email.trim().toLowerCase(), category: category.trim(), status, notes: record.notes || '' }),
+        body: JSON.stringify({
+          module: 'Faculty & Staff',
+          name: editForm.name.trim(),
+          email: editForm.email.trim().toLowerCase(),
+          category: editForm.designation.trim() + ' · ' + editForm.department.trim(),
+          status: editForm.status,
+          notes: editingRecord.notes || '',
+        }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || 'Unable to update this faculty/staff member.');
       setNotice('Faculty/staff details updated successfully.');
+      setEditingRecord(null);
       await load();
     } catch (err) { setError(err instanceof Error ? err.message : 'Unable to update this record.'); }
     finally { setBusy(false); }
@@ -116,6 +129,27 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
   const field=(key:keyof Form)=>(e:ChangeEvent<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>)=>set(key,e.target.value as never);
   const text=(key:keyof Form,label:string,required=false,type='text',placeholder='')=><Field label={label} required={required}><input className={inputClass} type={type} value={String(form[key])} onChange={field(key)} placeholder={placeholder}/></Field>;
   const select=(key:keyof Form,label:string,options:string[],required=false)=><Field label={label} required={required}><select className={inputClass} value={String(form[key])} onChange={field(key)}><option value="">Select {label.toLowerCase()}</option>{options.map(o=><option key={o} value={o}>{o}</option>)}</select></Field>;
+  if (editingRecord) return <div className="mx-auto max-w-4xl space-y-6 text-slate-900">
+    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div><div className="mb-2 text-sm text-slate-500">Faculty &amp; Staff <span className="mx-2">›</span> Edit Member</div><h1 className="text-3xl font-black tracking-tight">Edit Faculty / Staff</h1><p className="mt-1 text-sm text-slate-500">Update this member's directory details and portal account status.</p></div>
+      <button type="button" onClick={()=>{setEditingRecord(null);setError('');setNotice('');}} className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold hover:bg-slate-50"><ArrowLeft size={17}/> Back to Directory</button>
+    </div>
+    {notice&&<div role="status" className="rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm font-medium text-teal-800">{notice}</div>}
+    {error&&<div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700">{error}</div>}
+    <form onSubmit={saveEdit} className="space-y-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Full Name" required><input className={inputClass} value={editForm.name} onChange={e=>setEditForm(v=>({...v,name:e.target.value}))} required /></Field>
+        <Field label="Email Address" required><input className={inputClass} type="email" value={editForm.email} onChange={e=>setEditForm(v=>({...v,email:e.target.value}))} required /></Field>
+        <Field label="Designation" required><input className={inputClass} value={editForm.designation} onChange={e=>setEditForm(v=>({...v,designation:e.target.value}))} required /></Field>
+        <Field label="Department" required><input className={inputClass} value={editForm.department} onChange={e=>setEditForm(v=>({...v,department:e.target.value}))} required /></Field>
+        <Field label="Account Status" required><select className={inputClass} value={editForm.status} onChange={e=>setEditForm(v=>({...v,status:e.target.value as 'Active'|'Inactive'}))}><option value="Active">Active</option><option value="Inactive">Inactive</option></select></Field>
+      </div>
+      <div className="flex flex-col-reverse justify-end gap-3 border-t border-slate-100 pt-5 sm:flex-row">
+        <button type="button" onClick={()=>{setEditingRecord(null);setError('');setNotice('');}} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold hover:bg-slate-50">Cancel</button>
+        <button type="submit" disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-900 px-6 py-3 text-sm font-bold text-white hover:bg-violet-800 disabled:opacity-60">{busy?'Saving…':<><Check size={17}/> Save Changes</>}</button>
+      </div>
+    </form>
+  </div>;
   return <div className="space-y-6 text-slate-900">
     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div><div className="mb-2 flex items-center gap-2 text-sm text-slate-500"><span>Faculty &amp; Staff</span><span>›</span><span className="text-slate-700">{showForm?'Create New':'Directory'}</span></div><h1 className="text-3xl font-black tracking-tight sm:text-[32px]">Create Faculty / Staff</h1><p className="mt-1 text-base text-slate-600">Add a new faculty or staff member to your school.</p><p className="mt-1 text-xs text-slate-400">{institution}</p></div>
@@ -151,6 +185,6 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
         </aside>
       </div>
       <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:px-8">{step>0?<button type="button" onClick={()=>{setError('');setStep(s=>s-1);}} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 text-sm font-bold hover:bg-slate-200"><ArrowLeft size={17}/> Previous</button>:<button type="button" onClick={()=>{setShowForm(false);setError('');}} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 text-sm font-bold hover:bg-slate-200"><X size={17}/> Cancel</button>}{step<2?<button type="button" onClick={next} className="inline-flex items-center gap-2 rounded-xl bg-violet-900 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-violet-800">Next <ArrowRight size={17}/></button>:<button disabled={busy} type="submit" className="inline-flex items-center gap-2 rounded-xl bg-violet-900 px-6 py-3 text-sm font-bold text-white hover:bg-violet-800 disabled:opacity-60">{busy?'Creating…':<><Check size={17}/> Send Setup Link & Create Account</>}</button>}</div>
-    </form>:<><div className="grid gap-4 sm:grid-cols-3"><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Total team members</p><p className="mt-3 text-3xl font-black">{records.length}</p></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Active accounts</p><p className="mt-3 text-3xl font-black text-violet-700">{records.filter(r=>r.status==='Active').length}</p></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Faculty / Staff</p><p className="mt-3 text-3xl font-black">{records.filter(r=>/faculty|teaching/i.test(r.category)).length} <span className="text-base text-slate-400">/ {records.filter(r=>!/faculty|teaching/i.test(r.category)).length}</span></p></div></div><div className="overflow-hidden rounded-3xl border border-slate-200 bg-white"><div className="flex flex-col gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="font-extrabold">Team Directory</h3><p className="mt-1 text-xs text-slate-500">Faculty and staff registered in this school</p></div><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name, email…" className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-violet-500 sm:w-64"/></div></div>{filtered.length===0?<div className="px-5 py-14 text-center"><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-violet-50 text-violet-700"><Users size={25}/></span><h4 className="mt-4 font-bold">No faculty or staff records yet</h4><p className="mt-1 text-sm text-slate-500">Add your first team member to get started.</p><button onClick={()=>setShowForm(true)} className="mt-4 rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-bold text-white">Add team member</button></div>:<div className="overflow-x-auto"><table className="w-full min-w-[800px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3">Name</th><th className="px-5 py-3">Email</th><th className="px-5 py-3">Designation / department</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-100">{filtered.map(r=><tr key={r.id} className="hover:bg-slate-50/70"><td className="px-5 py-4 font-bold">{r.name}</td><td className="px-5 py-4 text-slate-600">{r.email||'—'}</td><td className="px-5 py-4 text-slate-600">{r.category||'—'}</td><td className="px-5 py-4"><span className={'rounded-full px-2.5 py-1 text-xs font-bold '+(r.status==='Active'?'bg-violet-50 text-violet-700':'bg-slate-100 text-slate-600')}>{r.status}</span></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><button type="button" disabled={busy} onClick={()=>void editRecord(r)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:border-violet-300 hover:bg-violet-50 disabled:opacity-50" aria-label={'Edit '+r.name}><Pencil size={14}/> Edit</button><button type="button" disabled={busy} onClick={()=>void deleteRecord(r)} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-50" aria-label={'Delete '+r.name}><Trash2 size={14}/> Delete</button></div></td></tr>)}</tbody></table></div>}</div></>}
+    </form>:<><div className="grid gap-4 sm:grid-cols-3"><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Total team members</p><p className="mt-3 text-3xl font-black">{records.length}</p></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Active accounts</p><p className="mt-3 text-3xl font-black text-violet-700">{records.filter(r=>r.status==='Active').length}</p></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Faculty / Staff</p><p className="mt-3 text-3xl font-black">{records.filter(r=>/faculty|teaching/i.test(r.category)).length} <span className="text-base text-slate-400">/ {records.filter(r=>!/faculty|teaching/i.test(r.category)).length}</span></p></div></div><div className="overflow-hidden rounded-3xl border border-slate-200 bg-white"><div className="flex flex-col gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="font-extrabold">Team Directory</h3><p className="mt-1 text-xs text-slate-500">Faculty and staff registered in this school</p></div><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name, email…" className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-violet-500 sm:w-64"/></div></div>{filtered.length===0?<div className="px-5 py-14 text-center"><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-violet-50 text-violet-700"><Users size={25}/></span><h4 className="mt-4 font-bold">No faculty or staff records yet</h4><p className="mt-1 text-sm text-slate-500">Add your first team member to get started.</p><button onClick={()=>setShowForm(true)} className="mt-4 rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-bold text-white">Add team member</button></div>:<div className="overflow-x-auto"><table className="w-full min-w-[800px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3">Name</th><th className="px-5 py-3">Email</th><th className="px-5 py-3">Designation / department</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-100">{filtered.map(r=><tr key={r.id} className="hover:bg-slate-50/70"><td className="px-5 py-4 font-bold">{r.name}</td><td className="px-5 py-4 text-slate-600">{r.email||'—'}</td><td className="px-5 py-4 text-slate-600">{r.category||'—'}</td><td className="px-5 py-4"><span className={'rounded-full px-2.5 py-1 text-xs font-bold '+(r.status==='Active'?'bg-violet-50 text-violet-700':'bg-slate-100 text-slate-600')}>{r.status}</span></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><button type="button" disabled={busy} onClick={()=>startEdit(r)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:border-violet-300 hover:bg-violet-50 disabled:opacity-50" aria-label={'Edit '+r.name}><Pencil size={14}/> Edit</button><button type="button" disabled={busy} onClick={()=>void deleteRecord(r)} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-50" aria-label={'Delete '+r.name}><Trash2 size={14}/> Delete</button></div></td></tr>)}</tbody></table></div>}</div></>}
   </div>;
 }
