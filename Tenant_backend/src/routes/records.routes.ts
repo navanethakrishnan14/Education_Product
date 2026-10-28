@@ -90,6 +90,10 @@ const staffAccountSchema = z.object({
   phone: z.string().trim().min(5).max(40),
   emergencyContact: z.string().max(40).default(''),
   address: z.string().max(1000).default(''),
+  bloodGroup: z.string().max(10).default(''),
+  maritalStatus: z.string().max(40).default(''),
+  // Image data is limited by the UI to JPG/PNG files of 2 MB or less.
+  profilePhoto: z.string().max(2_850_000).default(''),
   status: z.enum(['Active', 'Inactive']).default('Active'),
 });
 recordsRouter.post('/accounts', async (req, res) => {
@@ -113,6 +117,7 @@ recordsRouter.post('/accounts', async (req, res) => {
       dateOfBirth: data.dob || '', gender: data.gender, qualification: data.qualification,
       experience: data.experience, employmentType: data.employmentType, subject: data.subject,
       phone: data.phone, emergencyContact: data.emergencyContact, address: data.address,
+      bloodGroup: data.bloodGroup, maritalStatus: data.maritalStatus, profilePhoto: data.profilePhoto,
     });
     const record = await client.query(
       'INSERT INTO tenant_records (tenant_id, created_by, module_key, name, email, category, status, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id::text, module_key, name, email, category, status, notes, updated_at',
