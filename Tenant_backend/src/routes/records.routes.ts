@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import crypto from 'node:crypto';
+import nodemailer from 'nodemailer';
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -96,22 +97,23 @@ const staffAccountSchema = z.object({
 });
 
 async function sendPasswordSetupEmail(to: string, name: string, setupUrl: string): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL;
-  if (!apiKey || !from) throw new Error('Email service is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL.');
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from, to: [to], subject: 'Set up your school portal password',
-      html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#172033;max-width:600px;margin:auto"><h2>Welcome, ${escapeHtml(name)}</h2><p>Your school account has been created. Use the secure button below to set your own password.</p><p><a href="${setupUrl}" style="display:inline-block;padding:12px 20px;background:#4c1d95;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">Set my password</a></p><p>This link expires in 60 minutes and can be used only once. If you did not expect this email, ignore it.</p></div>`,
-    }),
-  });
-  if (!response.ok) {
-    const details = await response.text().catch(() => '');
-    console.error('Resend email request failed:', response.status, details.slice(0, 300));
-    throw new Error('Unable to send the password setup email.');
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = Number(process.env.SMTP_PORT || 465);
+  const secure = String(process.env.SMTP_SECURE || 'true').toLowerCase() === 'true';
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const from = process.env.SMTP_FROM_EMAIL || user;
+  if (!user || !pass || !from || !Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error('SMTP is not configured. Set SMTP_USER, SMTP_PASS, and SMTP_FROM_EMAIL (optional if it matches SMTP_USER).');
   }
+  const transporter = nodemailer.createTransport({ host, port, secure, auth: { user, pass } });
+  await transporter.sendMail({
+    from: { name: 'School Portal', address: from },
+    to,
+    subject: 'Set up your school portal password',
+    text: `Welcome, ${name}. Your school account has been created. Set your password using this link (expires in 60 minutes and can be used once): ${setupUrl}\n\nIf you did not expect this email, you can ignore it.`,
+    html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#172033;max-width:600px;margin:auto"><h2>Welcome, ${escapeHtml(name)}</h2><p>Your school account has been created. Use the secure button below to set your own password.</p><p><a href="${setupUrl}" style="display:inline-block;padding:12px 20px;background:#4c1d95;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">Set my password</a></p><p>This link expires in 60 minutes and can be used only once. If you did not expect this email, ignore it.</p></div>`,
+  });
 }
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] || char);
@@ -123,8 +125,8 @@ recordsRouter.post('/accounts', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ success: false, message: 'Check all required staff details.' });
   const data = parsed.data;
   const frontendBase = (process.env.TENANT_FRONTEND_URL || process.env.FRONTEND_URL || '').trim().replace(/\/$/, '');
-  if (!getJwtSecret() || !frontendBase || !process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
-    return res.status(503).json({ success: false, message: 'Password setup email is not configured. Set JWT_SECRET, TENANT_FRONTEND_URL, RESEND_API_KEY, and RESEND_FROM_EMAIL.' });
+  if (!getJwtSecret() || !frontendBase || !process.env.SMTP_USER || !process.env.SMTP_PASS || !(process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER)) {
+    return res.status(503).json({ success: false, message: 'Password setup email is not configured. Set JWT_SECRET, TENANT_FRONTEND_URL, SMTP_USER, and SMTP_PASS.' });
   }
   const client = await pool.connect();
   try {
