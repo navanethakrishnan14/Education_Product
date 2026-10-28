@@ -144,7 +144,7 @@ recordsRouter.post('/accounts', async (req, res) => {
     await client.query('BEGIN');
     const account = await client.query(
       'INSERT INTO tenant_users (tenant_id, full_name, email, password_hash, role, is_active) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id::text, full_name, email, role',
-      [req.tenantClaims!.tenantId, data.name, data.email.toLowerCase(), 'PENDING_PASSWORD_SETUP', 'FACULTY', data.status === 'Active'],
+      [req.tenantClaims!.tenantId, data.name, data.email.toLowerCase(), 'PENDING_PASSWORD_SETUP', data.role, data.status === 'Active'],
     );
     const token = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
@@ -264,8 +264,8 @@ recordsRouter.delete('/:id', async (req, res) => {
           [req.tenantClaims!.tenantId, email],
         );
         if (users.rowCount) {
-          await client.query('DELETE FROM tenant_user_invites WHERE tenant_id=$1 AND user_id = ANY($2::uuid[])', [req.tenantClaims!.tenantId, users.rows.map((row: {id:string})=>row.id)]);
-          await client.query('DELETE FROM tenant_users WHERE tenant_id=$1 AND id = ANY($2::uuid[])', [req.tenantClaims!.tenantId, users.rows.map((row: {id:string})=>row.id)]);
+          await client.query('DELETE FROM tenant_user_invites WHERE tenant_id=$1 AND user_id::text = ANY($2::text[])', [req.tenantClaims!.tenantId, users.rows.map((row: {id:string})=>String(row.id))]);
+          await client.query('DELETE FROM tenant_users WHERE tenant_id=$1 AND id::text = ANY($2::text[])', [req.tenantClaims!.tenantId, users.rows.map((row: {id:string})=>String(row.id))]);
         }
       }
     }
@@ -274,7 +274,7 @@ recordsRouter.delete('/:id', async (req, res) => {
     return res.json({ success: true });
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Tenant record delete failed:', error instanceof Error ? error.message : error);
+    console.error('Tenant record delete failed:', error);
     return res.status(500).json({ success: false, message: 'Unable to delete this record.' });
   } finally { client.release(); }
 });
