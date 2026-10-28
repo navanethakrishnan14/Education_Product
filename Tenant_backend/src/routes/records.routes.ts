@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { pool } from '../db/pool';
 import { getJwtSecret } from '../config/jwt';
@@ -70,6 +71,66 @@ recordsRouter.use(authenticate);
 function toRecord(row: { id: string; module_key: string; name: string; email: string; category: string; status: string; notes: string; updated_at: Date }) {
   return { id: row.id, module: row.module_key, name: row.name, email: row.email, category: row.category, status: row.status, notes: row.notes, updatedAt: row.updated_at };
 }
+
+const staffAccountSchema = z.object({
+  name: z.string().trim().min(2).max(160),
+  email: z.string().trim().email().max(254),
+  role: z.enum(['FACULTY', 'STAFF']),
+  password: z.string().min(8).max(128),
+  employeeId: z.string().trim().min(1).max(80),
+  designation: z.string().trim().min(1).max(160),
+  department: z.string().trim().min(1).max(160),
+  joiningDate: z.string().min(1).max(30),
+  dob: z.string().max(30).nullable().optional(),
+  gender: z.string().max(40).default(''),
+  qualification: z.string().max(200).default(''),
+  experience: z.string().max(30).default(''),
+  employmentType: z.string().max(40).default('Full-time'),
+  subject: z.string().max(160).default(''),
+  phone: z.string().trim().min(5).max(40),
+  emergencyContact: z.string().max(40).default(''),
+  address: z.string().max(1000).default(''),
+  status: z.enum(['Active', 'Inactive']).default('Active'),
+});
+recordsRouter.post('/accounts', async (req, res) => {
+  if (req.tenantClaims!.role !== 'MANAGEMENT') {
+    return res.status(403).json({ success: false, message: 'Only Management can create faculty and staff accounts.' });
+  }
+  const parsed = staffAccountSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ success: false, message: 'Check all required staff details and password requirements.' });
+  const data = parsed.data;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const passwordHash = await bcrypt.hash(data.password, 12);
+    // Both teaching and non-teaching staff use the supported FACULTY portal role.
+    const account = await client.query(
+      'INSERT INTO tenant_users (tenant_id, full_name, email, password_hash, role, is_active) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id::text, full_name, email, role',
+      [req.tenantClaims!.tenantId, data.name, data.email.toLowerCase(), passwordHash, 'FACULTY', data.status === 'Active'],
+    );
+    const notes = JSON.stringify({
+      employeeId: data.employeeId, staffType: data.role, joiningDate: data.joiningDate,
+      dateOfBirth: data.dob || '', gender: data.gender, qualification: data.qualification,
+      experience: data.experience, employmentType: data.employmentType, subject: data.subject,
+      phone: data.phone, emergencyContact: data.emergencyContact, address: data.address,
+    });
+    const record = await client.query(
+      'INSERT INTO tenant_records (tenant_id, created_by, module_key, name, email, category, status, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id::text, module_key, name, email, category, status, notes, updated_at',
+      [req.tenantClaims!.tenantId, req.tenantClaims!.platformManagement ? null : req.tenantClaims!.sub, 'Faculty & Staff', data.name, data.email.toLowerCase(), data.designation + ' · ' + data.department, data.status, notes],
+    );
+    await client.query('COMMIT');
+    return res.status(201).json({ success: true, account: { id: account.rows[0].id, name: account.rows[0].full_name, email: account.rows[0].email, role: account.rows[0].role }, record: toRecord(record.rows[0]) });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    const pgError = error as { code?: string };
+    if (pgError.code === '23505') return res.status(409).json({ success: false, message: 'An account with this email and role already exists for this school.' });
+    console.error('Faculty/staff account creation failed:', error);
+    return res.status(500).json({ success: false, message: 'Unable to create the faculty/staff account.' });
+  } finally {
+    client.release();
+  }
+});
+
 recordsRouter.get('/', async (req, res) => {
   const moduleKey = String(req.query.module || '').trim();
   if (!moduleKey || moduleKey.length > 100) return res.status(400).json({ success: false, message: 'A valid module query is required.' });
