@@ -38,7 +38,7 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
   useEffect(()=>{ void load(); },[base,token,tenantId]);
   function set<K extends keyof Form>(key:K,value:Form[K]) { setForm(old=>({...old,[key]:value})); }
   function validateStep() {
-    if(step===0 && (!form.firstName.trim() || !form.employeeId.trim() || !form.gender)) return 'Complete all required basic information.';
+    if(step===0 && (!form.firstName.trim() || !form.gender)) return 'Complete all required basic information.';
     if(step===1 && (!form.designation.trim() || !form.department.trim() || !form.joiningDate || !form.employmentType)) return 'Complete designation, department, and joining date.';
     if(step===2 && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) || !form.phone.trim())) return 'Enter a valid official email and phone number.';
     if(step===3) {
@@ -93,7 +93,7 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
           <div className="mb-8 flex items-center gap-4"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-100 text-teal-800">{step===0?<CircleUserRound size={25}/>:step===1?<GraduationCap size={25}/>:step===2?<Mail size={25}/>:<ShieldCheck size={25}/>}</span><div><h2 className="text-xl font-extrabold">{steps[step]}</h2><p className="mt-1 text-sm text-slate-500">{['Enter the basic details of the faculty or staff member.','Add their position, department and professional background.','Provide contact details for school communication.','Complete personal information and secure account access.'][step]}</p></div></div>
           {step===0&&<div className="grid min-w-0 grid-cols-1 gap-x-7 gap-y-7 sm:grid-cols-2">
             {text('firstName','Full Name',true,'text','Enter full name')}
-            {text('employeeId','Employee ID',true,'text','Auto-generated or enter manually')}
+            {text('employeeId','Employee ID',false,'text','Optional — auto-generated or enter manually')}
             <div className="sm:col-span-2"><Field label="Role Type" required><div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:max-w-[520px]">{([{value:'FACULTY',title:'Faculty',sub:'Teaching Staff',icon:GraduationCap},{value:'STAFF',title:'Staff',sub:'Non-Teaching',icon:Users}] as const).map(item=><button key={item.value} type="button" onClick={()=>set('staffType',item.value)} className={'flex min-h-[76px] min-w-0 items-center gap-3 rounded-xl border px-3 py-3 text-left '+(form.staffType===item.value?'border-teal-600 bg-teal-50/70 ring-1 ring-teal-600':'border-slate-200 hover:border-slate-300')}><span className={'grid h-9 w-9 shrink-0 place-items-center rounded-full '+(form.staffType===item.value?'bg-teal-700 text-white':'bg-slate-100 text-slate-500')}><item.icon size={18}/></span><span className="min-w-0"><b className="block text-sm">{item.title}</b><small className="block whitespace-normal text-xs leading-5 text-slate-500">{item.sub}</small></span></button>)}</div></Field></div>
             {select('designation','Designation',['Principal','Vice Principal','Head of Department','Teacher','Assistant Teacher','Lecturer','Librarian','Lab Assistant','Accountant','Administrator','Office Assistant','Support Staff','Other'],true)}
             {select('department','Department',['Administration','English','Tamil','Mathematics','Science','Physics','Chemistry','Biology','Computer Science','Social Science','Commerce','Physical Education','Library','Laboratory','Accounts','Transport','Other'],true)}

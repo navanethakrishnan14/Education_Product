@@ -77,7 +77,7 @@ const staffAccountSchema = z.object({
   email: z.string().trim().email().max(254),
   role: z.enum(['FACULTY', 'STAFF']),
   password: z.string().min(8).max(128),
-  employeeId: z.string().trim().min(1).max(80),
+  employeeId: z.string().trim().max(80).optional().default(''),
   designation: z.string().trim().min(1).max(160),
   department: z.string().trim().min(1).max(160),
   joiningDate: z.string().min(1).max(30),
