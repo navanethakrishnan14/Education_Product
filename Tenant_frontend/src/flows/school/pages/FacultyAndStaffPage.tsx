@@ -10,7 +10,7 @@ type Form = {
   email: string; phone: string; emergencyContact: string; address: string;
   bloodGroup: string; maritalStatus: string; profilePhoto: string;
 };
-const initial: Form = { staffType:'FACULTY', firstName:'', lastName:'', designation:'', department:'',
+const initial: Form = { staffType:'FACULTY', firstName:'', lastName:'', employeeId:'', designation:'', department:'',
   joiningDate:'', dob:'', gender:'Male', qualification:'', experience:'', employmentType:'Full-time', subject:'',
   email:'', phone:'', emergencyContact:'', address:'', bloodGroup:'', maritalStatus:'', profilePhoto:'' };
 const steps = ['Basic Information','Professional Details','Contact & Address'];
