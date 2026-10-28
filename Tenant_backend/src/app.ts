@@ -52,7 +52,8 @@ app.options('*', cors({
   optionsSuccessStatus: 204,
 }));
 
-// Allow a validated <=2 MB profile image (base64-encoded) plus the form payload.\napp.use(express.json({ limit: '4mb' }));
+// Allow a validated <=2 MB profile image (base64-encoded) plus the form payload.
+app.use(express.json({ limit: '4mb' }));
 
 app.get('/health', (_req, res) => {
   res.json({ success: true, service: 'tenant-backend', status: 'healthy' });
