@@ -8,6 +8,7 @@ import InstitutionFlow from './flows/institution/InstitutionFlow';
 import FacultyLogin from './FacultyLogin';
 import ParentLogin from './ParentLogin';
 import StudentLogin from './StudentLogin';
+import SetPasswordPage from './SetPasswordPage';
 
 type Role = 'Management' | 'Faculty' | 'Parent' | 'Student';
 const roles: { name: Role; desc: string; icon: typeof ShieldCheck; color: string }[] = [
@@ -103,5 +104,5 @@ function GuardedWorkspace() {
   return token ? <Workspace/> : <Navigate to="/" replace/>;
 }
 export default function App() {
-  return <Routes><Route path="/" element={<Landing/>}/><Route path="/login/management" element={<ManagementLogin/>}/><Route path="/login/faculty" element={<FacultyLogin/>}/><Route path="/login/parent" element={<ParentLogin/>}/><Route path="/login/student" element={<StudentLogin/>}/><Route path="/workspace/*" element={<GuardedWorkspace/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Routes>;
+  return <Routes><Route path="/" element={<Landing/>}/><Route path="/set-password" element={<SetPasswordPage/>}/><Route path="/login/management" element={<ManagementLogin/>}/><Route path="/login/faculty" element={<FacultyLogin/>}/><Route path="/login/parent" element={<ParentLogin/>}/><Route path="/login/student" element={<StudentLogin/>}/><Route path="/workspace/*" element={<GuardedWorkspace/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Routes>;
 }

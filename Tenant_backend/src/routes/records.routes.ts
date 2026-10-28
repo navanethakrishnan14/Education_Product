@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -76,8 +77,6 @@ const staffAccountSchema = z.object({
   name: z.string().trim().min(2).max(160),
   email: z.string().trim().email().max(254),
   role: z.enum(['FACULTY', 'STAFF']),
-  password: z.string().min(8).max(128),
-  employeeId: z.string().trim().max(80).optional().default(''),
   designation: z.string().trim().min(1).max(160),
   department: z.string().trim().min(1).max(160),
   joiningDate: z.string().min(1).max(30),
@@ -92,48 +91,73 @@ const staffAccountSchema = z.object({
   address: z.string().max(1000).default(''),
   bloodGroup: z.string().max(10).default(''),
   maritalStatus: z.string().max(40).default(''),
-  // Image data is limited by the UI to JPG/PNG files of 2 MB or less.
   profilePhoto: z.string().max(2_850_000).default(''),
   status: z.enum(['Active', 'Inactive']).default('Active'),
 });
-recordsRouter.post('/accounts', async (req, res) => {
-  if (req.tenantClaims!.role !== 'MANAGEMENT') {
-    return res.status(403).json({ success: false, message: 'Only Management can create faculty and staff accounts.' });
+
+async function sendPasswordSetupEmail(to: string, name: string, setupUrl: string): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL;
+  if (!apiKey || !from) throw new Error('Email service is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL.');
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from, to: [to], subject: 'Set up your school portal password',
+      html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#172033;max-width:600px;margin:auto"><h2>Welcome, ${escapeHtml(name)}</h2><p>Your school account has been created. Use the secure button below to set your own password.</p><p><a href="${setupUrl}" style="display:inline-block;padding:12px 20px;background:#4c1d95;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">Set my password</a></p><p>This link expires in 60 minutes and can be used only once. If you did not expect this email, ignore it.</p></div>`,
+    }),
+  });
+  if (!response.ok) {
+    const details = await response.text().catch(() => '');
+    console.error('Resend email request failed:', response.status, details.slice(0, 300));
+    throw new Error('Unable to send the password setup email.');
   }
+}
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] || char);
+}
+
+recordsRouter.post('/accounts', async (req, res) => {
+  if (req.tenantClaims!.role !== 'MANAGEMENT') return res.status(403).json({ success: false, message: 'Only Management can create faculty and staff accounts.' });
   const parsed = staffAccountSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ success: false, message: 'Check all required staff details and password requirements.' });
+  if (!parsed.success) return res.status(400).json({ success: false, message: 'Check all required staff details.' });
   const data = parsed.data;
+  const frontendBase = (process.env.TENANT_FRONTEND_URL || process.env.FRONTEND_URL || '').trim().replace(/\/$/, '');
+  if (!getJwtSecret() || !frontendBase || !process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
+    return res.status(503).json({ success: false, message: 'Password setup email is not configured. Set JWT_SECRET, TENANT_FRONTEND_URL, RESEND_API_KEY, and RESEND_FROM_EMAIL.' });
+  }
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const passwordHash = await bcrypt.hash(data.password, 12);
-    // Both teaching and non-teaching staff use the supported FACULTY portal role.
     const account = await client.query(
       'INSERT INTO tenant_users (tenant_id, full_name, email, password_hash, role, is_active) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id::text, full_name, email, role',
-      [req.tenantClaims!.tenantId, data.name, data.email.toLowerCase(), passwordHash, 'FACULTY', data.status === 'Active'],
+      [req.tenantClaims!.tenantId, data.name, data.email.toLowerCase(), 'PENDING_PASSWORD_SETUP', 'FACULTY', data.status === 'Active'],
     );
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    await client.query("INSERT INTO tenant_user_invites (user_id, tenant_id, token_hash, expires_at) VALUES ($1,$2,$3,NOW() + INTERVAL '60 minutes')", [account.rows[0].id, req.tenantClaims!.tenantId, tokenHash]);
     const notes = JSON.stringify({
-      employeeId: data.employeeId, staffType: data.role, joiningDate: data.joiningDate,
-      dateOfBirth: data.dob || '', gender: data.gender, qualification: data.qualification,
-      experience: data.experience, employmentType: data.employmentType, subject: data.subject,
-      phone: data.phone, emergencyContact: data.emergencyContact, address: data.address,
-      bloodGroup: data.bloodGroup, maritalStatus: data.maritalStatus, profilePhoto: data.profilePhoto,
+      staffType: data.role, joiningDate: data.joiningDate, dateOfBirth: data.dob || '',
+      gender: data.gender, qualification: data.qualification, experience: data.experience,
+      employmentType: data.employmentType, subject: data.subject, phone: data.phone,
+      emergencyContact: data.emergencyContact, address: data.address, bloodGroup: data.bloodGroup,
+      maritalStatus: data.maritalStatus, profilePhoto: data.profilePhoto,
     });
     const record = await client.query(
       'INSERT INTO tenant_records (tenant_id, created_by, module_key, name, email, category, status, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id::text, module_key, name, email, category, status, notes, updated_at',
       [req.tenantClaims!.tenantId, req.tenantClaims!.platformManagement ? null : req.tenantClaims!.sub, 'Faculty & Staff', data.name, data.email.toLowerCase(), data.designation + ' · ' + data.department, data.status, notes],
     );
+    await sendPasswordSetupEmail(data.email.toLowerCase(), data.name, frontendBase + '/set-password?token=' + token);
     await client.query('COMMIT');
-    return res.status(201).json({ success: true, account: { id: account.rows[0].id, name: account.rows[0].full_name, email: account.rows[0].email, role: account.rows[0].role }, record: toRecord(record.rows[0]) });
+    return res.status(201).json({ success: true, emailSent: true, account: { id: account.rows[0].id, name: account.rows[0].full_name, email: account.rows[0].email, role: account.rows[0].role }, record: toRecord(record.rows[0]) });
   } catch (error) {
     await client.query('ROLLBACK');
     const pgError = error as { code?: string };
     if (pgError.code === '23505') return res.status(409).json({ success: false, message: 'An account with this email and role already exists for this school.' });
-    console.error('Faculty/staff account creation failed:', error);
-    return res.status(500).json({ success: false, message: 'Unable to create the faculty/staff account.' });
-  } finally {
-    client.release();
-  }
+    console.error('Faculty/staff account creation failed:', error instanceof Error ? error.message : error);
+    if (error instanceof Error && (error.message.includes('email') || error.message.includes('Email'))) return res.status(503).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: 'Unable to create the faculty/staff account or send its setup email.' });
+  } finally { client.release(); }
 });
 
 recordsRouter.get('/', async (req, res) => {

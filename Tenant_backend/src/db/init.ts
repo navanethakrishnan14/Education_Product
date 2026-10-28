@@ -21,6 +21,18 @@ async function init() {
     await client.query('ALTER TABLE tenant_users ALTER COLUMN tenant_id TYPE TEXT USING tenant_id::text');
     await client.query('CREATE INDEX IF NOT EXISTS tenant_users_tenant_role_idx ON tenant_users(tenant_id, role)');
 
+    await client.query(`CREATE TABLE IF NOT EXISTS tenant_user_invites (
+      id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT NOT NULL REFERENCES tenant_users(id) ON DELETE CASCADE,
+      tenant_id TEXT NOT NULL,
+      token_hash CHAR(64) NOT NULL UNIQUE,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`);
+    await client.query('CREATE INDEX IF NOT EXISTS tenant_user_invites_user_idx ON tenant_user_invites(user_id)');
+
+
     await client.query(`CREATE TABLE IF NOT EXISTS tenant_records (
       id BIGSERIAL PRIMARY KEY,
       tenant_id TEXT NOT NULL,
