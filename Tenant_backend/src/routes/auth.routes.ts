@@ -15,13 +15,14 @@ const passwordSetupSchema = z.object({ token: z.string().regex(/^[a-f0-9]{64}$/i
 authRouter.post('/set-password', async (req, res) => {
   const parsed = passwordSetupSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ success: false, message: 'Provide a valid setup token and a password of at least 8 characters.' });
-  const tokenHash = crypto.createHash('sha256').update(parsed.data.token).digest('hex');
+  const normalizedToken = parsed.data.token.trim().toLowerCase();
+  const tokenHash = crypto.createHash('sha256').update(normalizedToken, 'utf8').digest('hex');
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const invite = await client.query(`SELECT i.id, i.user_id, i.tenant_id
       FROM tenant_user_invites i JOIN tenant_users u ON u.id = i.user_id AND u.tenant_id = i.tenant_id
-      WHERE i.token_hash = $1 AND i.used_at IS NULL AND i.expires_at > NOW()
+      WHERE LOWER(i.token_hash) = $1 AND i.used_at IS NULL AND i.expires_at > NOW()
       AND u.password_hash = 'PENDING_PASSWORD_SETUP' AND u.is_active = TRUE FOR UPDATE OF i`, [tokenHash]);
     if (!invite.rowCount) {
       await client.query('ROLLBACK');
