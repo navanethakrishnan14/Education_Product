@@ -207,32 +207,74 @@ recordsRouter.put('/:id', async (req, res) => {
   if (req.tenantClaims!.role !== 'MANAGEMENT') return res.status(403).json({ success: false, message: 'Only Management can update tenant records.' });
   const parsed = recordSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ success: false, message: 'Please provide valid record details.' });
+  const client = await pool.connect();
   try {
     const { module, name, email, category, status, notes } = parsed.data;
-    const result = await pool.query(
-      'UPDATE tenant_records SET name=$1, email=$2, category=$3, status=$4, notes=$5, updated_at=NOW() WHERE id=$6 AND tenant_id=$7 AND module_key=$8 RETURNING id::text, module_key, name, email, category, status, notes, updated_at',
-      [name, email, category, status, notes, req.params.id, req.tenantClaims!.tenantId, module],
+    await client.query('BEGIN');
+    const existing = await client.query(
+      'SELECT email FROM tenant_records WHERE id=$1 AND tenant_id=$2 AND module_key=$3 FOR UPDATE',
+      [req.params.id, req.tenantClaims!.tenantId, module],
     );
-    if (!result.rowCount) return res.status(404).json({ success: false, message: 'Record not found.' });
+    if (!existing.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, message: 'Record not found.' });
+    }
+    const previousEmail = String(existing.rows[0].email || '').toLowerCase();
+    const nextEmail = email.trim().toLowerCase();
+    const result = await client.query(
+      'UPDATE tenant_records SET name=$1, email=$2, category=$3, status=$4, notes=$5, updated_at=NOW() WHERE id=$6 AND tenant_id=$7 AND module_key=$8 RETURNING id::text, module_key, name, email, category, status, notes, updated_at',
+      [name, nextEmail, category, status, notes, req.params.id, req.tenantClaims!.tenantId, module],
+    );
+    if (module === 'Faculty & Staff' && previousEmail) {
+      await client.query(
+        'UPDATE tenant_users SET full_name=$1, email=$2, is_active=$3 WHERE tenant_id=$4 AND LOWER(email)=LOWER($5) AND role IN (\'FACULTY\',\'STAFF\')',
+        [name, nextEmail, status === 'Active', req.tenantClaims!.tenantId, previousEmail],
+      );
+    }
+    await client.query('COMMIT');
     return res.json({ success: true, record: toRecord(result.rows[0]) });
   } catch (error) {
-    console.error('Tenant record update failed:', error);
+    await client.query('ROLLBACK');
+    const pgError = error as { code?: string };
+    if (pgError.code === '23505') return res.status(409).json({ success: false, message: 'An account with this email already exists for this school.' });
+    console.error('Tenant record update failed:', error instanceof Error ? error.message : error);
     return res.status(500).json({ success: false, message: 'Unable to update this record.' });
-  }
+  } finally { client.release(); }
 });
 recordsRouter.delete('/:id', async (req, res) => {
   if (req.tenantClaims!.role !== 'MANAGEMENT') return res.status(403).json({ success: false, message: 'Only Management can delete tenant records.' });
   const moduleKey = String(req.query.module || '').trim();
   if (!moduleKey) return res.status(400).json({ success: false, message: 'A module query is required.' });
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
-      'DELETE FROM tenant_records WHERE id=$1 AND tenant_id=$2 AND module_key=$3 RETURNING id',
+    await client.query('BEGIN');
+    const existing = await client.query(
+      'SELECT email FROM tenant_records WHERE id=$1 AND tenant_id=$2 AND module_key=$3 FOR UPDATE',
       [req.params.id, req.tenantClaims!.tenantId, moduleKey],
     );
-    if (!result.rowCount) return res.status(404).json({ success: false, message: 'Record not found.' });
+    if (!existing.rowCount) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, message: 'Record not found.' });
+    }
+    if (moduleKey === 'Faculty & Staff') {
+      const email = String(existing.rows[0].email || '').toLowerCase();
+      if (email) {
+        const users = await client.query(
+          'SELECT id FROM tenant_users WHERE tenant_id=$1 AND LOWER(email)=LOWER($2) AND role IN (\'FACULTY\',\'STAFF\')',
+          [req.tenantClaims!.tenantId, email],
+        );
+        if (users.rowCount) {
+          await client.query('DELETE FROM tenant_user_invites WHERE tenant_id=$1 AND user_id = ANY($2::uuid[])', [req.tenantClaims!.tenantId, users.rows.map((row: {id:string})=>row.id)]);
+          await client.query('DELETE FROM tenant_users WHERE tenant_id=$1 AND id = ANY($2::uuid[])', [req.tenantClaims!.tenantId, users.rows.map((row: {id:string})=>row.id)]);
+        }
+      }
+    }
+    await client.query('DELETE FROM tenant_records WHERE id=$1 AND tenant_id=$2 AND module_key=$3', [req.params.id, req.tenantClaims!.tenantId, moduleKey]);
+    await client.query('COMMIT');
     return res.json({ success: true });
   } catch (error) {
-    console.error('Tenant record delete failed:', error);
+    await client.query('ROLLBACK');
+    console.error('Tenant record delete failed:', error instanceof Error ? error.message : error);
     return res.status(500).json({ success: false, message: 'Unable to delete this record.' });
-  }
+  } finally { client.release(); }
 });
