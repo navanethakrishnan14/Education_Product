@@ -10,7 +10,7 @@ type Form = {
   email: string; phone: string; emergencyContact: string; address: string;
   bloodGroup: string; maritalStatus: string; password: string; confirmPassword: string; profilePhoto: string;
 };
-const initial: Form = { staffType:'FACULTY', firstName:'', lastName:'', employeeId:'', designation:'', department:'',
+const initial: Form = { staffType:'FACULTY', firstName:'', lastName:'', designation:'', department:'',
   joiningDate:'', dob:'', gender:'Male', qualification:'', experience:'', employmentType:'Full-time', subject:'',
   email:'', phone:'', emergencyContact:'', address:'', bloodGroup:'', maritalStatus:'', password:'', confirmPassword:'', profilePhoto:'' };
 const steps = ['Basic Information','Professional Details','Contact & Address','Additional Information'];
@@ -61,7 +61,7 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
     try {
       const response=await fetch(base+'/records/accounts',{method:'POST',headers,body:JSON.stringify({
         module:'Faculty & Staff', name, email:form.email.trim().toLowerCase(), role:form.staffType,
-        password:form.password, employeeId:nextEmployeeId, designation:form.designation,
+        password:form.password, designation:form.designation,
         department:form.department, joiningDate:form.joiningDate, dob:form.dob || null, gender:form.gender,
         qualification:form.qualification, experience:form.experience, employmentType:form.employmentType,
         subject:form.subject, phone:form.phone.trim(), emergencyContact:form.emergencyContact,
@@ -75,21 +75,6 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
     } catch(err) { setError(err instanceof Error?err.message:'Something went wrong while creating the account.'); }
     finally { setBusy(false); }
   }
-  const employeePrefix = (institution || 'SCH').replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase().padEnd(3, 'X');
-  const nextEmployeeId = useMemo(() => {
-    const existingNumbers = records.map(record => {
-      if (!record.notes) return 0;
-      try {
-        const metadata = JSON.parse(record.notes) as { employeeId?: string };
-        const match = metadata.employeeId?.match(new RegExp('^' + employeePrefix + '-(\\d+)$'));
-        return match ? Number(match[1]) : 0;
-      } catch {
-        const match = record.notes.match(new RegExp('(?:employeeId|employee_id)[^A-Z0-9]*' + employeePrefix + '-(\\d+)', 'i'));
-        return match ? Number(match[1]) : 0;
-      }
-    });
-    return employeePrefix + '-' + String(Math.max(0, ...existingNumbers) + 1).padStart(4, '0');
-  }, [records, employeePrefix]);
   const filtered=records.filter(r=>(r.name+' '+r.email+' '+r.category).toLowerCase().includes(search.toLowerCase()));
   const field=(key:keyof Form)=>(e:ChangeEvent<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>)=>set(key,e.target.value as never);
   const text=(key:keyof Form,label:string,required=false,type='text',placeholder='')=><Field label={label} required={required}><input className={inputClass} type={type} value={String(form[key])} onChange={field(key)} placeholder={placeholder}/></Field>;
@@ -108,7 +93,7 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
           <div className="mb-8 flex items-center gap-4"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-100 text-violet-800">{step===0?<CircleUserRound size={25}/>:step===1?<GraduationCap size={25}/>:step===2?<Mail size={25}/>:<ShieldCheck size={25}/>}</span><div><h2 className="text-xl font-extrabold">{steps[step]}</h2><p className="mt-1 text-sm text-slate-500">{['Enter the basic details of the faculty or staff member.','Add their position, department and professional background.','Provide contact details for school communication.','Complete personal information and secure account access.'][step]}</p></div></div>
           {step===0&&<div className="grid min-w-0 grid-cols-1 gap-x-7 gap-y-7 sm:grid-cols-2">
             {text('firstName','Full Name',true,'text','Enter full name')}
-            {text('employeeId','Employee ID',false,'text','Optional — auto-generated or enter manually')}
+            
             <div className="sm:col-span-2"><Field label="Role Type" required><div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:max-w-[520px]">{([{value:'FACULTY',title:'Faculty',sub:'Teaching Staff',icon:GraduationCap},{value:'STAFF',title:'Staff',sub:'Non-Teaching',icon:Users}] as const).map(item=><button key={item.value} type="button" onClick={()=>set('staffType',item.value)} className={'flex min-h-[76px] min-w-0 items-center gap-3 rounded-xl border px-3 py-3 text-left '+(form.staffType===item.value?'border-violet-600 bg-violet-50/70 ring-1 ring-violet-600':'border-slate-200 hover:border-slate-300')}><span className={'grid h-9 w-9 shrink-0 place-items-center rounded-full '+(form.staffType===item.value?'bg-violet-700 text-white':'bg-slate-100 text-slate-500')}><item.icon size={18}/></span><span className="min-w-0"><b className="block text-sm">{item.title}</b><small className="block whitespace-normal text-xs leading-5 text-slate-500">{item.sub}</small></span></button>)}</div></Field></div>
             {select('designation','Designation',['Principal','Vice Principal','Head of Department','Teacher','Assistant Teacher','Lecturer','Librarian','Lab Assistant','Accountant','Administrator','Office Assistant','Support Staff','Other'],true)}
             {select('department','Department',['Administration','English','Tamil','Mathematics','Science','Physics','Chemistry','Biology','Computer Science','Social Science','Commerce','Physical Education','Library','Laboratory','Accounts','Transport','Other'],true)}
