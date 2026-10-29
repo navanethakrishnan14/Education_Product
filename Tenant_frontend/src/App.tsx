@@ -40,14 +40,14 @@ function Landing() {
       <aside className="role-reference-brand">
         <div className="edupro-brand"><span className="edupro-mark"><GraduationCap size={40}/><BookOpen size={35}/></span><span><b>EduPro</b><small>School Management System</small></span></div>
         <div className="school-pill"><Building2 size={17}/> School Management Simplified</div>
-        <h1>One Platform<br/>for a <span>Brighter<br/>Tomorrow</span></h1>
+        <h1>One Platform<br/>for a <span>Schools</span></h1>
         <p className="role-reference-intro">Empowering Schools, Teachers, Students and Parents to Learn, Manage and Grow Together.</p>
         <div className="role-benefits">
           <div><span className="benefit-icon"><Network size={25}/></span><span><b>Manage Academics</b><small>Classes, Exams, Timetable</small></span></div>
           <div><span className="benefit-icon"><CheckSquare size={25}/></span><span><b>Track Progress</b><small>Attendance, Marks, Reports</small></span></div>
           <div><span className="benefit-icon"><HeartHandshake size={25}/></span><span><b>Stay Connected</b><small>Parents, Students, Teachers</small></span></div>
         </div>
-        <div className="role-wave"><span>Better Education<br/>Brighter Tomorrow</span><i/></div>
+        <div className="role-wave"><span></span><i/></div>
       </aside>
       <section className="role-reference-main">
         <button className="role-language" type="button"><Globe2 size={18}/> English <span>⌄</span></button>
