@@ -462,3 +462,75 @@ body { font-size: 15px; line-height: 1.6; }
 .student .reference-login:hover{
   background:linear-gradient(100deg,#0b9691,#066f6b) !important;
 }
+
+
+/* EduPro four-role login pages — responsive reference-matched layout */
+.edu-login-shell{--role:#6425dc;--role-dark:#351078;--role-soft:#eee6ff;--role-glow:#b58bff;min-height:100vh;display:grid;grid-template-columns:1.02fr .98fr;background:#faf8ff;color:#10153b;font-family:'DM Sans',sans-serif}
+.edu-login-shell.theme-blue{--role:#ff7900;--role-dark:#a83d00;--role-soft:#fff0d8;--role-glow:#ffb34c}
+.edu-login-shell.theme-teal{--role:#f32e45;--role-dark:#94172d;--role-soft:#ffe2e7;--role-glow:#ff8493}
+.edu-login-shell.theme-purple{--role:#079e9a;--role-dark:#005b61;--role-soft:#d9fbf7;--role-glow:#52e1d6}
+.edu-login-visual{position:relative;min-height:100vh;overflow:hidden;padding:26px clamp(26px,5vw,76px);color:white;background:linear-gradient(135deg,color-mix(in srgb,var(--role) 94%,white),var(--role-dark));isolation:isolate}
+.edu-login-visual:before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,color-mix(in srgb,var(--role) 48%,transparent),color-mix(in srgb,var(--role-dark) 35%,transparent)),url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1400&q=85') center/cover}
+.edu-login-visual:after{content:"";position:absolute;z-index:-1;left:10%;top:-5%;width:82%;height:65%;border-radius:50%;background:linear-gradient(145deg,color-mix(in srgb,var(--role) 92%,white),color-mix(in srgb,var(--role-dark) 88%,black));box-shadow:0 20px 70px #16093c35}
+.edu-login-visual-inner{width:min(100%,490px);margin:0 auto;position:relative;z-index:1;min-height:calc(100vh - 52px);display:flex;flex-direction:column}
+.edu-login-logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;width:max-content}
+.edu-logo-symbol{width:42px;height:40px;display:grid;place-items:center;position:relative}
+.edu-logo-symbol svg{filter:drop-shadow(0 2px 2px #0002)}
+.edu-logo-symbol span{position:absolute;bottom:-4px;font-size:27px;line-height:16px;font-weight:800}
+.edu-login-logo b{display:block;font:800 21px/1.1 Manrope,sans-serif;letter-spacing:-.6px}
+.edu-login-logo small{display:block;font-size:9px;margin-top:3px;opacity:.9}
+.edu-login-title{margin:27px 0 14px}
+.edu-login-title h1{font:800 clamp(25px,2.5vw,35px)/1.12 Manrope,sans-serif;letter-spacing:-1px;margin:0 0 6px}
+.edu-login-title h1 span{color:var(--role-glow)}
+.edu-login-title p{font-size:12px;margin:0;color:#fff;opacity:.94}
+.edu-role-list{display:grid;gap:7px}
+.edu-role-option{display:flex;align-items:center;gap:11px;text-align:left;width:100%;min-height:57px;padding:8px 11px;border:1px solid #ffffff8c;border-radius:12px;background:#ffffffed;color:#17133a;box-shadow:0 6px 18px #190a3c20;transition:transform .18s,box-shadow .18s,border-color .18s}
+.edu-role-option:hover{transform:translateX(3px);box-shadow:0 9px 22px #190a3c2b}
+.edu-role-option.active{border-color:#fff;box-shadow:0 0 0 2px color-mix(in srgb,var(--role) 35%,white),0 7px 20px #190a3c22}
+.edu-role-icon{width:42px;height:40px;border-radius:9px;display:grid;place-items:center;font-size:25px;flex-shrink:0;background:#f0e7ff}
+.icon-faculty{background:#fff0d9}.icon-parent{background:#ffe4e9}.icon-student{background:#dffaf7}
+.edu-role-copy{min-width:0;flex:1}
+.edu-role-copy b{display:block;font-size:11px;font-weight:800;line-height:1.25}
+.edu-role-copy small{display:block;font-size:9px;color:#5d6281;margin-top:3px}
+.edu-role-arrow{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--role);color:#fff;flex-shrink:0}
+.edu-login-slogan{margin-top:auto;padding:24px 0 12px}
+.edu-login-slogan>span{display:block;width:26px;height:2px;background:#fff;margin-bottom:12px}
+.edu-login-slogan p{font-size:12px;line-height:1.45;margin:0;font-weight:500}
+.edu-login-form-panel{position:relative;min-height:100vh;padding:56px clamp(22px,4vw,60px) 24px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#fff 0%,#faf8ff 70%,color-mix(in srgb,var(--role-soft) 45%,white) 100%)}
+.edu-language{position:absolute;top:18px;right:22px;display:flex;align-items:center;gap:9px;padding:8px 11px;border:1px solid #e6e8f3;border-radius:9px;background:#ffffffd9;box-shadow:0 2px 8px #25274b0c;font-size:9px;color:#171b40}
+.edu-language span:first-child{font-size:16px}.edu-language span:last-child{margin-left:6px}
+.edu-login-card{width:min(100%,440px);padding:0 0 8px;text-align:center}
+.edu-form-brand{display:flex;align-items:center;justify-content:center;gap:8px;text-align:left;text-decoration:none;color:#0c1238;margin-bottom:10px}
+.edu-form-brand-icon{position:relative;width:40px;height:38px;color:var(--role);display:flex;align-items:center;justify-content:center}
+.edu-form-brand-icon svg:last-child{position:absolute;bottom:-2px;left:5px}
+.edu-form-brand b{display:block;font:800 19px/1.05 Manrope,sans-serif;letter-spacing:-.6px}
+.edu-form-brand small{display:block;font-size:8px;color:#576183;margin-top:3px}
+.edu-login-card h2{font:800 22px/1.2 Manrope,sans-serif;letter-spacing:-.55px;color:#111638;margin:4px 0 6px}
+.edu-form-subtitle{font-size:10px;line-height:1.5;color:#626b91;margin:0 auto 26px;max-width:310px;min-height:15px}
+.edu-login-fields{text-align:left}
+.edu-login-fields>label{display:block;font-size:9px;font-weight:600;color:#252b52;margin:13px 0 6px}
+.edu-input-wrap{height:39px;display:flex;align-items:center;gap:9px;padding:0 10px;border:1px solid #dfe3f0;border-radius:6px;background:#fff;color:#647198;box-shadow:0 1px 2px #1a214208}
+.edu-input-wrap:focus-within{border-color:var(--role);box-shadow:0 0 0 3px color-mix(in srgb,var(--role) 12%,transparent)}
+.edu-input-wrap input{border:0;outline:0;min-width:0;flex:1;background:transparent;font-size:10px;color:#202747}
+.edu-input-wrap input::placeholder,.edu-plain-input::placeholder{color:#929bb8}
+.edu-password-toggle{border:0;background:transparent;color:#677195;padding:3px;display:grid;place-items:center}
+.edu-plain-input{width:100%;height:39px;padding:0 10px;border:1px solid #dfe3f0;border-radius:6px;background:#fff;font-size:10px;outline:0}
+.edu-form-options{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:11px 0 15px}
+.edu-form-options label{display:flex;align-items:center;gap:6px;font-size:9px;color:#323858}
+.edu-form-options input{width:13px;height:13px;accent-color:var(--role);margin:0}
+.edu-form-options button{border:0;background:transparent;padding:0;color:var(--role);font-size:9px;font-weight:700}
+.edu-submit{width:100%;height:39px;border:0;border-radius:6px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(100deg,var(--role),var(--role-dark));color:white;font-size:10px;font-weight:700;box-shadow:0 4px 9px color-mix(in srgb,var(--role) 20%,transparent)}
+.edu-submit:disabled{opacity:.7;cursor:wait}
+.edu-login-message{padding:9px 10px;border-radius:6px;background:#fff0f0;color:#a11c31;font-size:10px;line-height:1.4}
+.edu-divider{display:flex;align-items:center;gap:12px;margin:19px 0 14px;color:#555d81;font-size:9px}
+.edu-divider:before,.edu-divider:after{content:"";height:1px;flex:1;background:#e3e6f0}
+.edu-social-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.edu-social-row button{height:36px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #e0e5f0;border-radius:6px;background:#fff;color:#343b5b;font-size:9px;white-space:nowrap}
+.google-g{font:bold 16px Arial,sans-serif;color:#4285f4}
+.microsoft-mark{font-size:18px;color:#f25022}
+.edu-admin-help{font-size:10px;color:#626b91;margin:20px 0 0}
+.edu-login-footer{position:absolute;bottom:17px;left:24px;right:24px;display:flex;justify-content:space-between;gap:12px;font-size:9px;color:#8b91ac}
+.edu-login-footer a{color:#687092;text-decoration:none}
+@media(min-width:1200px){.edu-login-shell{grid-template-columns:1.02fr .98fr}.edu-login-visual{padding-top:28px}.edu-login-title{margin-top:30px}.edu-role-list{gap:8px}.edu-role-option{min-height:59px}}
+@media(max-width:760px){.edu-login-shell{grid-template-columns:1fr}.edu-login-visual{min-height:auto;padding:20px 20px 16px}.edu-login-visual-inner{min-height:auto;width:min(100%,520px)}.edu-login-visual:after{top:-10%;height:90%}.edu-login-title{margin:18px 0 12px}.edu-login-title h1{font-size:27px}.edu-role-list{grid-template-columns:1fr 1fr;gap:7px}.edu-role-option{min-height:65px;padding:7px;gap:7px}.edu-role-icon{width:34px;height:34px;font-size:20px}.edu-role-copy b{font-size:10px}.edu-role-copy small{font-size:8px}.edu-role-arrow{width:24px;height:24px}.edu-login-slogan{display:none}.edu-login-form-panel{min-height:650px;padding:65px 22px 65px}.edu-login-card{max-width:440px}.edu-login-footer{bottom:18px}}
+@media(max-width:390px){.edu-role-list{grid-template-columns:1fr}.edu-role-option{min-height:52px}.edu-login-form-panel{padding-left:16px;padding-right:16px}.edu-social-row{grid-template-columns:1fr}}
