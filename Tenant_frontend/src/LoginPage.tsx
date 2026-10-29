@@ -86,12 +86,12 @@ export default function LoginPage({ role, title, color }: { role: LoginRole; tit
     { name: 'Parent', detail: "Track your child’s progress", icon: '👨‍👩‍👧', path: '/login/parent' },
     { name: 'Student', detail: 'Learn · Grow · Succeed', icon: '🎓', path: '/login/student' },
   ];
-  return <div className={`edu-login-shell theme-${color} ${role === "Management" ? "management-login" : ""}`}>
+  return <div className={`edu-login-shell theme-${color} ${role === "Management" ? "management-login" : role === "Faculty" ? "faculty-login" : ""}`}>
     <section className="edu-login-visual">
       <div className="edu-login-visual-inner">
         <Link className="edu-login-logo" to="/"><span className="edu-logo-symbol"><GraduationCap size={31}/><span>▱</span></span><span><b>EduPro</b><small>School Management System</small></span></Link>
-        <div className="edu-login-title"><h1>{role === 'Management' ? <>Empower<br/>Your School<br/><span>Management</span></> : <>Choose Your <span>Role</span></>}</h1><p>{role === 'Management' ? 'Manage academics, users, attendance, reports and overall school operations in one place.' : 'Login to your account to continue'}</p></div>
-        {role === 'Management' ? <div className="edu-management-benefits"><div><span>♟</span><p><b>Complete Control</b><small>Users, Academics, Reports</small></p></div><div><span>✓</span><p><b>Better Efficiency</b><small>Streamlined Operations</small></p></div><div><span>▥</span><p><b>Data Driven Insights</b><small>Smarter Decisions</small></p></div></div> : <nav className="edu-role-list" aria-label="Choose login role">
+        <div className="edu-login-title"><h1>{role === 'Management' ? <>Empower<br/>Your School<br/><span>Management</span></> : role === 'Faculty' ? <>Inspire<br/>Educate<br/><span>Make an Impact</span></> : <>Choose Your <span>Role</span></>}</h1><p>{role === 'Management' ? 'Manage academics, users, attendance, reports and overall school operations in one place.' : role === 'Faculty' ? 'Manage your classes, take attendance, enter marks and track student performance effortlessly.' : 'Login to your account to continue'}</p></div>
+        {role === 'Management' ? <div className="edu-management-benefits"><div><span>♟</span><p><b>Complete Control</b><small>Users, Academics, Reports</small></p></div><div><span>✓</span><p><b>Better Efficiency</b><small>Streamlined Operations</small></p></div><div><span>▥</span><p><b>Data Driven Insights</b><small>Smarter Decisions</small></p></div></div> : role === 'Faculty' ? <div className="edu-management-benefits faculty-benefits"><div><span>⚑</span><p><b>Manage Classes</b><small>Timetable &amp; Attendance</small></p></div><div><span>▰</span><p><b>Track Performance</b><small>Marks &amp; Assessments</small></p></div><div><span>▣</span><p><b>Stay Connected</b><small>Communicate with Students</small></p></div></div> : <nav className="edu-role-list" aria-label="Choose login role">
           {roleItems.map(item => <button key={item.name} type="button" className={`edu-role-option ${role === item.name ? 'active' : ''}`} onClick={() => nav(item.path)} aria-current={role === item.name ? 'page' : undefined}>
             <span className={`edu-role-icon icon-${item.name.toLowerCase()}`}>{item.icon}</span><span className="edu-role-copy"><b>{item.name}</b><small>{item.detail}</small></span><span className="edu-role-arrow"><ArrowRight size={17}/></span>
           </button>)}
@@ -103,7 +103,7 @@ export default function LoginPage({ role, title, color }: { role: LoginRole; tit
       <div className="edu-language"><span>◎</span> English <span>⌄</span></div>
       <section className="edu-login-card">
         {role !== 'Management' && <Link className="edu-form-brand" to="/"><span className="edu-form-brand-icon"><GraduationCap size={32}/><BookOpen size={25}/></span><span><b>EduPro</b><small>School Management System</small></span></Link>}
-        {role === 'Management' && <div className="edu-management-emblem"><GraduationCap size={54}/></div>}
+        {role === 'Management' && <div className="edu-management-emblem"><GraduationCap size={54}/></div>}{role === 'Faculty' && <div className="edu-management-emblem faculty-emblem"><span>👨‍🏫</span></div>}
         <h2>{role} Login</h2>
         <p className="edu-form-subtitle">{role === 'Management' ? 'Access and manage your school with ease.' : role === 'Faculty' ? 'Access your classes, attendance and manage student performance.' : role === 'Parent' ? "Track your child’s progress, attendance, exams and stay updated." : 'Access your timetable, homework, exams and learning materials.'}</p>
         <form className="edu-login-fields" onSubmit={submit}>
