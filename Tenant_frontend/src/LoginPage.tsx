@@ -80,33 +80,46 @@ export default function LoginPage({ role, title, color }: { role: LoginRole; tit
     }
   }
 
-  return <div className="layout">
-    <aside className="brand-side">
-      <div className="side-top"><Link className="brand" to="/"><span className="brand-icon"><GraduationCap size={19}/></span><span><b>EduSphere Enterprise</b><small>UNIFIED ACADEMIC OS</small></span></Link><span className="status">Tenant sign-in</span></div>
-      <div className="side-copy"><div className="eyebrow">SMARTER EDUCATION. BETTER TOMORROW.</div><h1>One Platform.<br/><span>Every Possibility.</span></h1><p>Secure access to the right workspace for every member of your school community.</p></div>
-      <div className="login-art"><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="core"><span><ShieldCheck size={25}/></span><b>{role.toUpperCase()} WORKSPACE</b></div></div>
-      <div className="side-bottom">Secure tenant-scoped access · EduSphere</div>
-    </aside>
-    <main className="login-side">
-      <div className="login-top"><button type="button" onClick={() => nav('/')}><ArrowLeft size={14}/> Back to role selection</button><span><HelpCircle size={13}/> Need help? Contact your school administrator</span></div>
-      <section className="login-card">
-        <div className={'login-role ' + color}>{role} portal</div>
-        <h2>{title}</h2>
-        <p className="login-intro">{role === "Management" ? "Sign in with the Official Email that received your password setup link and the password you created." : "Sign in with the credentials issued by your school. Your account and school must match the selected role."}</p>
-        <div className="or">SCHOOL CREDENTIALS</div>
-        <form onSubmit={submit}>
-          {role === "Management" ? <div className="exam" style={{marginBottom:16}}><b>Organization lookup:</b> Your Official Email identifies your organization. You do not need a separate Tenant ID for Management sign-in.</div> : <><label htmlFor="tenant">School / Tenant ID</label><input id="tenant" value={tenantId} onChange={e => setTenantId(e.target.value)} placeholder="School tenant UUID" autoComplete="organization" required pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}" title="Enter the UUID provided by your school administrator."/></>}
-          <label htmlFor="email">{role === "Management" ? "Official Organization Email" : "School Email"}</label>
-          <div className="field"><Mail size={14}/><input id="email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@school.edu" maxLength={254} required/></div>
-          <div className="password-label"><label htmlFor="password">Password</label><span className="text-xs text-slate-500">Forgot password? Contact your administrator.</span></div>
-          <div className="field"><LockKeyhole size={14}/><input id="password" type={visible ? 'text' : 'password'} autoComplete="current-password" minLength={8} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" required/><button className="eye" type="button" aria-label={visible ? 'Hide password' : 'Show password'} onClick={() => setVisible(!visible)}><Eye size={14}/></button></div>
-          <label className="remember"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}/> Keep me logged in on this personal device</label>
-          <button className="launch" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in to ' + role} <ArrowRight size={14}/></button>
-          {message && <p className="message" role="status" aria-live="polite">{message}</p>}
+  const roleItems = [
+    { name: 'Management', detail: 'Manage school operations', icon: '🏫', path: '/login/management' },
+    { name: 'Faculty', detail: 'Teach · Attend · Assess', icon: '👩‍🏫', path: '/login/faculty' },
+    { name: 'Parent', detail: "Track your child’s progress", icon: '👨‍👩‍👧', path: '/login/parent' },
+    { name: 'Student', detail: 'Learn · Grow · Succeed', icon: '🎓', path: '/login/student' },
+  ];
+  return <div className={`edu-login-shell theme-${color}`}>
+    <section className="edu-login-visual">
+      <div className="edu-login-visual-inner">
+        <Link className="edu-login-logo" to="/"><span className="edu-logo-symbol"><GraduationCap size={31}/><span>▱</span></span><span><b>EduPro</b><small>School Management System</small></span></Link>
+        <div className="edu-login-title"><h1>Choose Your <span>Role</span></h1><p>Login to your account to continue</p></div>
+        <nav className="edu-role-list" aria-label="Choose login role">
+          {roleItems.map(item => <button key={item.name} type="button" className={`edu-role-option ${role === item.name ? 'active' : ''}`} onClick={() => nav(item.path)} aria-current={role === item.name ? 'page' : undefined}>
+            <span className={`edu-role-icon icon-${item.name.toLowerCase()}`}>{item.icon}</span><span className="edu-role-copy"><b>{item.name}</b><small>{item.detail}</small></span><span className="edu-role-arrow"><ArrowRight size={17}/></span>
+          </button>)}
+        </nav>
+        <div className="edu-login-slogan"><span></span><p>Better Education<br/>Brighter Tomorrow</p></div>
+      </div>
+    </section>
+    <main className="edu-login-form-panel">
+      <div className="edu-language"><span>◎</span> English <span>⌄</span></div>
+      <section className="edu-login-card">
+        <Link className="edu-form-brand" to="/"><span className="edu-form-brand-icon"><GraduationCap size={32}/><BookOpen size={25}/></span><span><b>EduPro</b><small>School Management System</small></span></Link>
+        <h2>{role} Login</h2>
+        <p className="edu-form-subtitle">{role === 'Management' ? 'Access and manage your school with ease.' : role === 'Faculty' ? 'Access your classes, attendance and manage student performance.' : role === 'Parent' ? "Track your child’s progress, attendance, exams and stay updated." : 'Access your timetable, homework, exams and learning materials.'}</p>
+        <form className="edu-login-fields" onSubmit={submit}>
+          {role !== 'Management' && <><label htmlFor="tenant">School / Tenant ID</label><input className="edu-plain-input" id="tenant" value={tenantId} onChange={e => setTenantId(e.target.value)} placeholder="Enter your school tenant ID" autoComplete="organization" required pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}" title="Enter the UUID provided by your school administrator."/></>}
+          <label htmlFor="email">{role === 'Management' ? 'Email Address' : 'Email Address'}</label>
+          <div className="edu-input-wrap"><Mail size={16}/><input id="email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter your email address" maxLength={254} required/></div>
+          <label htmlFor="password">Password</label>
+          <div className="edu-input-wrap"><LockKeyhole size={16}/><input id="password" type={visible ? 'text' : 'password'} autoComplete="current-password" minLength={8} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" required/><button className="edu-password-toggle" type="button" aria-label={visible ? 'Hide password' : 'Show password'} onClick={() => setVisible(!visible)}><Eye size={16}/></button></div>
+          <div className="edu-form-options"><label><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}/> Remember me</label><button type="button" onClick={() => setMessage('Please contact your school administrator to reset your password.')}>Forgot password?</button></div>
+          {message && <p className="edu-login-message" role="status" aria-live="polite">{message}</p>}
+          <button className="edu-submit" type="submit" disabled={busy}>{busy ? 'Signing in…' : `Login as ${role}`} <ArrowRight size={17}/></button>
         </form>
-        <div className="exam"><b>Secure access:</b> Never share your password or use “keep me logged in” on a shared device.</div>
+        <div className="edu-divider"><span>or continue with</span></div>
+        <div className="edu-social-row"><button type="button" onClick={() => setMessage('Google sign-in is not configured yet. Please use your school credentials.') }><b className="google-g">G</b> Continue with Google</button><button type="button" onClick={() => setMessage('Microsoft sign-in is not configured yet. Please use your school credentials.') }><b className="microsoft-mark">▦</b> Continue with Microsoft</button></div>
+        <p className="edu-admin-help">Need help? Contact your administrator.</p>
       </section>
-      <footer className="login-footer"><Link to="/">Back to EduSphere home</Link><span>English</span></footer>
+      <footer className="edu-login-footer"><Link to="/">Back to role selection</Link><span>Secure school access</span></footer>
     </main>
   </div>;
 }
