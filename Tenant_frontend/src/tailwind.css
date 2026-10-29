@@ -338,3 +338,65 @@ body { font-size: 15px; line-height: 1.6; }
 .role-reference-brand .role-wave{z-index:0}
 @media(min-width:761px){.role-reference-main{padding-left:6.6%;padding-right:6.6%}.role-reference-grid{gap:15px 20px}.reference-role-card{min-height:314px}.reference-art{height:116px}.reference-login{min-height:44px}}
 @media(max-width:760px){.role-emoji-art{font-size:54px}}
+
+
+/* Purple theme based on the supplied School Modules sidebar reference */
+.role-reference-page{
+  background:
+    radial-gradient(ellipse at 72% 42%,rgba(105,43,180,.95) 0%,rgba(67,28,125,.96) 50%,rgba(47,20,94,1) 100%) !important;
+  color:#fff;
+}
+.role-reference-glass{
+  background:rgba(49,20,96,.28) !important;
+  border-color:rgba(255,255,255,.22) !important;
+  box-shadow:0 20px 55px rgba(20,7,50,.24) !important;
+}
+.role-reference-brand{
+  background:linear-gradient(160deg,rgba(64,27,122,.98),rgba(43,22,91,.98)) !important;
+  color:#fff !important;
+}
+.edupro-brand,.role-reference-brand h1,.role-benefits b{color:#fff !important}
+.edupro-brand small,.role-reference-intro,.role-benefits small{color:#ded2f7 !important}
+.role-reference-brand h1 span{color:#d1b8ff !important}
+.school-pill,.benefit-icon{
+  background:rgba(255,255,255,.12) !important;
+  color:#e9ddff !important;
+  border:1px solid rgba(255,255,255,.06);
+}
+.school-pill svg{color:#e4d3ff !important}
+.role-wave{
+  background:linear-gradient(145deg,#6933ad,#4a2187 62%,#351866) !important;
+}
+.role-wave:before{background:linear-gradient(130deg,#7c49c2,#54249a) !important}
+.role-reference-heading h2{color:#fff !important}
+.role-reference-heading p{color:#e0d3f8 !important}
+.role-language{
+  background:rgba(255,255,255,.96) !important;
+  color:#35166c !important;
+  border-color:rgba(255,255,255,.8) !important;
+}
+.reference-role-card{
+  background:rgba(255,255,255,.97) !important;
+  border-color:rgba(255,255,255,.88) !important;
+  box-shadow:0 10px 26px rgba(18,5,44,.18) !important;
+  color:#35166c !important;
+}
+.reference-role-card>b{color:#321568 !important}
+.reference-role-card p{color:#665481 !important}
+.reference-role-card .reference-art{
+  background:linear-gradient(145deg,#f0e7ff,#e2d2fa) !important;
+  color:#59289b !important;
+}
+.reference-role-card .reference-arrow{
+  background:#eee3ff !important;
+  color:#572491 !important;
+}
+.reference-role-card .reference-login{
+  background:linear-gradient(100deg,#6331a6,#451b83) !important;
+  color:#fff !important;
+}
+.reference-role-card:hover{box-shadow:0 16px 34px rgba(18,5,44,.28) !important}
+@media(max-width:760px){
+  .role-reference-brand{display:none}
+  .role-reference-glass{background:transparent !important}
+}
