@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, GraduationCap, LockKeyhole, Mail, Eye, HelpCircle, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, GraduationCap, BookOpen, LockKeyhole, Mail, Eye, HelpCircle, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { FormEvent } from 'react';
 
