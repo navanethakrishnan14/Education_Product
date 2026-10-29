@@ -1021,3 +1021,128 @@ body { font-size: 15px; line-height: 1.6; }
   .reference-arrow{width:25px !important;height:25px !important;top:8px !important;right:8px !important}
   .reference-login{width:100% !important;min-height:29px !important;font-size:9px !important;padding:6px 8px !important}
 }
+
+
+/* Management login: closely match the supplied EduPro reference */
+.management-login{
+  --role:#6420f5 !important;
+  --role-dark:#24106f !important;
+  --role-soft:#e9ddff !important;
+  --role-glow:#d1a5ff !important;
+  grid-template-columns:53.3% 46.7% !important;
+  background:#f3efff !important;
+  font-family:'DM Sans',sans-serif !important;
+}
+.management-login .edu-login-visual{
+  padding:52px clamp(32px,6.7vw,104px) 32px !important;
+  background:linear-gradient(135deg,#291078 0%,#4814ba 48%,#8e42ff 100%) !important;
+}
+.management-login .edu-login-visual:before{
+  background:linear-gradient(115deg,rgba(34,8,111,.88) 0%,rgba(62,15,159,.72) 43%,rgba(111,42,220,.2) 100%),url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1600&q=90') center/cover !important;
+}
+.management-login .edu-login-visual:after{
+  left:55% !important;top:-15% !important;width:75% !important;height:72% !important;
+  background:linear-gradient(140deg,#742cffaa,#a54cff55) !important;
+  box-shadow:none !important;
+}
+.management-login .edu-login-visual-inner{width:min(100%,590px) !important;min-height:calc(100vh - 84px) !important}
+.management-login .edu-login-logo{gap:22px !important}
+.management-login .edu-logo-symbol{width:82px !important;height:78px !important}
+.management-login .edu-logo-symbol svg{width:70px !important;height:70px !important}
+.management-login .edu-logo-symbol span{font-size:43px !important;bottom:-2px !important}
+.management-login .edu-login-logo b{font-size:42px !important;letter-spacing:-1.2px !important}
+.management-login .edu-login-logo small{font-size:18px !important;margin-top:5px !important}
+.management-login .edu-login-title{margin:32px 0 16px !important}
+.management-login .edu-login-title:before{content:'';display:block;width:48px;height:2px;background:#fff;margin-bottom:20px}
+.management-login .edu-login-title h1{font-size:clamp(36px,3.8vw,58px) !important;line-height:1.05 !important;letter-spacing:-1.6px !important;margin:0 0 22px !important}
+.management-login .edu-login-title h1 span{color:#d6a3ff !important}
+.management-login .edu-login-title p{max-width:520px !important;font-size:clamp(16px,1.5vw,23px) !important;line-height:1.4 !important;opacity:1 !important}
+.management-login .edu-role-list{gap:8px !important}
+.management-login .edu-management-benefits{display:grid;gap:13px;margin-top:4px}
+.management-login .edu-management-benefits>div{display:flex;align-items:center;gap:22px}
+.management-login .edu-management-benefits>div>span{display:grid;place-items:center;width:74px;height:74px;border-radius:50%;background:linear-gradient(145deg,#7b30f4dd,#4615b6ee);box-shadow:0 5px 20px #21006d40;font-size:36px;font-weight:800;flex:0 0 auto}
+.management-login .edu-management-benefits p{margin:0;display:flex;flex-direction:column;gap:3px}
+.management-login .edu-management-benefits b{font-size:20px;line-height:1.3}
+.management-login .edu-management-benefits small{font-size:16px;line-height:1.4;color:#fff}
+.management-login .edu-login-slogan{padding:22px 0 0 !important}
+.management-login .edu-login-slogan>span{width:48px !important;margin-bottom:18px !important}
+.management-login .edu-login-slogan p{font-size:21px !important;line-height:1.45 !important}
+.management-login .edu-login-form-panel{
+  min-height:100vh !important;padding:40px clamp(26px,3vw,48px) !important;
+  background:radial-gradient(ellipse at 50% 100%,#e3c9ff 0%,transparent 45%),linear-gradient(145deg,#fdfcff 0%,#f8f5ff 100%) !important;
+}
+.management-login .edu-language{top:60px !important;right:58px !important;gap:12px !important;padding:14px 20px !important;border-radius:16px !important;font-size:16px !important;background:#ffffffd9 !important;box-shadow:0 5px 18px #38208012 !important}
+.management-login .edu-language span:first-child{font-size:24px !important}
+.management-login .edu-login-card{
+  width:min(100%,650px) !important;padding:62px 50px 42px !important;
+  border:1px solid #ffffffd9 !important;border-radius:32px !important;
+  background:rgba(255,255,255,.76) !important;box-shadow:0 18px 60px #5122a515 !important;
+  backdrop-filter:blur(18px) !important;text-align:center !important;
+}
+.management-login .edu-management-emblem{width:136px;height:122px;margin:0 auto 13px;display:grid;place-items:center;border-radius:28px;background:linear-gradient(145deg,#f4eaff,#eee2ff);color:#6b1cff}
+.management-login .edu-management-emblem svg{width:78px !important;height:78px !important;stroke-width:2.5}
+.management-login .edu-login-card h2{font-size:clamp(27px,2.7vw,42px) !important;letter-spacing:-1px !important;margin:10px 0 10px !important}
+.management-login .edu-form-subtitle{font-size:clamp(14px,1.35vw,21px) !important;line-height:1.5 !important;color:#68739d !important;margin:0 0 38px !important}
+.management-login .edu-login-fields{text-align:left !important}
+.management-login .edu-login-fields>label{display:block;font-size:18px !important;line-height:1.4 !important;margin:20px 0 9px !important;color:#111638 !important}
+.management-login .edu-input-wrap{min-height:64px !important;border:1.5px solid #dfe1f4 !important;border-radius:14px !important;padding:0 20px !important;gap:18px !important;background:#ffffff65 !important;color:#6875a4 !important}
+.management-login .edu-input-wrap>svg{width:25px !important;height:25px !important;flex:0 0 auto}
+.management-login .edu-input-wrap input{min-width:0 !important;width:100% !important;border:0 !important;outline:none !important;background:transparent !important;color:#111638 !important;font-size:18px !important;padding:12px 0 !important}
+.management-login .edu-input-wrap input::placeholder{color:#8994bf !important;opacity:1}
+.management-login .edu-password-toggle{display:grid !important;place-items:center !important;border:0 !important;background:transparent !important;color:#6875a4 !important;padding:4px !important;min-width:30px !important;min-height:30px !important}
+.management-login .edu-password-toggle svg{width:25px !important;height:25px !important}
+.management-login .edu-form-options{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:12px !important;margin:20px 0 24px !important;font-size:17px !important}
+.management-login .edu-form-options label{display:flex !important;align-items:center !important;gap:12px !important;font-size:17px !important}
+.management-login .edu-form-options input{width:28px !important;height:28px !important;accent-color:#7020f4 !important;margin:0 !important}
+.management-login .edu-form-options button{border:0 !important;background:transparent !important;color:#7020f4 !important;font-weight:700 !important;font-size:17px !important;padding:0 !important;min-height:28px !important}
+.management-login .edu-submit{width:100% !important;min-height:70px !important;display:flex !important;align-items:center !important;justify-content:center !important;gap:22px !important;border:0 !important;border-radius:15px !important;background:linear-gradient(100deg,#7725ff,#5813e9) !important;color:#fff !important;font-size:22px !important;font-weight:700 !important;box-shadow:0 8px 20px #6a20f01c !important}
+.management-login .edu-divider{display:flex !important;align-items:center !important;gap:22px !important;margin:29px 0 22px !important;color:#10153b !important;font-size:16px !important}
+.management-login .edu-divider:before,.management-login .edu-divider:after{content:'';height:1px;flex:1;background:#dedff0}
+.management-login .edu-divider span{white-space:nowrap}
+.management-login .edu-social-row{display:grid !important;grid-template-columns:1fr 1fr !important;gap:18px !important}
+.management-login .edu-social-row button{display:flex !important;align-items:center !important;justify-content:center !important;gap:13px !important;min-width:0 !important;min-height:68px !important;padding:12px 10px !important;border:1.5px solid #dfe1f4 !important;border-radius:14px !important;background:#ffffff80 !important;color:#111638 !important;font-size:16px !important;white-space:nowrap !important}
+.management-login .google-g{font-size:31px !important;font-weight:800 !important;color:#4285f4 !important}
+.management-login .microsoft-mark{font-size:30px !important;color:#f25022 !important}
+.management-login .edu-admin-help{font-size:20px !important;color:#68739d !important;margin:30px 0 0 !important}
+.management-login .edu-login-footer{display:none !important}
+@media(max-width:1100px){
+ .management-login .edu-login-visual{padding:38px 30px 26px !important}
+ .management-login .edu-login-logo{gap:14px !important}
+ .management-login .edu-login-logo b{font-size:32px !important}
+ .management-login .edu-login-logo small{font-size:14px !important}
+ .management-login .edu-management-benefits>div>span{width:58px;height:58px;font-size:28px}
+ .management-login .edu-management-benefits b{font-size:16px}
+ .management-login .edu-management-benefits small{font-size:13px}
+ .management-login .edu-login-card{padding:48px 30px 32px !important}
+ .management-login .edu-language{right:25px !important;top:24px !important}
+ .management-login .edu-social-row button{font-size:13px !important;white-space:normal !important}
+}
+@media(max-width:760px){
+ .management-login{grid-template-columns:1fr !important}
+ .management-login .edu-login-visual{min-height:auto !important;padding:28px 25px 26px !important}
+ .management-login .edu-login-visual-inner{min-height:0 !important}
+ .management-login .edu-login-title{margin:25px 0 16px !important}
+ .management-login .edu-login-title h1{font-size:38px !important}
+ .management-login .edu-management-benefits{grid-template-columns:1fr !important;gap:12px !important}
+ .management-login .edu-management-benefits>div>span{width:48px;height:48px;font-size:24px}
+ .management-login .edu-management-benefits b{font-size:14px}
+ .management-login .edu-management-benefits small{font-size:12px}
+ .management-login .edu-login-slogan{display:none !important}
+ .management-login .edu-login-form-panel{min-height:auto !important;padding:80px 18px 28px !important}
+ .management-login .edu-language{top:18px !important;right:18px !important}
+ .management-login .edu-login-card{width:100% !important;padding:30px 22px !important;border-radius:24px !important}
+ .management-login .edu-management-emblem{width:100px;height:90px}
+ .management-login .edu-management-emblem svg{width:60px !important;height:60px !important}
+ .management-login .edu-login-card h2{font-size:28px !important}
+ .management-login .edu-form-subtitle{font-size:14px !important;margin-bottom:24px !important}
+ .management-login .edu-login-fields>label{font-size:14px !important;margin:16px 0 7px !important}
+ .management-login .edu-input-wrap{min-height:52px !important;padding:0 13px !important;gap:10px !important}
+ .management-login .edu-input-wrap input{font-size:15px !important}
+ .management-login .edu-form-options,.management-login .edu-form-options label,.management-login .edu-form-options button{font-size:13px !important}
+ .management-login .edu-form-options input{width:21px !important;height:21px !important}
+ .management-login .edu-submit{min-height:54px !important;font-size:17px !important}
+ .management-login .edu-social-row{gap:9px !important}
+ .management-login .edu-social-row button{min-height:52px !important;font-size:11px !important;gap:6px !important}
+ .management-login .edu-admin-help{font-size:14px !important;margin-top:22px !important}
+}
+@media(max-width:390px){.management-login .edu-social-row{grid-template-columns:1fr !important}}
