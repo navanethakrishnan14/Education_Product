@@ -400,3 +400,55 @@ body { font-size: 15px; line-height: 1.6; }
   .role-reference-brand{display:none}
   .role-reference-glass{background:transparent !important}
 }
+
+
+/* FINAL reference palette: preserve the original campus design and swap teal accents to purple */
+.role-reference-page{
+  background-image:linear-gradient(115deg,rgba(235,247,249,.12),rgba(255,255,255,.08)),url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=2400&q=90') !important;
+  background-size:cover !important;background-position:center !important;color:#0b1039 !important;
+}
+.role-reference-glass{
+  background:rgba(255,255,255,.42) !important;
+  border-color:rgba(255,255,255,.78) !important;
+  box-shadow:0 15px 60px rgba(18,42,62,.12) !important;
+}
+.role-reference-brand{
+  background:linear-gradient(150deg,rgba(255,255,255,.94),rgba(248,244,255,.92)) !important;
+  color:#0d173c !important;
+}
+.edupro-brand,.role-reference-brand h1,.role-benefits b{color:#0b1039 !important}
+.edupro-brand small,.role-reference-intro,.role-benefits small{color:#4e5b80 !important}
+.edupro-mark,.edupro-mark svg:first-child{color:#6425a8 !important}
+.edupro-mark svg:first-child{fill:#6425a8 !important}
+.role-reference-brand h1 span{color:#6425a8 !important}
+.school-pill{
+  background:linear-gradient(90deg,#f0e5ff,#e8d9ff) !important;
+  color:#4c2676 !important;border-color:#eadcff !important;
+}
+.school-pill svg{color:#6425a8 !important}
+.benefit-icon{
+  background:linear-gradient(145deg,#f0e5ff,#e3d1ff) !important;
+  color:#6425a8 !important;border-color:transparent !important;
+}
+.role-wave{background:linear-gradient(145deg,#b995ed,#6425a8 62%,#421777) !important}
+.role-wave:before{background:linear-gradient(130deg,#8b4bd1,#59219b) !important}
+.role-reference-heading h2{color:#080d36 !important}
+.role-reference-heading p{color:#4f5d85 !important}
+.role-language{background:rgba(255,255,255,.96) !important;color:#182143 !important;border-color:#dce5ec !important}
+/* Keep the four distinct card themes from the supplied reference image. */
+.reference-role-card{background:rgba(255,255,255,.91) !important;border-color:rgba(255,255,255,.9) !important;color:#0b1039 !important;box-shadow:0 8px 22px rgba(33,47,76,.06) !important}
+.reference-role-card>b{color:#0b1039 !important}
+.reference-role-card p{color:#536184 !important}
+.reference-role-card.management .reference-art,
+.management .reference-art{background:linear-gradient(135deg,#e9dcff,#d8c2fa) !important;color:#6425a8 !important}
+.management .reference-arrow{background:#eadcff !important;color:#6425a8 !important}
+.management .reference-login{background:linear-gradient(100deg,#7b3bc0,#541a98) !important;color:#fff !important}
+.faculty .reference-art{background:linear-gradient(135deg,#ffedc9,#fff7e6) !important;color:#e97509 !important}
+.faculty .reference-arrow{background:#fff0d1 !important;color:#f0780b !important}
+.faculty .reference-login{background:linear-gradient(100deg,#ff9822,#ff7900) !important;color:#fff !important}
+.parent .reference-art{background:linear-gradient(135deg,#ffe0e4,#fff0f1) !important;color:#ef3748 !important}
+.parent .reference-arrow{background:#ffe0e3 !important;color:#ef3748 !important}
+.parent .reference-login{background:linear-gradient(100deg,#ff5b68,#ef3447) !important;color:#fff !important}
+.student .reference-art{background:linear-gradient(135deg,#e5d8ff,#f3edff) !important;color:#6a18db !important}
+.student .reference-arrow{background:#e8d9ff !important;color:#6a18db !important}
+.student .reference-login{background:linear-gradient(100deg,#7120e7,#5708c9) !important;color:#fff !important}
