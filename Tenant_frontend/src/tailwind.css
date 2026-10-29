@@ -322,3 +322,19 @@ body { font-size: 15px; line-height: 1.6; }
 @media(max-width:1100px){.role-reference-page{padding:22px}.role-reference-glass{grid-template-columns:34% 66%}.role-reference-brand{padding:35px 25px 30px}.role-reference-brand h1{font-size:clamp(30px,3.4vw,40px)}.role-reference-intro{font-size:14px}.role-reference-main{padding:86px 4% 25px}.reference-role-card{padding:17px;min-height:285px}.reference-art{height:100px;width:170px}.reference-role-card p{font-size:13px}.role-reference-heading h2{font-size:34px}.role-reference-heading p{font-size:17px}}
 @media(max-width:760px){.role-reference-page{padding:12px;background-position:center}.role-reference-glass{grid-template-columns:1fr;min-height:calc(100vh - 24px);border-radius:17px}.role-reference-brand{display:none}.role-reference-main{padding:94px 18px 24px}.role-reference-heading{margin-bottom:24px}.role-reference-heading h2{font-size:32px}.role-reference-heading p{font-size:16px}.role-reference-grid{gap:12px}.reference-role-card{min-height:255px;padding:14px;border-radius:15px}.reference-art{width:100%;max-width:100%;height:88px;border-radius:14px}.reference-art svg{width:52px;height:52px}.reference-arrow{width:34px;height:34px;right:12px;top:12px}.reference-arrow svg{width:18px}.reference-role-card>b{font-size:16px}.reference-role-card p{font-size:12px;line-height:1.45}.reference-login{min-height:38px;padding:8px 10px;font-size:11px;border-radius:9px}.role-language{top:15px;right:15px;padding:8px 12px}.role-language span{margin-left:0}}
 @media(max-width:390px){.role-reference-main{padding-left:12px;padding-right:12px}.role-reference-heading h2{font-size:28px}.role-reference-grid{gap:9px}.reference-role-card{padding:11px;min-height:250px}.reference-role-card>b{font-size:15px}.reference-role-card p{font-size:11px}.reference-login{font-size:10px}.reference-art{height:78px}}
+
+
+/* Reference-match refinements: illustrated role art, proportions and left-panel wave */
+.reference-art{overflow:hidden;position:relative;isolation:isolate}
+.role-emoji-art{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:76px;line-height:1;filter:drop-shadow(0 8px 5px rgba(15,35,50,.15));transform:translateY(2px)}
+.management .reference-art{background:linear-gradient(135deg,#c9fbf3,#e1fff9)}
+.faculty .reference-art{background:linear-gradient(135deg,#ffedc9,#fff7e6)}
+.parent .reference-art{background:linear-gradient(135deg,#ffe0e4,#fff0f1)}
+.student .reference-art{background:linear-gradient(135deg,#e5d8ff,#f3edff)}
+.role-reference-brand{border-radius:0;clip-path:none}
+.role-reference-brand:after{content:"";position:absolute;z-index:0;pointer-events:none;top:-2%;right:-22%;width:42%;height:105%;border-radius:0 0 0 100%;background:rgba(255,255,255,.2);transform:rotate(7deg)}
+.role-reference-brand>*:not(.role-wave){position:relative;z-index:1}
+.role-wave{z-index:0}
+.role-reference-brand .role-wave{z-index:0}
+@media(min-width:761px){.role-reference-main{padding-left:6.6%;padding-right:6.6%}.role-reference-grid{gap:15px 20px}.reference-role-card{min-height:314px}.reference-art{height:116px}.reference-login{min-height:44px}}
+@media(max-width:760px){.role-emoji-art{font-size:54px}}
