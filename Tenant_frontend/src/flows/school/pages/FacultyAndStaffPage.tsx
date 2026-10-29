@@ -179,7 +179,7 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
   if (editingRecord) return <div className="space-y-6 text-slate-900">
     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div><div className="mb-2 flex items-center gap-2 text-sm text-slate-500"><span>Faculty &amp; Staff</span><span>›</span><span className="text-slate-700">Edit Member</span></div><h1 className="text-3xl font-black tracking-tight sm:text-[32px]">Edit Faculty / Staff</h1><p className="mt-1 text-base text-slate-600">Update the member's details using the same form as creating a new account.</p><p className="mt-1 text-xs text-slate-400">{institution}</p></div>
-      <button type="button" onClick={()=>{setEditingRecord(null);setForm(initial);setStep(0);setError('');setNotice('');}} className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold hover:bg-slate-50"><ArrowLeft size={17}/> Back to Directory</button>
+      <button type="button" onClick={()=>{setEditingRecord(null);setShowForm(false);setForm(initial);setStep(0);setError('');setNotice('');}} className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold hover:bg-slate-50"><ArrowLeft size={17}/> Back to Directory</button>
     </div>
     {notice&&<div role="status" className="rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm font-medium text-teal-800">{notice}</div>}
     {error&&<div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700">{error}</div>}
