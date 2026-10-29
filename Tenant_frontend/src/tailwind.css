@@ -957,3 +957,27 @@ body { font-size: 15px; line-height: 1.6; }
   }
   .reference-role-card{padding:8px !important}
 }
+
+
+/* Let role cards flex to fill the available grid width while preserving the gap */
+.role-reference-grid{
+  width:min(100%,560px) !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  column-gap:22px !important;
+  row-gap:22px !important;
+}
+.reference-role-card{
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  justify-self:stretch !important;
+  box-sizing:border-box !important;
+}
+@media(max-width:640px){
+  .role-reference-grid{
+    width:100% !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    column-gap:14px !important;
+    row-gap:14px !important;
+  }
+}
