@@ -452,3 +452,13 @@ body { font-size: 15px; line-height: 1.6; }
 .student .reference-art{background:linear-gradient(135deg,#e5d8ff,#f3edff) !important;color:#6a18db !important}
 .student .reference-arrow{background:#e8d9ff !important;color:#6a18db !important}
 .student .reference-login{background:linear-gradient(100deg,#7120e7,#5708c9) !important;color:#fff !important}
+
+
+/* Student login button: use teal as requested */
+.student .reference-login{
+  background:linear-gradient(100deg,#0faaa4,#07847f) !important;
+  color:#fff !important;
+}
+.student .reference-login:hover{
+  background:linear-gradient(100deg,#0b9691,#066f6b) !important;
+}
