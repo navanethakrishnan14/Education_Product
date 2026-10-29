@@ -29,7 +29,38 @@ function SiteFooter() {
 }
 function Landing() {
   const nav = useNavigate();
-  return <div className="landing-shell"><SiteHeader/><div className="layout"><aside className="brand-side"><div className="side-copy"><div className="hero-pills"><span className="eyebrow"><i/> SMARTER EDUCATION. BETTER TOMORROW.</span><span className="release-pill">v4.2 Enterprise Release</span></div><h1>One Platform.<br/><span>Every Possibility.</span></h1><p>Bringing administrators, educators, parents, and students together in one unified, real-time learning ecosystem.</p></div><div className="network-art"><div className="feature f1"><span className="feature-icon cyan"><Microscope size={20}/></span><span><b>Virtual Lab Simulation</b><small><i className="tiny-check"/> Interactive Learning</small></span></div><div className="feature f2"><span className="feature-icon violet"><Globe2 size={20}/></span><span><b>Global Campus Network</b><small><Network size={12}/> Multi-Institution Mesh</small></span></div><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="orbit orbit-three"/><span className="orbit-dot dot-a"/><span className="orbit-dot dot-b"/><span className="orbit-dot dot-c"/><span className="orbit-dot dot-d"/><div className="core"><span><BookOpen size={29}/></span><b>KNOWLEDGE CORE</b><small><i/> Synced Campus</small></div><div className="feature f3"><span className="feature-icon lilac"><PencilRuler size={20}/></span><span><b>Collaborative Canvas</b><small><HeartHandshake size={12}/> Real-Time Studio</small></span></div><div className="feature f4"><span className="feature-icon teal"><Award size={20}/></span><span><b>Scholar Identity &amp; Honors</b><small><Award size={12}/> Academic Accreditation</small></span></div><div className="chips"><span><Network size={12}/> Unified Campus Architecture</span><span><Brain size={12}/> Intelligent Learning Experience</span><span><BookOpen size={12}/> Comprehensive Digital Curricula</span></div></div><div className="side-bottom"><p>Empowering global universities &amp; K-12 school districts worldwide.</p><div className="proof"><span><ShieldCheck size={11}/> SOC-2 Type II</span><span><ShieldCheck size={11}/> FERPA Compliant</span><span><ShieldCheck size={11}/> ISO 27001</span></div><small>© 2025 EduSphere Inc. All rights reserved.</small></div></aside><main className="portal-side"><section className="portal-content"><div className="eyebrow">YOUR EDUCATION PORTAL</div><h2>Welcome back</h2><p className="intro">Select your role to access your personalized workspace.</p><div className="role-grid">{roles.map(r=>{const Icon=r.icon;return <button className={'role-card '+r.color+'-card'} key={r.name} onClick={()=>nav('/login/'+r.name.toLowerCase())}><span className={'role-icon '+r.color}><Icon size={21}/></span><b>{r.name}{r.name==='Faculty'?' & Staff':''}</b><p>{r.desc}</p><span className="continue">Continue <ArrowRight size={16}/></span></button>})}</div><button className="directory" onClick={()=>nav('/login/management')}><CheckSquare size={16}/><span>Universal SSO Federated Directory</span><b>Fast-track <ArrowRight size={14}/></b></button></section></main></div><SiteFooter/></div>;
+  const cards = [
+    { name: 'Management', desc: 'Manage school operations, users, and overall academic activities.', color: 'management', icon: <Building2 size={76} strokeWidth={1.7} /> },
+    { name: 'Faculty', desc: 'Take attendance, manage classes, enter marks and track student performance.', color: 'faculty', icon: <GraduationCap size={76} strokeWidth={1.7} /> },
+    { name: 'Parent', desc: "Track your child’s progress, attendance, exams and stay updated.", color: 'parent', icon: <HeartHandshake size={76} strokeWidth={1.7} /> },
+    { name: 'Student', desc: 'Access your timetable, homework, exams and learning materials in one place.', color: 'student', icon: <BookOpen size={76} strokeWidth={1.7} /> },
+  ];
+  return <main className="role-reference-page">
+    <div className="role-reference-glass">
+      <aside className="role-reference-brand">
+        <div className="edupro-brand"><span className="edupro-mark"><GraduationCap size={40}/><BookOpen size={35}/></span><span><b>EduPro</b><small>School Management System</small></span></div>
+        <div className="school-pill"><Building2 size={17}/> School Management Simplified</div>
+        <h1>One Platform<br/>for a <span>Brighter<br/>Tomorrow</span></h1>
+        <p className="role-reference-intro">Empowering Schools, Teachers, Students and Parents to Learn, Manage and Grow Together.</p>
+        <div className="role-benefits">
+          <div><span className="benefit-icon"><Network size={25}/></span><span><b>Manage Academics</b><small>Classes, Exams, Timetable</small></span></div>
+          <div><span className="benefit-icon"><CheckSquare size={25}/></span><span><b>Track Progress</b><small>Attendance, Marks, Reports</small></span></div>
+          <div><span className="benefit-icon"><HeartHandshake size={25}/></span><span><b>Stay Connected</b><small>Parents, Students, Teachers</small></span></div>
+        </div>
+        <div className="role-wave"><span>Better Education<br/>Brighter Tomorrow</span><i/></div>
+      </aside>
+      <section className="role-reference-main">
+        <button className="role-language" type="button"><Globe2 size={18}/> English <span>⌄</span></button>
+        <div className="role-reference-heading"><h2>Choose Your Role</h2><p>Login to your account to continue</p></div>
+        <div className="role-reference-grid">
+          {cards.map(card => <button type="button" key={card.name} className={'reference-role-card '+card.color} onClick={() => nav('/login/'+card.name.toLowerCase())}>
+            <span className="reference-art">{card.icon}</span><span className="reference-arrow"><ArrowRight size={23}/></span>
+            <b>{card.name}</b><p>{card.desc}</p><span className="reference-login">Login as {card.name} <ArrowRight size={19}/></span>
+          </button>)}
+        </div>
+      </section>
+    </div>
+  </main>;
 }
 function Workspace() {
   const nav = useNavigate();
