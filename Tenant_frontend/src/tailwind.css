@@ -868,3 +868,35 @@ body { font-size: 15px; line-height: 1.6; }
   .role-reference-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
   .reference-role-card{aspect-ratio:1 / 1 !important;min-height:0 !important}
 }
+
+
+/* Reduce square role-card footprint while retaining the 2x2 layout */
+.role-reference-main{
+  padding-left:clamp(24px,3vw,48px) !important;
+  padding-right:clamp(24px,3vw,48px) !important;
+}
+.role-reference-grid{
+  width:min(100%,820px) !important;
+  margin-inline:auto !important;
+  gap:12px !important;
+}
+.reference-role-card{
+  width:100% !important;
+  max-width:390px !important;
+  justify-self:center !important;
+  padding:clamp(12px,1.2vw,18px) !important;
+}
+.reference-art{
+  width:min(68%,155px) !important;
+}
+.reference-role-card>b{font-size:clamp(15px,1.1vw,19px) !important}
+.reference-role-card p{font-size:clamp(11px,.85vw,14px) !important;line-height:1.35 !important}
+.reference-login{min-height:34px !important;font-size:11px !important}
+@media(max-width:640px){
+  .role-reference-grid{width:100% !important;gap:9px !important}
+  .reference-role-card{padding:9px !important}
+  .reference-art{width:68% !important}
+  .reference-role-card>b{font-size:12px !important}
+  .reference-role-card p{font-size:9px !important}
+  .reference-login{min-height:28px !important;font-size:8px !important;padding:6px !important}
+}
