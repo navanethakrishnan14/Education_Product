@@ -534,3 +534,94 @@ body { font-size: 15px; line-height: 1.6; }
 @media(min-width:1200px){.edu-login-shell{grid-template-columns:1.02fr .98fr}.edu-login-visual{padding-top:28px}.edu-login-title{margin-top:30px}.edu-role-list{gap:8px}.edu-role-option{min-height:59px}}
 @media(max-width:760px){.edu-login-shell{grid-template-columns:1fr}.edu-login-visual{min-height:auto;padding:20px 20px 16px}.edu-login-visual-inner{min-height:auto;width:min(100%,520px)}.edu-login-visual:after{top:-10%;height:90%}.edu-login-title{margin:18px 0 12px}.edu-login-title h1{font-size:27px}.edu-role-list{grid-template-columns:1fr 1fr;gap:7px}.edu-role-option{min-height:65px;padding:7px;gap:7px}.edu-role-icon{width:34px;height:34px;font-size:20px}.edu-role-copy b{font-size:10px}.edu-role-copy small{font-size:8px}.edu-role-arrow{width:24px;height:24px}.edu-login-slogan{display:none}.edu-login-form-panel{min-height:650px;padding:65px 22px 65px}.edu-login-card{max-width:440px}.edu-login-footer{bottom:18px}}
 @media(max-width:390px){.edu-role-list{grid-template-columns:1fr}.edu-role-option{min-height:52px}.edu-login-form-panel{padding-left:16px;padding-right:16px}.edu-social-row{grid-template-columns:1fr}}
+
+
+/* Compact role cards styled to match the latest supplied reference */
+.role-reference-grid{
+  gap:9px 11px !important;
+  max-width:100% !important;
+  align-content:center;
+}
+.reference-role-card{
+  min-height:0 !important;
+  height:100%;
+  padding:12px 16px 11px !important;
+  border-radius:16px !important;
+  background:rgba(255,255,255,.94) !important;
+  box-shadow:0 7px 22px rgba(25,30,65,.09) !important;
+  border:1px solid rgba(255,255,255,.95) !important;
+}
+.reference-art{
+  width: min(100%, 150px) !important;
+  height:66px !important;
+  max-width:72% !important;
+  margin:0 0 5px !important;
+  border-radius:14px !important;
+  display:grid !important;
+  place-items:center !important;
+}
+.role-emoji-art{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  height:100% !important;
+  font-size:48px !important;
+  line-height:1 !important;
+  filter:drop-shadow(0 4px 3px rgba(20,20,40,.12));
+}
+.reference-arrow{
+  width:30px !important;
+  height:30px !important;
+  top:15px !important;
+  right:15px !important;
+}
+.reference-arrow svg{width:17px;height:17px}
+.reference-role-card>b{
+  font-size:16px !important;
+  line-height:1.2 !important;
+}
+.reference-role-card p{
+  font-size:11px !important;
+  line-height:1.3 !important;
+  margin:3px 0 7px !important;
+  max-width:100% !important;
+}
+.reference-login{
+  width:min(100%,190px) !important;
+  min-height:27px !important;
+  padding:6px 11px !important;
+  border-radius:8px !important;
+  font-size:10px !important;
+  font-weight:600 !important;
+}
+.reference-login svg{width:14px;height:14px}
+.management .reference-art{background:linear-gradient(135deg,#f0e5ff,#e4d3ff) !important;color:#6324bc !important}
+.management .reference-arrow{background:#eadcff !important;color:#6b25c5 !important}
+.management .reference-login{background:linear-gradient(100deg,#6d20d8,#4d10b7) !important;color:#fff !important}
+.faculty .reference-art{background:linear-gradient(135deg,#fff0d3,#ffe5b8) !important;color:#f07808 !important}
+.faculty .reference-arrow{background:#fff0d1 !important;color:#f07808 !important}
+.faculty .reference-login{background:linear-gradient(100deg,#ff9822,#ff7900) !important;color:#fff !important}
+.parent .reference-art{background:linear-gradient(135deg,#ffe4e7,#ffd9df) !important;color:#f02f45 !important}
+.parent .reference-arrow{background:#ffe0e3 !important;color:#ef3748 !important}
+.parent .reference-login{background:linear-gradient(100deg,#ff5b68,#ef3447) !important;color:#fff !important}
+.student .reference-art{background:linear-gradient(135deg,#d9faf5,#c6f5ee) !important;color:#009b94 !important}
+.student .reference-arrow{background:#d5faf4 !important;color:#009b94 !important}
+.student .reference-login{background:linear-gradient(100deg,#0caaa3,#00877f) !important;color:#fff !important}
+@media(min-width:761px){
+  .role-reference-main{padding:76px 5% 28px !important}
+  .role-reference-heading{margin-bottom:24px !important}
+  .role-reference-heading h2{font-size:clamp(30px,2.7vw,40px) !important}
+  .role-reference-heading p{font-size:17px !important}
+  .role-reference-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+}
+@media(max-width:760px){
+  .role-reference-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:9px !important}
+  .reference-role-card{padding:10px !important}
+  .reference-art{height:58px !important;max-width:76% !important}
+  .role-emoji-art{font-size:38px !important}
+  .reference-role-card>b{font-size:14px !important}
+  .reference-role-card p{font-size:10px !important}
+  .reference-arrow{top:10px !important;right:10px !important;width:26px !important;height:26px !important}
+  .reference-login{font-size:9px !important;padding:6px 8px !important}
+}
