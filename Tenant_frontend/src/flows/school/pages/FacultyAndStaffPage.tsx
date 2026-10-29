@@ -29,7 +29,6 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
   const [search,setSearch] = useState('');
   const [showForm,setShowForm] = useState(false);
   const [editingRecord,setEditingRecord] = useState<StaffRecord | null>(null);
-  const [editForm,setEditForm] = useState({name:'',email:'',designation:'',department:'',status:'Active' as 'Active'|'Inactive'});
   const base = String(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').trim().replace(/\/$/,'');
   const token = localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token') || '';
   const headers = useMemo(()=>({ 'Content-Type':'application/json', Accept:'application/json', Authorization:'Bearer '+token }),[token]);
@@ -58,7 +57,7 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
     const name=form.firstName.trim();
     try {
       const response=await fetch(base+'/records/accounts',{method:'POST',headers,body:JSON.stringify({
-        module:'Faculty & Staff', name, email:form.email.trim().toLowerCase(), role:form.staffType,
+        name, email:form.email.trim().toLowerCase(), role:form.staffType,
         designation:form.designation,
         department:form.department, joiningDate:form.joiningDate, dob:form.dob || null, gender:form.gender,
         qualification:form.qualification, experience:form.experience, employmentType:form.employmentType,
@@ -79,36 +78,84 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
     finally { setBusy(false); }
   }
   function startEdit(record: StaffRecord) {
+    let saved: Partial<Form> = {};
+    try {
+      const parsed = record.notes ? JSON.parse(record.notes) as Record<string, unknown> : {};
+      saved = {
+        staffType: parsed.staffType === 'STAFF' ? 'STAFF' : 'FACULTY',
+        joiningDate: typeof parsed.joiningDate === 'string' ? parsed.joiningDate.slice(0, 10) : '',
+        dob: typeof parsed.dateOfBirth === 'string' ? parsed.dateOfBirth.slice(0, 10) : '',
+        gender: typeof parsed.gender === 'string' && parsed.gender ? parsed.gender : 'Male',
+        qualification: typeof parsed.qualification === 'string' ? parsed.qualification : '',
+        experience: typeof parsed.experience === 'string' ? parsed.experience : '',
+        employmentType: typeof parsed.employmentType === 'string' && parsed.employmentType ? parsed.employmentType : 'Full-time',
+        subject: typeof parsed.subject === 'string' ? parsed.subject : '',
+        phone: typeof parsed.phone === 'string' ? parsed.phone : '',
+        emergencyContact: typeof parsed.emergencyContact === 'string' ? parsed.emergencyContact : '',
+        address: typeof parsed.address === 'string' ? parsed.address : '',
+        bloodGroup: typeof parsed.bloodGroup === 'string' ? parsed.bloodGroup : '',
+        maritalStatus: typeof parsed.maritalStatus === 'string' ? parsed.maritalStatus : '',
+        profilePhoto: typeof parsed.profilePhoto === 'string' ? parsed.profilePhoto : '',
+      };
+    } catch {
+      saved = {};
+    }
     const [designation = '', department = ''] = (record.category || '').split(' · ');
+    setForm({
+      ...initial,
+      ...saved,
+      firstName: record.name || '',
+      email: record.email || '',
+      designation,
+      department,
+    });
+    setStep(0);
     setEditingRecord(record);
-    setEditForm({ name: record.name || '', email: record.email || '', designation, department, status: record.status || 'Active' });
+    setShowForm(true);
     setError('');
     setNotice('');
-    setShowForm(false);
   }
   async function saveEdit(e: FormEvent) {
     e.preventDefault();
     if (!editingRecord) return;
-    if (!editForm.name.trim()) { setError('Enter the faculty/staff full name.'); return; }
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(editForm.email.trim())) { setError('Enter a valid email address.'); return; }
-    if (!editForm.designation.trim() || !editForm.department.trim()) { setError('Enter both designation and department.'); return; }
+    const issue = validateStep();
+    if (issue) { setError(issue); return; }
     setBusy(true); setError(''); setNotice('');
     try {
+      const notes = JSON.stringify({
+        staffType: form.staffType,
+        joiningDate: form.joiningDate,
+        dateOfBirth: form.dob,
+        gender: form.gender,
+        qualification: form.qualification,
+        experience: form.experience,
+        employmentType: form.employmentType,
+        subject: form.subject,
+        phone: form.phone.trim(),
+        emergencyContact: form.emergencyContact,
+        address: form.address,
+        bloodGroup: form.bloodGroup,
+        maritalStatus: form.maritalStatus,
+        profilePhoto: form.profilePhoto,
+      });
       const response = await fetch(base + '/records/' + encodeURIComponent(editingRecord.id), {
         method: 'PUT', headers,
         body: JSON.stringify({
           module: 'Faculty & Staff',
-          name: editForm.name.trim(),
-          email: editForm.email.trim().toLowerCase(),
-          category: editForm.designation.trim() + ' · ' + editForm.department.trim(),
-          status: editForm.status,
-          notes: editingRecord.notes || '',
+          name: form.firstName.trim(),
+          email: form.email.trim().toLowerCase(),
+          category: form.designation.trim() + ' · ' + form.department.trim(),
+          status: editingRecord.status || 'Active',
+          notes,
         }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || 'Unable to update this faculty/staff member.');
       setNotice('Faculty/staff details updated successfully.');
       setEditingRecord(null);
+      setForm(initial);
+      setStep(0);
+      setShowForm(false);
       await load();
     } catch (err) { setError(err instanceof Error ? err.message : 'Unable to update this record.'); }
     finally { setBusy(false); }
@@ -129,31 +176,45 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
   const field=(key:keyof Form)=>(e:ChangeEvent<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>)=>set(key,e.target.value as never);
   const text=(key:keyof Form,label:string,required=false,type='text',placeholder='')=><Field label={label} required={required}><input className={inputClass} type={type} value={String(form[key])} onChange={field(key)} placeholder={placeholder}/></Field>;
   const select=(key:keyof Form,label:string,options:string[],required=false)=><Field label={label} required={required}><select className={inputClass} value={String(form[key])} onChange={field(key)}><option value="">Select {label.toLowerCase()}</option>{options.map(o=><option key={o} value={o}>{o}</option>)}</select></Field>;
-  if (editingRecord) return <div className="mx-auto max-w-4xl space-y-6 text-slate-900">
+  if (editingRecord) return <div className="space-y-6 text-slate-900">
     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-      <div><div className="mb-2 text-sm text-slate-500">Faculty &amp; Staff <span className="mx-2">›</span> Edit Member</div><h1 className="text-3xl font-black tracking-tight">Edit Faculty / Staff</h1><p className="mt-1 text-sm text-slate-500">Update this member's directory details and portal account status.</p></div>
-      <button type="button" onClick={()=>{setEditingRecord(null);setError('');setNotice('');}} className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold hover:bg-slate-50"><ArrowLeft size={17}/> Back to Directory</button>
+      <div><div className="mb-2 flex items-center gap-2 text-sm text-slate-500"><span>Faculty &amp; Staff</span><span>›</span><span className="text-slate-700">Edit Member</span></div><h1 className="text-3xl font-black tracking-tight sm:text-[32px]">Edit Faculty / Staff</h1><p className="mt-1 text-base text-slate-600">Update the member's details using the same form as creating a new account.</p><p className="mt-1 text-xs text-slate-400">{institution}</p></div>
+      <button type="button" onClick={()=>{setEditingRecord(null);setForm(initial);setStep(0);setError('');setNotice('');}} className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold hover:bg-slate-50"><ArrowLeft size={17}/> Back to Directory</button>
     </div>
     {notice&&<div role="status" className="rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm font-medium text-teal-800">{notice}</div>}
     {error&&<div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700">{error}</div>}
-    <form onSubmit={saveEdit} className="space-y-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Full Name" required><input className={inputClass} value={editForm.name} onChange={e=>setEditForm(v=>({...v,name:e.target.value}))} required /></Field>
-        <Field label="Email Address" required><input className={inputClass} type="email" value={editForm.email} onChange={e=>setEditForm(v=>({...v,email:e.target.value}))} required /></Field>
-        <Field label="Designation" required><input className={inputClass} value={editForm.designation} onChange={e=>setEditForm(v=>({...v,designation:e.target.value}))} required /></Field>
-        <Field label="Department" required><input className={inputClass} value={editForm.department} onChange={e=>setEditForm(v=>({...v,department:e.target.value}))} required /></Field>
-        <Field label="Account Status" required><select className={inputClass} value={editForm.status} onChange={e=>setEditForm(v=>({...v,status:e.target.value as 'Active'|'Inactive'}))}><option value="Active">Active</option><option value="Inactive">Inactive</option></select></Field>
+    <form onSubmit={saveEdit} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,.06)]">
+      <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_330px]">
+        <div className="min-w-0 p-5 sm:p-8 lg:p-9">
+          <div className="relative mb-9 grid grid-cols-3 gap-3 sm:gap-5">{steps.map((title,i)=><div key={title} className="relative text-center"><div className="relative z-10 mx-auto grid h-10 w-10 place-items-center rounded-full border text-sm font-bold transition" style={{background:i<=step?'#4c1d95':'#ede9fe',color:i<=step?'white':'#102a43',borderColor:i<=step?'#4c1d95':'#ede9fe'}}>{i<step?<Check size={17}/>:i+1}</div><p className={'mt-2 text-[10px] font-semibold sm:text-xs '+(i===step?'text-slate-900':'text-slate-500')}>{title}</p>{i<2&&<span className="absolute left-[calc(50%+24px)] right-[calc(-50%+24px)] top-5 h-px bg-slate-200"/>}</div>)}</div>
+          <div className="mb-8 flex items-center gap-4"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-100 text-violet-800">{step===0?<CircleUserRound size={25}/>:step===1?<GraduationCap size={25}/>:<Mail size={25}/>}</span><div><h2 className="text-xl font-extrabold">{steps[step]}</h2><p className="mt-1 text-sm text-slate-500">{['Update the basic details of the faculty or staff member.','Update their position, department and professional background.','Update contact details and save your changes.'][step]}</p></div></div>
+          {step===0&&<div className="grid min-w-0 grid-cols-1 gap-x-7 gap-y-7 sm:grid-cols-2">
+            {text('firstName','Full Name',true,'text','Enter full name')}
+            {text('email','Employee Email ID',true,'email','employee@school.edu')}
+            <div className="sm:col-span-2"><Field label="Role Type" required><div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:max-w-[520px]">{([{value:'FACULTY',title:'Faculty',sub:'Teaching Staff',icon:GraduationCap},{value:'STAFF',title:'Staff',sub:'Non-Teaching',icon:Users}] as const).map(item=><button key={item.value} type="button" onClick={()=>set('staffType',item.value)} className={'flex min-h-[76px] min-w-0 items-center gap-3 rounded-xl border px-3 py-3 text-left '+(form.staffType===item.value?'border-violet-600 bg-violet-50/70 ring-1 ring-violet-600':'border-slate-200 hover:border-slate-300')}><span className={'grid h-9 w-9 shrink-0 place-items-center rounded-full '+(form.staffType===item.value?'bg-violet-700 text-white':'bg-slate-100 text-slate-500')}><item.icon size={18}/></span><span className="min-w-0"><b className="block text-sm">{item.title}</b><small className="block whitespace-normal text-xs leading-5 text-slate-500">{item.sub}</small></span></button>)}</div></Field></div>
+            {select('designation','Designation',['Principal','Vice Principal','Head of Department','Teacher','Assistant Teacher','Lecturer','Librarian','Lab Assistant','Accountant','Administrator','Office Assistant','Support Staff','Other'],true)}
+            {select('department','Department',['Administration','English','Tamil','Mathematics','Science','Physics','Chemistry','Biology','Computer Science','Social Science','Commerce','Physical Education','Library','Laboratory','Accounts','Transport','Other'],true)}
+            {text('joiningDate','Joining Date',true,'date')}
+            {text('dob','Date of Birth',true,'date')}
+            <div className="sm:col-span-2"><Field label="Gender" required><div className="mt-3 flex min-h-[48px] flex-nowrap items-center gap-x-6 whitespace-nowrap">{['Male','Female','Other'].map(g=><label key={g} className="inline-flex shrink-0 cursor-pointer items-center gap-2 text-sm"><input type="radio" name="gender" value={g} checked={form.gender===g} onChange={()=>set('gender',g)} className="h-4 w-4 accent-violet-700"/>{g}</label>)}</div></Field></div>
+            {select('maritalStatus','Marital Status',['Single','Married','Divorced','Widowed','Prefer not to say'])}
+            {select('bloodGroup','Blood Group',['A+','A-','B+','B-','AB+','AB-','O+','O-'])}
+          </div>}
+          {step===1&&<div className="grid min-w-0 grid-cols-1 gap-x-7 gap-y-7 sm:grid-cols-2">{select('employmentType','Employment Type',['Full-time','Part-time','Contract','Temporary','Visiting'],true)}{text('qualification','Highest Qualification',true,'text','e.g. M.Sc., B.Ed.')}{text('experience','Experience (years)',false,'number','e.g. 5')}{text('subject','Subject / Specialization',form.staffType==='FACULTY','text','e.g. Mathematics')}<div className="sm:col-span-2 rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">Professional contact information and residential address are collected in the next step.</div></div>}
+          {step===2&&<div className="grid gap-x-5 gap-y-5 sm:grid-cols-2">{text('phone','Phone Number',true,'tel','Enter phone number')}{text('emergencyContact','Emergency Contact',false,'tel','Emergency phone number')}<div className="sm:col-span-2"><Field label="Residential Address"><textarea className={inputClass+' min-h-28 resize-y'} value={form.address} onChange={field('address')} placeholder="Street, city, state, PIN code"/></Field></div><div className="sm:col-span-2 rounded-xl border border-violet-100 bg-violet-50 p-4 text-sm text-violet-900"><div className="flex gap-2"><Mail size={18} className="shrink-0"/><p><b>Employee login email:</b> The email ID entered in Basic Information will remain the login email for this account.</p></div></div></div>}
+        </div>
+        <aside className="border-t border-slate-100 bg-white p-5 sm:p-8 lg:border-l lg:border-t-0">
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_8px_28px_rgba(15,23,42,.04)]"><h3 className="flex items-center gap-3 font-extrabold"><span className="grid h-7 w-7 place-items-center rounded-full bg-violet-800 text-white"><CircleUserRound size={16}/></span>Profile Photo</h3><div className="mt-4 flex min-h-[250px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-5 text-center">{form.profilePhoto?<><img src={form.profilePhoto} alt="Staff profile preview" className="h-28 w-28 rounded-full object-cover ring-4 ring-white shadow"/><button type="button" onClick={()=>set('profilePhoto','')} className="mt-3 text-xs font-bold text-rose-600">Remove photo</button></>:<><span className="grid h-20 w-20 place-items-center rounded-full bg-violet-50 text-violet-700"><CircleUserRound size={42}/></span><p className="mt-4 font-bold">Upload Profile Photo</p><p className="mt-1 text-xs text-slate-500">JPG, PNG (Max 2 MB)</p></>}<label className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-bold hover:bg-slate-200"><Upload size={17}/> Choose File<input type="file" accept="image/jpeg,image/png" className="sr-only" onChange={onPhoto}/></label></div></div>
+          <div className="mt-5 rounded-2xl bg-violet-50/80 p-5"><h3 className="flex items-center gap-3 font-extrabold text-slate-800"><span className="grid h-7 w-7 place-items-center rounded-full bg-violet-700 text-white"><Info size={16}/></span>Guidelines</h3><ul className="mt-4 space-y-3 text-sm leading-5 text-slate-700"><li className="flex gap-3"><span className="font-black text-violet-600">•</span>Use a clear and professional photo.</li><li className="flex gap-3"><span className="font-black text-violet-600">•</span>Ensure the correct designation and department.</li><li className="flex gap-3"><span className="font-black text-violet-600">•</span>All required fields are marked with <b className="text-rose-500">*</b>.</li><li className="flex gap-3"><span className="font-black text-violet-600">•</span>Your changes are saved to the existing account.</li></ul></div>
+        </aside>
       </div>
-      <div className="flex flex-col-reverse justify-end gap-3 border-t border-slate-100 pt-5 sm:flex-row">
-        <button type="button" onClick={()=>{setEditingRecord(null);setError('');setNotice('');}} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold hover:bg-slate-50">Cancel</button>
-        <button type="submit" disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-900 px-6 py-3 text-sm font-bold text-white hover:bg-violet-800 disabled:opacity-60">{busy?'Saving…':<><Check size={17}/> Save Changes</>}</button>
-      </div>
+      <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:px-8">{step>0?<button type="button" onClick={()=>{setError('');setStep(s=>s-1);}} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 text-sm font-bold hover:bg-slate-200"><ArrowLeft size={17}/> Previous</button>:<button type="button" onClick={()=>{setEditingRecord(null);setForm(initial);setStep(0);setError('');}} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 text-sm font-bold hover:bg-slate-200"><X size={17}/> Cancel</button>}{step<2?<button type="button" onClick={next} className="inline-flex items-center gap-2 rounded-xl bg-violet-900 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-violet-800">Next <ArrowRight size={17}/></button>:<button disabled={busy} type="submit" className="inline-flex items-center gap-2 rounded-xl bg-violet-900 px-6 py-3 text-sm font-bold text-white hover:bg-violet-800 disabled:opacity-60">{busy?'Saving…':<><Check size={17}/> Save Changes</>}</button>}</div>
     </form>
   </div>;
   return <div className="space-y-6 text-slate-900">
     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-      <div><div className="mb-2 flex items-center gap-2 text-sm text-slate-500"><span>Faculty &amp; Staff</span><span>›</span><span className="text-slate-700">{showForm?'Create New':'Directory'}</span></div><h1 className="text-3xl font-black tracking-tight sm:text-[32px]">Create Faculty / Staff</h1><p className="mt-1 text-base text-slate-600">Add a new faculty or staff member to your school.</p><p className="mt-1 text-xs text-slate-400">{institution}</p></div>
-      <button type="button" onClick={()=>{setShowForm(!showForm);setError('');setNotice('');}} className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold shadow-sm hover:bg-slate-50">{showForm?<><ArrowLeft size={17}/> Back to List</>:<><Plus size={17}/> Add faculty / staff</>}</button>
+      <div><div className="mb-2 flex items-center gap-2 text-sm text-slate-500"><span>Faculty &amp; Staff</span><span>›</span><span className="text-slate-700">{showForm?'Create New':'Directory'}</span></div><h1 className="text-3xl font-black tracking-tight sm:text-[32px]">{showForm?'Create Faculty / Staff':'Faculty & Staff Directory'}</h1><p className="mt-1 text-base text-slate-600">{showForm?'Add a new faculty or staff member to your school.':'Manage faculty and staff accounts for your school.'}</p><p className="mt-1 text-xs text-slate-400">{institution}</p></div>
+      <button type="button" onClick={()=>{setShowForm(!showForm);setError('');setNotice('');setForm(initial);setStep(0);}} className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold shadow-sm hover:bg-slate-50">{showForm?<><ArrowLeft size={17}/> Back to List</>:<><Plus size={17}/> Add faculty / staff</>}</button>
     </div>
     {notice&&<div role="status" className="rounded-xl border border-teal-200 bg-violet-50 p-4 text-sm font-medium text-violet-800">{notice}</div>}
     {error&&<div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700">{error}</div>}
@@ -185,6 +246,6 @@ export default function FacultyAndStaffPage({ tenantId, institution }: Props) {
         </aside>
       </div>
       <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:px-8">{step>0?<button type="button" onClick={()=>{setError('');setStep(s=>s-1);}} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 text-sm font-bold hover:bg-slate-200"><ArrowLeft size={17}/> Previous</button>:<button type="button" onClick={()=>{setShowForm(false);setError('');}} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 text-sm font-bold hover:bg-slate-200"><X size={17}/> Cancel</button>}{step<2?<button type="button" onClick={next} className="inline-flex items-center gap-2 rounded-xl bg-violet-900 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-violet-800">Next <ArrowRight size={17}/></button>:<button disabled={busy} type="submit" className="inline-flex items-center gap-2 rounded-xl bg-violet-900 px-6 py-3 text-sm font-bold text-white hover:bg-violet-800 disabled:opacity-60">{busy?'Creating…':<><Check size={17}/> Send Setup Link & Create Account</>}</button>}</div>
-    </form>:<><div className="grid gap-4 sm:grid-cols-3"><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Total team members</p><p className="mt-3 text-3xl font-black">{records.length}</p></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Active accounts</p><p className="mt-3 text-3xl font-black text-violet-700">{records.filter(r=>r.status==='Active').length}</p></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Faculty / Staff</p><p className="mt-3 text-3xl font-black">{records.filter(r=>/faculty|teaching/i.test(r.category)).length} <span className="text-base text-slate-400">/ {records.filter(r=>!/faculty|teaching/i.test(r.category)).length}</span></p></div></div><div className="overflow-hidden rounded-3xl border border-slate-200 bg-white"><div className="flex flex-col gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="font-extrabold">Team Directory</h3><p className="mt-1 text-xs text-slate-500">Faculty and staff registered in this school</p></div><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name, email…" className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-violet-500 sm:w-64"/></div></div>{filtered.length===0?<div className="px-5 py-14 text-center"><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-violet-50 text-violet-700"><Users size={25}/></span><h4 className="mt-4 font-bold">No faculty or staff records yet</h4><p className="mt-1 text-sm text-slate-500">Add your first team member to get started.</p><button onClick={()=>setShowForm(true)} className="mt-4 rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-bold text-white">Add team member</button></div>:<div className="overflow-x-auto"><table className="w-full min-w-[800px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3">Name</th><th className="px-5 py-3">Email</th><th className="px-5 py-3">Designation / department</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-100">{filtered.map(r=><tr key={r.id} className="hover:bg-slate-50/70"><td className="px-5 py-4 font-bold">{r.name}</td><td className="px-5 py-4 text-slate-600">{r.email||'—'}</td><td className="px-5 py-4 text-slate-600">{r.category||'—'}</td><td className="px-5 py-4"><span className={'rounded-full px-2.5 py-1 text-xs font-bold '+(r.status==='Active'?'bg-violet-50 text-violet-700':'bg-slate-100 text-slate-600')}>{r.status}</span></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><button type="button" disabled={busy} onClick={()=>startEdit(r)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:border-violet-300 hover:bg-violet-50 disabled:opacity-50" aria-label={'Edit '+r.name}><Pencil size={14}/> Edit</button><button type="button" disabled={busy} onClick={()=>void deleteRecord(r)} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-50" aria-label={'Delete '+r.name}><Trash2 size={14}/> Delete</button></div></td></tr>)}</tbody></table></div>}</div></>}
+    </form>:<><div className="grid gap-4 sm:grid-cols-3"><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Total team members</p><p className="mt-3 text-3xl font-black">{records.length}</p></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Active accounts</p><p className="mt-3 text-3xl font-black text-violet-700">{records.filter(r=>r.status==='Active').length}</p></div><div className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-500">Faculty / Staff</p><p className="mt-3 text-3xl font-black">{records.filter(r=>/faculty|teaching/i.test(r.category)).length} <span className="text-base text-slate-400">/ {records.filter(r=>!/faculty|teaching/i.test(r.category)).length}</span></p></div></div><div className="overflow-hidden rounded-3xl border border-slate-200 bg-white"><div className="flex flex-col gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="font-extrabold">Team Directory</h3><p className="mt-1 text-xs text-slate-500">Faculty and staff registered in this school</p></div><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name, email…" className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-violet-500 sm:w-64"/></div></div>{filtered.length===0?<div className="px-5 py-14 text-center"><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-violet-50 text-violet-700"><Users size={25}/></span><h4 className="mt-4 font-bold">{search?'No matching faculty or staff records':'No faculty or staff records yet'}</h4><p className="mt-1 text-sm text-slate-500">Add your first team member to get started.</p><button onClick={()=>setShowForm(true)} className="mt-4 rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-bold text-white">Add team member</button></div>:<div className="overflow-x-auto"><table className="w-full min-w-[800px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3">Name</th><th className="px-5 py-3">Email</th><th className="px-5 py-3">Designation / department</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-100">{filtered.map(r=><tr key={r.id} className="hover:bg-slate-50/70"><td className="px-5 py-4 font-bold">{r.name}</td><td className="px-5 py-4 text-slate-600">{r.email||'—'}</td><td className="px-5 py-4 text-slate-600">{r.category||'—'}</td><td className="px-5 py-4"><span className={'rounded-full px-2.5 py-1 text-xs font-bold '+(r.status==='Active'?'bg-violet-50 text-violet-700':'bg-slate-100 text-slate-600')}>{r.status}</span></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><button type="button" disabled={busy} onClick={()=>startEdit(r)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:border-violet-300 hover:bg-violet-50 disabled:opacity-50" aria-label={'Edit '+r.name}><Pencil size={14}/> Edit</button><button type="button" disabled={busy} onClick={()=>void deleteRecord(r)} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-50" aria-label={'Delete '+r.name}><Trash2 size={14}/> Delete</button></div></td></tr>)}</tbody></table></div>}</div></>}
   </div>;
 }
