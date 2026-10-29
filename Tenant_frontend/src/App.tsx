@@ -30,10 +30,10 @@ function SiteFooter() {
 function Landing() {
   const nav = useNavigate();
   const cards = [
-    { name: 'Management', desc: 'Manage school operations, users, and overall academic activities.', color: 'management', icon: <Building2 size={76} strokeWidth={1.7} /> },
-    { name: 'Faculty', desc: 'Take attendance, manage classes, enter marks and track student performance.', color: 'faculty', icon: <GraduationCap size={76} strokeWidth={1.7} /> },
-    { name: 'Parent', desc: "Track your child’s progress, attendance, exams and stay updated.", color: 'parent', icon: <HeartHandshake size={76} strokeWidth={1.7} /> },
-    { name: 'Student', desc: 'Access your timetable, homework, exams and learning materials in one place.', color: 'student', icon: <BookOpen size={76} strokeWidth={1.7} /> },
+    { name: 'Management', desc: 'Manage school operations, users, and overall academic activities.', color: 'management', icon: <span className="role-emoji-art" aria-hidden="true">🏫</span> },
+    { name: 'Faculty', desc: 'Take attendance, manage classes, enter marks and track student performance.', color: 'faculty', icon: <span className="role-emoji-art" aria-hidden="true">👩‍🏫</span> },
+    { name: 'Parent', desc: "Track your child’s progress, attendance, exams and stay updated.", color: 'parent', icon: <span className="role-emoji-art" aria-hidden="true">👨‍👩‍👧</span> },
+    { name: 'Student', desc: 'Access your timetable, homework, exams and learning materials in one place.', color: 'student', icon: <span className="role-emoji-art" aria-hidden="true">🎓</span> },
   ];
   return <main className="role-reference-page">
     <div className="role-reference-glass">
