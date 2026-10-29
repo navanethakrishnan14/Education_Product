@@ -1,5 +1,5 @@
 import { ArrowRight, BookOpen, GraduationCap, HeartHandshake, ShieldCheck, Landmark, Settings, Globe2, Network, PanelsTopLeft, HelpCircle, CheckSquare, Microscope, Award, PencilRuler, Brain, Building2 } from 'lucide-react';
-import { Link, Route, Routes, useNavigate, Navigate } from 'react-router-dom';
+import { Link, Route, Routes, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import ManagementLogin from './ManagementLogin';
 import SchoolFlow from './flows/school/SchoolFlow';
@@ -53,7 +53,7 @@ function Landing() {
         <button className="role-language" type="button"><Globe2 size={18}/> English <span>⌄</span></button>
         <div className="role-reference-heading"><h2>Choose Your Role</h2><p>Login to your account to continue</p></div>
         <div className="role-reference-grid">
-          {cards.map(card => <button type="button" key={card.name} className={'reference-role-card '+card.color} onClick={() => nav('/login/'+card.name.toLowerCase())}>
+          {cards.map(card => <button type="button" key={card.name} className={'reference-role-card '+card.color} onClick={() => nav('/login/'+card.name.toLowerCase(), { state: { roleSelected: true, role: card.name } })}>
             <span className="reference-art">{card.icon}</span><span className="reference-arrow"><ArrowRight size={23}/></span>
             <b>{card.name}</b><p>{card.desc}</p><span className="reference-login">Login as {card.name} <ArrowRight size={19}/></span>
           </button>)}
@@ -130,10 +130,16 @@ function Workspace() {
   }
   return <main className="workspace-page"><header className="workspace-header"><Brand/><button className="logout" onClick={logout}>Sign out</button></header><section className="workspace-content"><div className="workspace-symbol"><ShieldCheck size={24}/></div><div className="eyebrow">AUTHENTICATED TENANT WORKSPACE</div><h1>Welcome{user.name ? ', ' + user.name : ''}</h1><p>Your identity has been verified for the selected school portal.</p><div className="workspace-summary"><span>Role</span><strong>{role}</strong>{user.tenantCode && <><span>Organization Code</span><code>{user.tenantCode}</code></>}<span>Organization / Tenant ID</span><code>{user.tenantId || 'Not provided'}</code><span>Account</span><strong>{user.email || 'Signed-in user'}</strong></div><p className="workspace-note">Your sign-in is complete. Feature dashboards can be connected here as the Management, Faculty, Parent, and Student modules are implemented.</p><button className="launch" onClick={logout}>Sign out securely <ArrowRight size={14}/></button></section></main>;
 }
+function RoleLoginRoute({ role, children }: { role: Role; children: JSX.Element }) {
+  const location = useLocation();
+  const selected = (location.state as { roleSelected?: boolean; role?: string } | null)?.roleSelected === true
+    && (location.state as { role?: string } | null)?.role?.toLowerCase() === role.toLowerCase();
+  return selected ? children : <Navigate to="/" replace />;
+}
 function GuardedWorkspace() {
   const token = localStorage.getItem('tenant_token') || sessionStorage.getItem('tenant_token');
   return token ? <Workspace/> : <Navigate to="/" replace/>;
 }
 export default function App() {
-  return <Routes><Route path="/" element={<Landing/>}/><Route path="/set-password" element={<SetPasswordPage/>}/><Route path="/login/management" element={<ManagementLogin/>}/><Route path="/login/faculty" element={<FacultyLogin/>}/><Route path="/login/parent" element={<ParentLogin/>}/><Route path="/login/student" element={<StudentLogin/>}/><Route path="/workspace/*" element={<GuardedWorkspace/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Routes>;
+  return <Routes><Route path="/" element={<Landing/>}/><Route path="/set-password" element={<SetPasswordPage/>}/><Route path="/login/management" element={<RoleLoginRoute role="Management"><ManagementLogin/></RoleLoginRoute>}/><Route path="/login/faculty" element={<RoleLoginRoute role="Faculty"><FacultyLogin/></RoleLoginRoute>}/><Route path="/login/parent" element={<RoleLoginRoute role="Parent"><ParentLogin/></RoleLoginRoute>}/><Route path="/login/student" element={<RoleLoginRoute role="Student"><StudentLogin/></RoleLoginRoute>}/><Route path="/workspace/*" element={<GuardedWorkspace/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Routes>;
 }
