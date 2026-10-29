@@ -933,3 +933,27 @@ body { font-size: 15px; line-height: 1.6; }
   .reference-role-card p{font-size:9px !important}
   .reference-login{width:100% !important;min-height:27px !important;font-size:8px !important;padding:6px !important}
 }
+
+
+/* Slightly smaller role cards with clearer spacing between each card */
+.role-reference-grid{
+  width:min(100%,560px) !important;
+  grid-template-columns:repeat(2,minmax(0,240px)) !important;
+  column-gap:22px !important;
+  row-gap:22px !important;
+  justify-content:center !important;
+  margin-inline:auto !important;
+}
+.reference-role-card{
+  max-width:240px !important;
+  padding:12px !important;
+}
+@media(max-width:640px){
+  .role-reference-grid{
+    width:min(100%,440px) !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    column-gap:14px !important;
+    row-gap:14px !important;
+  }
+  .reference-role-card{padding:8px !important}
+}
