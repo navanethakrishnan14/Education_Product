@@ -86,23 +86,24 @@ export default function LoginPage({ role, title, color }: { role: LoginRole; tit
     { name: 'Parent', detail: "Track your child’s progress", icon: '👨‍👩‍👧', path: '/login/parent' },
     { name: 'Student', detail: 'Learn · Grow · Succeed', icon: '🎓', path: '/login/student' },
   ];
-  return <div className={`edu-login-shell theme-${color}`}>
+  return <div className={`edu-login-shell theme-${color} ${role === "Management" ? "management-login" : ""}`}>
     <section className="edu-login-visual">
       <div className="edu-login-visual-inner">
         <Link className="edu-login-logo" to="/"><span className="edu-logo-symbol"><GraduationCap size={31}/><span>▱</span></span><span><b>EduPro</b><small>School Management System</small></span></Link>
-        <div className="edu-login-title"><h1>Choose Your <span>Role</span></h1><p>Login to your account to continue</p></div>
-        <nav className="edu-role-list" aria-label="Choose login role">
+        <div className="edu-login-title"><h1>{role === 'Management' ? <>Empower<br/>Your School<br/><span>Management</span></> : <>Choose Your <span>Role</span></>}</h1><p>{role === 'Management' ? 'Manage academics, users, attendance, reports and overall school operations in one place.' : 'Login to your account to continue'}</p></div>
+        {role === 'Management' ? <div className="edu-management-benefits"><div><span>♟</span><p><b>Complete Control</b><small>Users, Academics, Reports</small></p></div><div><span>✓</span><p><b>Better Efficiency</b><small>Streamlined Operations</small></p></div><div><span>▥</span><p><b>Data Driven Insights</b><small>Smarter Decisions</small></p></div></div> : <nav className="edu-role-list" aria-label="Choose login role">
           {roleItems.map(item => <button key={item.name} type="button" className={`edu-role-option ${role === item.name ? 'active' : ''}`} onClick={() => nav(item.path)} aria-current={role === item.name ? 'page' : undefined}>
             <span className={`edu-role-icon icon-${item.name.toLowerCase()}`}>{item.icon}</span><span className="edu-role-copy"><b>{item.name}</b><small>{item.detail}</small></span><span className="edu-role-arrow"><ArrowRight size={17}/></span>
           </button>)}
-        </nav>
+        </nav>}
         <div className="edu-login-slogan"><span></span><p>Better Education<br/>Brighter Tomorrow</p></div>
       </div>
     </section>
     <main className="edu-login-form-panel">
       <div className="edu-language"><span>◎</span> English <span>⌄</span></div>
       <section className="edu-login-card">
-        <Link className="edu-form-brand" to="/"><span className="edu-form-brand-icon"><GraduationCap size={32}/><BookOpen size={25}/></span><span><b>EduPro</b><small>School Management System</small></span></Link>
+        {role !== 'Management' && <Link className="edu-form-brand" to="/"><span className="edu-form-brand-icon"><GraduationCap size={32}/><BookOpen size={25}/></span><span><b>EduPro</b><small>School Management System</small></span></Link>}
+        {role === 'Management' && <div className="edu-management-emblem"><GraduationCap size={54}/></div>}
         <h2>{role} Login</h2>
         <p className="edu-form-subtitle">{role === 'Management' ? 'Access and manage your school with ease.' : role === 'Faculty' ? 'Access your classes, attendance and manage student performance.' : role === 'Parent' ? "Track your child’s progress, attendance, exams and stay updated." : 'Access your timetable, homework, exams and learning materials.'}</p>
         <form className="edu-login-fields" onSubmit={submit}>
@@ -113,7 +114,7 @@ export default function LoginPage({ role, title, color }: { role: LoginRole; tit
           <div className="edu-input-wrap"><LockKeyhole size={16}/><input id="password" type={visible ? 'text' : 'password'} autoComplete="current-password" minLength={8} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" required/><button className="edu-password-toggle" type="button" aria-label={visible ? 'Hide password' : 'Show password'} onClick={() => setVisible(!visible)}><Eye size={16}/></button></div>
           <div className="edu-form-options"><label><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}/> Remember me</label><button type="button" onClick={() => setMessage('Please contact your school administrator to reset your password.')}>Forgot password?</button></div>
           {message && <p className="edu-login-message" role="status" aria-live="polite">{message}</p>}
-          <button className="edu-submit" type="submit" disabled={busy}>{busy ? 'Signing in…' : `Login as ${role}`} <ArrowRight size={17}/></button>
+          <button className="edu-submit" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Login'} <ArrowRight size={22}/></button>
         </form>
         <div className="edu-divider"><span>or continue with</span></div>
         <div className="edu-social-row"><button type="button" onClick={() => setMessage('Google sign-in is not configured yet. Please use your school credentials.') }><b className="google-g">G</b> Continue with Google</button><button type="button" onClick={() => setMessage('Microsoft sign-in is not configured yet. Please use your school credentials.') }><b className="microsoft-mark">▦</b> Continue with Microsoft</button></div>
