@@ -102,7 +102,7 @@ export default function LoginPage({ role, title, color }: { role: LoginRole; tit
     <main className="edu-login-form-panel">
       <div className="edu-language"><span>◎</span> English <span>⌄</span></div>
       <section className="edu-login-card">
-        {role !== 'Management' && <Link className="edu-form-brand" to="/"><span className="edu-form-brand-icon"><GraduationCap size={32}/><BookOpen size={25}/></span><span><b>EduPro</b><small>School Management System</small></span></Link>}
+        {role !== 'Management' && role !== 'Student' && <Link className="edu-form-brand" to="/"><span className="edu-form-brand-icon"><GraduationCap size={32}/><BookOpen size={25}/></span><span><b>EduPro</b><small>School Management System</small></span></Link>}
         {role === 'Management' && <div className="edu-management-emblem"><GraduationCap size={54}/></div>}{role === 'Faculty' && <div className="edu-management-emblem faculty-emblem"><span>👨‍🏫</span></div>}{role === 'Parent' && <div className="edu-management-emblem parent-emblem"><span>👪</span></div>}{role === 'Student' && <div className="edu-management-emblem student-emblem"><GraduationCap size={74}/></div>}
         <h2>{role} Login</h2>
         <p className="edu-form-subtitle">{role === 'Management' ? 'Access and manage your school with ease.' : role === 'Faculty' ? 'Access your classes, attendance and manage student performance.' : role === 'Parent' ? "Track your child’s progress, attendance, exams and stay updated." : 'Access your timetable, homework, exams and learning materials.'}</p>
