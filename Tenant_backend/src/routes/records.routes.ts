@@ -226,10 +226,24 @@ recordsRouter.put('/:id', async (req, res) => {
       [name, nextEmail, category, status, notes, req.params.id, req.tenantClaims!.tenantId, module],
     );
     if (module === 'Faculty & Staff' && previousEmail) {
-      await client.query(
-        'UPDATE tenant_users SET full_name=$1, email=$2, is_active=$3 WHERE tenant_id=$4 AND LOWER(email)=LOWER($5) AND role IN (\'FACULTY\',\'STAFF\')',
-        [name, nextEmail, status === 'Active', req.tenantClaims!.tenantId, previousEmail],
+      const staffDetails = (() => {
+        try { return JSON.parse(notes || '{}') as Record<string, unknown>; }
+        catch { return {}; }
+      })();
+      const nextRole = staffDetails.staffType === 'STAFF' ? 'STAFF' : 'FACULTY';
+      const currentUser = await client.query(
+        'SELECT id::text, role FROM tenant_users WHERE tenant_id=$1 AND LOWER(email)=LOWER($2) AND role IN (\'FACULTY\',\'STAFF\') LIMIT 1 FOR UPDATE',
+        [req.tenantClaims!.tenantId, previousEmail],
       );
+      if (currentUser.rowCount) {
+        // Keep the existing portal account when its email or faculty/staff subtype is edited.
+        const accountId = String(currentUser.rows[0].id);
+        const existingRole = String(currentUser.rows[0].role);
+        await client.query(
+          'UPDATE tenant_users SET full_name=$1, email=$2, role=$3, is_active=$4 WHERE id=$5 AND tenant_id=$6',
+          [name, nextEmail, nextRole || existingRole, status === 'Active', accountId, req.tenantClaims!.tenantId],
+        );
+      }
     }
     await client.query('COMMIT');
     return res.json({ success: true, record: toRecord(result.rows[0]) });
